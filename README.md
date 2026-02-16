@@ -2,26 +2,25 @@
 
 > La hutte du castor — relay email intelligent pour navigateurs en haute mer.
 
-Facteur automatisé côté terre pour les marins qui communiquent par radio BLU (SailMail/Winlink). Agrège, filtre et transmet les emails dans les contraintes de bande passante extrêmes (~200 ko/jour).
+Relay email automatisé côté terre pour les marins qui communiquent par radio BLU (SailMail/Winlink). Agrège, filtre et transmet les emails dans les contraintes de bande passante extrêmes (~200 ko/jour).
 
 ## Le problème
 
-En mer, pas de Wi-Fi. La radio BLU offre ~1-5 kbps avec un crédit limité. Un seul spam peut épuiser la connexion du jour. HutMail joue le rôle du "facteur à terre" : il trie le courrier et n'envoie que l'essentiel.
+En mer, pas de Wi-Fi. La radio BLU offre ~1-5 kbps avec un crédit limité. Un seul spam peut épuiser la connexion du jour. Jusqu'ici, la solution était un "facteur" humain à terre qui triait le courrier manuellement.
+
+HutMail automatise tout ça : des règles configurables filtrent, agrègent et transmettent — sans intervention humaine.
 
 ## Comment ça marche
 
-- **Entrée** : récupère les boîtes IMAP, strip le superflu, agrège en un seul mail texte brut
-- **Sortie** : parse les messages du bateau et les dispatche aux bons destinataires
-- **Commandes** : le bateau peut piloter le serveur par email (pause, status, whitelist...)
-- **Interface web** : validation humaine avant envoi, dashboard, estimation du poids
+- **Règles de filtrage** : whitelist/blacklist, taille max, mots-clés, priorités par expéditeur
+- **Screener** : le bateau reçoit d'abord un résumé léger (expéditeur, sujet, taille, résumé IA) et choisit quoi télécharger
+- **Agrégation** : les messages validés sont strippés (texte brut uniquement) et bundlés en un seul mail compact
+- **Dispatch sortant** : parse les messages du bateau et les envoie aux bons destinataires
+- **Commandes par email** : le bateau pilote le serveur à distance (modifier les règles, pause, status...)
 
 ## Stack
 
 Ruby on Rails • ActionMailbox • ActiveJob
-
-## Licence
-
-MIT
 
 ---
 
