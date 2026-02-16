@@ -170,6 +170,3 @@ Aucune solution existante identifiée pour le rôle de "facteur à terre" automa
 
 Potentiel open source : des milliers de bateaux en tour du monde chaque année ont ce problème.
 
-## Licence
-
-MIT

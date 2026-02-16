@@ -18,6 +18,10 @@ HutMail automatise tout ça : des règles configurables filtrent, agrègent et t
 - **Dispatch sortant** : parse les messages du bateau et les envoie aux bons destinataires
 - **Commandes par email** : le bateau pilote le serveur à distance (modifier les règles, pause, status...)
 
+## Spec
+
+📋 [Spécification complète](.specs/SPEC.md)
+
 ## Stack
 
 Ruby on Rails • ActionMailbox • ActiveJob
