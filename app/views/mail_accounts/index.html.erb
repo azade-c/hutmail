@@ -1,0 +1,41 @@
+<% content_for(:title, "Mail Accounts — HutMail") %>
+
+<div class="w-full max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold">📬 Mail Accounts</h1>
+    <%= link_to "Add Account", new_mail_account_path, class: "bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition" %>
+  </div>
+
+  <% if notice.present? %>
+    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6">
+      <%= notice %>
+    </div>
+  <% end %>
+
+  <% if @mail_accounts.empty? %>
+    <div class="text-center py-16 text-gray-500">
+      <div class="text-5xl mb-4">📭</div>
+      <p class="text-lg mb-2">No mail accounts configured yet.</p>
+      <p class="text-sm">Add an IMAP account to start fetching emails.</p>
+    </div>
+  <% else %>
+    <div class="space-y-3">
+      <% @mail_accounts.each do |account| %>
+        <div class="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition">
+          <div class="flex-1">
+            <div class="flex items-center gap-3">
+              <h2 class="font-semibold text-lg"><%= account.name %></h2>
+              <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"><%= account.imap_server %></span>
+            </div>
+            <p class="text-sm text-gray-500 mt-1">
+              <%= account.imap_username %> · Port <%= account.imap_port %> · <%= account.use_ssl ? "SSL" : "No SSL" %>
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <%= button_to "Remove", mail_account_path(account), method: :delete, class: "text-red-500 hover:text-red-700 text-sm", data: { turbo_confirm: "Remove #{account.name}?" } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

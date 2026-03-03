@@ -1,0 +1,201 @@
+<% content_for(:title, "HutMail 🦫 — Le facteur des Castors") %>
+
+<div class="w-full max-w-4xl mx-auto">
+  <%# Hero %>
+  <div class="text-center mb-16">
+    <h1 class="text-6xl font-bold mb-4">HutMail <span class="inline-block">🦫</span></h1>
+    <p class="text-xl text-gray-500 italic mb-2">La hutte du castor — là où le courrier est trié et stocké.</p>
+    <p class="text-lg text-gray-600 mt-6 max-w-2xl mx-auto">
+      An automated shore-side mail relay for sailors crossing oceans with
+      only a BLU/SSB radio and a satellite phone.
+    </p>
+  </div>
+
+  <%# Problem %>
+  <section class="mb-14">
+    <h2 class="text-2xl font-bold mb-4 border-b pb-2">The Problem</h2>
+    <div class="grid md:grid-cols-3 gap-6 mt-6">
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-5">
+        <div class="text-3xl mb-2">📻</div>
+        <h3 class="font-semibold mb-1">BLU / SailMail</h3>
+        <p class="text-sm text-gray-600">~200 KB/day, 90 min/rolling week. PACTOR protocol. 35 KB max per message.</p>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-5">
+        <div class="text-3xl mb-2">📡</div>
+        <h3 class="font-semibold mb-1">Iridium</h3>
+        <p class="text-sm text-gray-600">~400 kbps but €1.50/min. Backup only — too expensive for daily use.</p>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-5">
+        <div class="text-3xl mb-2">⚠️</div>
+        <h3 class="font-semibold mb-1">No Filtering</h3>
+        <p class="text-sm text-gray-600">Airmail downloads everything. A single spam or heavy email can burn the entire radio budget.</p>
+      </div>
+    </div>
+  </section>
+
+  <%# Solution %>
+  <section class="mb-14">
+    <h2 class="text-2xl font-bold mb-4 border-b pb-2">The Solution</h2>
+    <p class="text-gray-700 mb-6">
+      HutMail is an automated <strong>shore-side mail relay</strong>. It fetches, filters, summarizes,
+      and forwards emails so sailors only download what matters — in the most compact form possible.
+    </p>
+
+    <div class="space-y-8">
+      <%# Inbound flow %>
+      <div>
+        <h3 class="text-lg font-semibold mb-3">📥 Inbound — World → Boat</h3>
+        <ol class="space-y-4">
+          <li class="flex gap-4">
+            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">1</span>
+            <div>
+              <strong>Collect & Filter</strong>
+              <p class="text-sm text-gray-600">Periodically fetches IMAP inboxes. Applies whitelist/blacklist, size limits, keyword rules, and sender priorities.</p>
+            </div>
+          </li>
+          <li class="flex gap-4">
+            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">2</span>
+            <div>
+              <strong>Screener</strong>
+              <p class="text-sm text-gray-600">Sends an ultra-compact summary to the boat — one AI-condensed line per message, just a few hundred bytes total.</p>
+              <pre class="mt-2 bg-gray-900 text-green-400 text-xs p-3 rounded-lg overflow-x-auto"><code>=== SCREENER 15/02 ===
+#1 bob@example.com | "Re: Horta" | 0.8 KB | Confirms Tuesday at the port
+#2 maman@famille.fr | "News" | 1.2 KB | Asks for photos, tells about Xmas
+#3 bank@credit.fr | "Statement" | 3.1 KB | January account statement
+#4 news@voile.fr | "Sailing" | 8.2 KB | Vendée Globe results
+TOTAL pending: 13.3 KB (4 messages)
+===</code></pre>
+            </div>
+          </li>
+          <li class="flex gap-4">
+            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">3</span>
+            <div>
+              <strong>Select</strong>
+              <p class="text-sm text-gray-600">The boat replies with message numbers to fetch or drop.</p>
+              <pre class="mt-2 bg-gray-900 text-green-400 text-xs p-3 rounded-lg overflow-x-auto"><code>===CMD===
+GET 1 2
+DROP 3 4
+===END===</code></pre>
+            </div>
+          </li>
+          <li class="flex gap-4">
+            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">4</span>
+            <div>
+              <strong>Deliver</strong>
+              <p class="text-sm text-gray-600">Selected messages are stripped (HTML → plain text, attachments removed, signatures cleaned) and packed into one compact email sent via SailMail.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <%# Outbound flow %>
+      <div>
+        <h3 class="text-lg font-semibold mb-3">📤 Outbound — Boat → World</h3>
+        <p class="text-sm text-gray-600 mb-2">The boat sends a single structured email. HutMail parses it and dispatches each message from the appropriate account.</p>
+        <pre class="bg-gray-900 text-green-400 text-xs p-3 rounded-lg overflow-x-auto"><code>===MSG bob@example.com===
+Arriving Tuesday in Horta
+===MSG famille@castors.fr===
+All good, 15 knots of wind</code></pre>
+      </div>
+
+      <%# CLI %>
+      <div>
+        <h3 class="text-lg font-semibold mb-3">⌨️ Email CLI — Commands from the Boat</h3>
+        <pre class="bg-gray-900 text-green-400 text-xs p-3 rounded-lg overflow-x-auto"><code>===CMD===
+SEND bob@example.com "Arriving Tuesday"
+PAUSE 3d              — pause aggregation (shore leave, wifi available)
+RESUME                — resume
+STATUS                — get summary (pending messages, KB used)
+WHITELIST add bob@example.com
+URGENT famille@castors.fr "All good"  — immediate send
+===END===</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <%# Architecture diagram %>
+  <section class="mb-14">
+    <h2 class="text-2xl font-bold mb-4 border-b pb-2">Architecture</h2>
+    <pre class="bg-gray-900 text-green-400 text-xs p-4 rounded-lg overflow-x-auto leading-relaxed"><code>[Beaver Mailboxes]          [Outside World]
+       |                          |
+     IMAP                       SMTP
+       |                          |
+       v                          v
++-------------------------------------+
+|           HutMail (Rails)           |
+|                                     |
+|  • Inbound aggregation & filtering  |
+|  • Outbound dispatch                |
+|  • Web dashboard for configuration  |
+|  • Email CLI (commands from boat)   |
++-------------------------------------+
+       |                    ^
+     SMTP                 SMTP
+       |                    |
+       v                    |
+[SailMail: call@sailmail.com]
+       |                    ^
+       | PACTOR (radio)     |
+       v                    |
+   [Boat — Airmail]  ------+</code></pre>
+  </section>
+
+  <%# Features list %>
+  <section class="mb-14">
+    <h2 class="text-2xl font-bold mb-4 border-b pb-2">Web Dashboard</h2>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-1">📊 Dashboard</h3>
+        <p class="text-sm text-gray-600">Pending, sent & received messages. Daily KB budget tracking.</p>
+      </div>
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-1">⚙️ Rules</h3>
+        <p class="text-sm text-gray-600">Whitelist, blacklist, keyword filters, sender priorities.</p>
+      </div>
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-1">📬 Accounts</h3>
+        <p class="text-sm text-gray-600">IMAP inboxes to monitor, SMTP accounts for outbound.</p>
+      </div>
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-1">📋 Screener Preview</h3>
+        <p class="text-sm text-gray-600">See the next screener before it's sent.</p>
+      </div>
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-1">📜 History</h3>
+        <p class="text-sm text-gray-600">Complete log of all exchanges.</p>
+      </div>
+      <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-1">📡 Monitoring</h3>
+        <p class="text-sm text-gray-600">Full visibility on what the system does — no manual validation needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <%# Auto-mode %>
+  <section class="mb-14">
+    <h2 class="text-2xl font-bold mb-4 border-b pb-2">Fully Automated</h2>
+    <p class="text-gray-700">
+      If the boat doesn't reply to a screener within a configurable delay, priority rules kick in automatically:
+      family messages are always forwarded, newsletters are dropped.
+      <strong>No human "postman" needed.</strong> Configure the rules before departure and let the beaver sort the mail.
+    </p>
+  </section>
+
+  <%# CTA %>
+  <section class="text-center mb-16 py-10 bg-blue-50 rounded-xl">
+    <p class="text-gray-600 mb-6">Thousands of boats cross oceans every year with this exact problem. HutMail automates what sailors have been doing manually for 20 years.</p>
+    <% if authenticated? %>
+      <a href="#" class="inline-block bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+        Go to Dashboard →
+      </a>
+    <% else %>
+      <a href="<%= new_session_path %>" class="inline-block bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+        Sign In →
+      </a>
+    <% end %>
+  </section>
+
+  <footer class="text-center text-sm text-gray-400 pb-8">
+    HutMail — Open source shore-side mail relay for ocean sailors.
+  </footer>
+</div>

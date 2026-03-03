@@ -1,0 +1,259 @@
+<% content_for(:title, "Mailbox — HutMail") %>
+
+<div class="w-full max-w-5xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold">📬 Mailbox</h1>
+    <div class="flex items-center gap-3">
+      <%= link_to "Refresh", mailbox_path, class: "bg-gray-100 text-gray-700 font-medium px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm" %>
+      <%= link_to "Accounts", mail_accounts_path, class: "text-gray-500 hover:text-gray-700 text-sm" %>
+    </div>
+  </div>
+
+  <% if @no_accounts %>
+    <div class="text-center py-16 text-gray-500">
+      <div class="text-5xl mb-4">📭</div>
+      <p class="text-lg mb-2">No mail accounts configured.</p>
+      <%= link_to "Add an IMAP account →", new_mail_account_path, class: "text-blue-600 hover:text-blue-800 font-medium" %>
+    </div>
+  <% else %>
+
+    <%# Fetch errors %>
+    <% if @fetch_errors.any? %>
+      <div class="mb-6 space-y-2">
+        <% @fetch_errors.each do |account, error| %>
+          <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded-lg text-sm">
+            ❌ <strong><%= account.name %></strong>: <%= error %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% total_emails = @accounts_with_emails.values.flatten.size %>
+    <% total_raw_kb = @accounts_with_emails.values.flatten.sum(&:size) / 1024.0 %>
+
+    <% if total_emails == 0 %>
+      <div class="text-center py-16 text-gray-500">
+        <div class="text-5xl mb-4">📭</div>
+        <p class="text-lg">No new messages across your <%= @mail_accounts.size %> accounts.</p>
+      </div>
+    <% else %>
+
+      <%# ==================== COLLECTED EMAILS BY ACCOUNT ==================== %>
+      <div class="mb-8">
+        <div class="flex items-center gap-4 mb-3 text-sm text-gray-500">
+          <span><strong class="text-gray-800"><%= total_emails %></strong> messages across <strong class="text-gray-800"><%= @accounts_with_emails.count { |_, v| v.any? } %></strong> accounts</span>
+          <span>·</span>
+          <span><strong class="text-gray-800"><%= number_with_precision(total_raw_kb, precision: 1) %> KB</strong> raw</span>
+          <span>→</span>
+          <span><strong class="text-green-700"><%= number_with_precision(@bundle[:size] / 1024.0, precision: 1) %> KB</strong> stripped</span>
+          <% if total_raw_kb > 0 %>
+            <span class="text-green-600 font-medium">-<%= ((1 - @bundle[:size].to_f / (total_raw_kb * 1024)) * 100).round(0) %>%</span>
+          <% end %>
+        </div>
+
+        <% global_idx = 0 %>
+        <% @accounts_with_emails.each do |account, emails| %>
+          <% next if emails.empty? %>
+          <div class="mb-4">
+            <div class="flex items-center gap-2 mb-2">
+              <h2 class="text-sm font-bold text-gray-600"><%= account.name %></h2>
+              <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full"><%= account.imap_username %></span>
+              <span class="text-xs text-gray-400"><%= emails.size %> messages</span>
+            </div>
+
+            <div class="border rounded-lg divide-y overflow-hidden">
+              <% emails.each do |email| %>
+                <% global_idx += 1 %>
+                <% is_dropped = @execution && @execution[:drop_indices]&.include?(global_idx) %>
+                <div class="flex items-start gap-3 px-4 py-2.5 hover:bg-blue-50/50 transition
+                  <%= 'bg-red-50 opacity-50 line-through' if is_dropped %>
+                  <%= 'bg-blue-50' if !is_dropped && !email.seen %>">
+                  <div class="flex-shrink-0 pt-1.5">
+                    <% if is_dropped %>
+                      <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                    <% elsif !email.seen %>
+                      <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                    <% else %>
+                      <div class="w-2.5 h-2.5"></div>
+                    <% end %>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-baseline justify-between gap-4">
+                      <div class="flex items-baseline gap-3 min-w-0">
+                        <span class="font-semibold text-sm truncate max-w-48 <%= email.seen ? 'text-gray-700' : 'text-gray-900' %>">
+                          <%= email.from %>
+                        </span>
+                        <span class="text-sm truncate <%= email.seen ? 'text-gray-500' : 'text-gray-800 font-medium' %>">
+                          <%= email.subject.presence || "(no subject)" %>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 flex-shrink-0 text-xs text-gray-400">
+                        <% if is_dropped %>
+                          <span class="bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-semibold">DROPPED</span>
+                        <% end %>
+                        <span class="bg-gray-100 px-1.5 py-0.5 rounded font-mono">#<%= global_idx %></span>
+                        <span><%= number_with_precision(email.size / 1024.0, precision: 1) %> KB</span>
+                        <span class="w-16 text-right">
+                          <% if email.date %>
+                            <% if email.date.to_date == Date.today %>
+                              <%= email.date.strftime("%H:%M") %>
+                            <% elsif email.date.to_date == Date.yesterday %>
+                              Yest.
+                            <% else %>
+                              <%= email.date.strftime("%d/%m") %>
+                            <% end %>
+                          <% end %>
+                        </span>
+                      </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-0.5 truncate"><%= email.body_preview %></p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%# ==================== SAILMAIL DELIVERY ==================== %>
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-bold">📻 SailMail Delivery</h2>
+          <span class="text-sm font-mono font-bold <%= @bundle[:size] > 35 * 1024 ? 'text-red-600' : 'text-green-600' %>">
+            <%= number_with_precision(@bundle[:size] / 1024.0, precision: 1) %> KB
+          </span>
+        </div>
+
+        <%# Warnings %>
+        <% @bundle[:warnings]&.each do |warning| %>
+          <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded-lg mb-3 text-sm">
+            <%= warning %>
+          </div>
+        <% end %>
+
+        <%# Size bar %>
+        <div class="mb-4">
+          <% pct = [(@bundle[:size] / (35.0 * 1024) * 100), 100].min %>
+          <div class="flex items-center gap-3 mb-1">
+            <div class="flex-1 bg-gray-200 rounded-full h-3">
+              <div class="h-3 rounded-full transition-all <%= pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-amber-500' : 'bg-green-500' %>" style="width: <%= pct %>%"></div>
+            </div>
+            <span class="text-xs text-gray-400"><%= pct.round(0) %>%</span>
+          </div>
+          <div class="flex justify-between text-xs text-gray-400">
+            <span>0 KB</span>
+            <span>35 KB (SailMail limit)</span>
+          </div>
+        </div>
+
+        <%# Per-account breakdown %>
+        <% if @bundle[:accounts]&.any? %>
+          <div class="mb-4 flex flex-wrap gap-2">
+            <% @bundle[:accounts].each do |acct| %>
+              <div class="bg-gray-50 border rounded px-3 py-1.5 text-xs flex items-center gap-2">
+                <span class="font-semibold"><%= acct[:name] %></span>
+                <span class="text-gray-400"><%= acct[:email_count] %> msgs</span>
+                <span class="font-mono"><%= number_with_precision(acct[:parts].sum { |p| p[:size] } / 1024.0, precision: 1) %> KB</span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%# The bundled text %>
+        <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto max-h-[600px] overflow-y-auto">
+          <pre class="text-green-400 text-xs leading-relaxed font-mono whitespace-pre-wrap"><%= @bundle[:text] %></pre>
+        </div>
+
+        <p class="text-xs text-gray-400 mt-3">
+          ☝️ This single email is sent to the SailMail address. All accounts bundled, HTML stripped, attachments removed,
+          quoted replies cut, signatures cleaned. Human-readable in Airmail.
+        </p>
+      </div>
+
+      <%# ==================== COMMAND INPUT ==================== %>
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-bold">⌨️ Boat Commands</h2>
+        </div>
+        <p class="text-xs text-gray-500 mb-3">
+          Simulate commands the boat would send back. The boat can manage what it receives.
+        </p>
+
+        <%= form_tag mailbox_path, method: :get do %>
+          <%= text_area_tag :command,
+            params[:command],
+            rows: 6,
+            placeholder: "===CMD===\nDROP LAST\n===END===",
+            class: "w-full bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 resize-y placeholder-gray-600",
+            spellcheck: false %>
+
+          <div class="mt-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button type="submit" class="bg-green-600 text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-green-700 transition text-sm cursor-pointer">
+                📻 Process Command
+              </button>
+              <% if params[:command].present? %>
+                <%= link_to "Clear", mailbox_path, class: "text-gray-400 hover:text-gray-600 text-sm" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%# Command reference %>
+        <details class="mt-4 text-xs text-gray-500">
+          <summary class="cursor-pointer hover:text-gray-700 font-medium">Command reference</summary>
+          <div class="mt-2 bg-gray-50 border rounded-lg p-3 font-mono space-y-1">
+            <p><strong>DROP LAST</strong> — cancel previous delivery (too big to download)</p>
+            <p><strong>DROP 3 5</strong> — exclude messages #3 and #5 from next delivery</p>
+            <p><strong>SEND bob@example.com "Hello"</strong> — send a message</p>
+            <p><strong>URGENT famille@castors.fr "All good"</strong> — immediate send</p>
+            <p><strong>PAUSE 3d</strong> — pause aggregation (shore leave)</p>
+            <p><strong>RESUME</strong> — resume aggregation</p>
+            <p><strong>STATUS</strong> — receive pending messages summary</p>
+            <p><strong>WHITELIST add bob@example.com</strong> — always forward</p>
+            <p><strong>BLACKLIST add spam@junk.com</strong> — always block</p>
+          </div>
+        </details>
+      </div>
+
+      <%# ==================== COMMAND RESULTS ==================== %>
+      <% if @parse_result %>
+        <div class="mb-8">
+          <% if !@parse_result.valid? %>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h3 class="font-semibold text-red-800 mb-2">Parse errors:</h3>
+              <ul class="text-sm text-red-600 list-disc list-inside space-y-1">
+                <% @parse_result.errors.each do |err| %>
+                  <li><%= err %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% elsif @execution %>
+            <div class="bg-gray-50 border rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-2">Execution log:</h3>
+              <div class="space-y-1">
+                <% @execution[:actions_log].each do |log_line| %>
+                  <p class="text-sm font-mono"><%= log_line %></p>
+                <% end %>
+              </div>
+              <% if @execution[:drop_last] %>
+                <div class="mt-3 bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 rounded text-sm">
+                  📻 The previous delivery would be cancelled. The boat's Airmail client should not download it.
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%# Budget context %>
+      <div class="mb-8 bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+        <strong>📻 Radio budget:</strong>
+        <%= total_emails %> messages from <%= @accounts_with_emails.count { |_, v| v.any? } %> accounts,
+        <%= number_with_precision(total_raw_kb, precision: 1) %> KB raw
+        → <strong><%= number_with_precision(@bundle[:size] / 1024.0, precision: 1) %> KB</strong> bundled
+        · Daily budget: ~200 KB · Max per message: 35 KB
+      </div>
+    <% end %>
+  <% end %>
+</div>
