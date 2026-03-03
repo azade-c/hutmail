@@ -15,6 +15,10 @@ En mer, pas de Wi-Fi. La radio BLU offre ~1-5 kbps avec un crédit limité. Un s
 - **Commandes** : le bateau peut piloter le serveur par email (pause, status, whitelist...)
 - **Interface web** : validation humaine avant envoi, dashboard, estimation du poids
 
+## Spec
+
+📋 [Spécification complète](.specs/SPEC.md)
+
 ## Stack
 
 Ruby on Rails • ActionMailbox • ActiveJob
