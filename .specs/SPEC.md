@@ -52,52 +52,19 @@ Une application **Ruby on Rails** qui joue le rôle de facteur automatisé côt�
 
 ### Flux entrant (monde → bateau)
 
-#### Étape 1 : Collecte et filtrage automatique
-
 1. Cron récupère les boîtes IMAP des Castors à intervalles réguliers
-2. Filtrage par règles configurables :
-   - Whitelist/blacklist d'expéditeurs
-   - Taille max par message
-   - Mots-clés prioritaires ou bloqués
-   - Priorité par expéditeur (famille > newsletter)
-3. Les messages filtrés sont stockés en attente
-
-#### Étape 2 : Screener (résumé léger envoyé au bateau)
-
-Le bateau reçoit d'abord un **screener** — un résumé ultra-compact de ce qui attend :
-
-```
-=== SCREENER 15/02 ===
-#1 bob@example.com | "Re: Horta" | 0.8 ko | Confirme rdv mardi au port
-#2 maman@famille.fr | "Nouvelles" | 1.2 ko | Demande photos, raconte Noël
-#3 banque@credit.fr | "Relevé mensuel" | 3.1 ko | Relevé de compte janvier
-#4 newsletter@voile.fr | "Actus voile" | 8.2 ko | Vendée Globe résultats
-TOTAL en attente : 13.3 ko (4 messages)
-===
-```
-
-Le résumé IA condense chaque message en une ligne (~10 mots). Le screener pèse quelques centaines d'octets.
-
-#### Étape 3 : Sélection depuis le bateau
-
-Le bateau répond avec les numéros des messages à recevoir :
-
-```
-===CMD===
-GET 1 2
-DROP 3 4
-===END===
-```
-
-#### Étape 4 : Envoi des messages sélectionnés
-
-Les messages demandés sont strippés (HTML → texte brut, pièces jointes virées, signatures nettoyées) et agrégés en un seul mail compact envoyé à l'adresse SailMail.
-
-**Mode automatique :** si le bateau ne répond pas au screener dans un délai configurable, les règles de priorité s'appliquent automatiquement (ex: famille = toujours envoyer, newsletter = dropper).
-
-#### Pas de facteur humain
-
-Tout est automatisé par les règles. L'interface web sert à configurer les règles avant le départ et à monitorer, pas à valider chaque envoi manuellement.
+2. Strip HTML, pièces jointes, signatures, disclaimers, historique de conversation
+3. Garde uniquement le corps texte brut
+4. Concatène tous les messages en un seul mail compact :
+   ```
+   === De: bob@example.com (Bob Martin) — 15/02 14:30 ===
+   Salut, comment ça va en mer ?
+   === De: famille@castors.fr (Maman) — 15/02 16:00 ===
+   On pense à vous, bisous !
+   === FIN ===
+   ```
+5. Validation humaine via l'interface web avant envoi
+6. Envoi à l'adresse SailMail du bateau
 
 ### Flux sortant (bateau → monde)
 
@@ -129,12 +96,11 @@ URGENT famille@castors.fr "Tout va bien"  — envoi immédiat
 
 ### Interface web
 
-- **Dashboard** : messages en attente, envoyés, reçus, budget ko consommé/restant
-- **Règles** : configuration des filtres, priorités, whitelist/blacklist
-- **Comptes** : boîtes IMAP à surveiller, comptes SMTP pour l'envoi
-- **Screener** : preview du prochain screener à envoyer
+- **Dashboard** : messages en attente, envoyés, reçus
+- **Validation** : relecture avant envoi vers le bateau
+- **Configuration** : boîtes IMAP à surveiller, contacts, whitelist
+- **Estimation** : poids en ko de chaque synthèse
 - **Historique** : log complet des échanges
-- **Monitoring** : pas de validation manuelle, mais visibilité sur ce que fait le système
 
 ## Décisions techniques
 
