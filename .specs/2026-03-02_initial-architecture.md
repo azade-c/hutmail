@@ -255,14 +255,8 @@ Source of truth for all messages known to HutMail. A message is added here at co
 | status | string | `pending` → `sent` → `error` |
 | error_message | string | If error |
 
-#### `budget_entries`
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | PK |
-| user_id | integer | FK → users |
-| date | date | Day |
-| bytes_sent | integer | Bytes sent that day |
-| bundle_id | integer | FK → bundles (nullable, for traceability) |
+#### ~~`budget_entries`~~ (removed)
+Budget is calculated directly from `bundles` (`total_stripped_size` + `sent_at`) over 7 rolling days. No separate table needed.
 
 ### Collection flow (detailed)
 
@@ -406,9 +400,8 @@ A `GET` response follows the same format: `=== HUTMAIL ===` with the requested m
 HutMail keeps a complete record of all exchanges via the database:
 
 #### Radio budget
-- `budget_entries`: KB sent per day
-- Rolling calculation: `SUM(bytes_sent) WHERE date >= 7.days.ago`
-- Remaining budget = `(100 KB × 7) - consumed_7d`
+- Calculated from `bundles`: `SUM(total_stripped_size) WHERE sent_at >= 7.days.ago`
+- Remaining budget = `(daily_budget_kb × 7) - consumed_7d`
 - Alerts when budget is tight
 
 #### Sent bundles
@@ -547,6 +540,48 @@ Messages are identified by `DDmon.BB.N` (e.g.: `01mar.GM.1`, `28feb.OR.2`). Bene
 - Zero-padded day for consistent sorting (`01mar`, `09feb`)
 - Implicit year unless different (`15jan26.GM.3`)
 - Easy to type on an Airmail keyboard
+
+### Stripping pipeline
+
+Two gems handle the heavy lifting, with a custom layer to compensate their gaps:
+
+1. **`html2text`** (soundasleep) — HTML → plain text conversion
+   - Handles `<p>`, `<br>`, `<li>`, `<table>`, `<a>` → structured text
+   - We post-process: strip URLs from links (useless on radio, waste bytes), clean excess whitespace
+
+2. **`email_reply_parser`** (GitHub) — removes quoted replies and standard signatures
+   - Detects `>` quoted blocks, `On ... wrote:` headers, `--` signatures
+   - **Gap: English only.** We add French patterns: `Le ... a écrit :`, `De :`, `Envoyé :`
+
+3. **Custom `MessageStripper`** (~50-80 lines) — compensates both gems:
+   - Mobile signatures: `Sent from my iPhone`, `Envoyé de mon iPad`, `Get Outlook for iOS`
+   - Legal disclaimers: blocks with `DISCLAIMER`, `CONFIDENTIAL`, `AVERTISSEMENT`
+   - Unsubscribe noise: `unsubscribe`, `se désinscrire`, `manage preferences`
+   - Orphan URLs: lines containing only a URL
+   - Whitespace normalization: multiple blank lines → one, trim
+
+**Pipeline:**
+```
+Email (Mail gem)
+  → text/plain if exists, else text/html → html2text, else empty
+  → email_reply_parser (quoted replies + signatures)
+  → custom MessageStripper (French patterns, mobile sigs, disclaimers)
+  → normalize whitespace
+  = stripped_body
+```
+
+**Attachments:** stripped from body, metadata stored as JSON on `collected_messages`:
+```json
+[{"name": "facture.pdf", "size": 245000, "content_type": "application/pdf"}]
+```
+Displayed in bundle: `📎 facture.pdf (245 KB)`. No attachment download via radio (V1).
+
+### Encryption
+
+All personal data is encrypted at rest using Active Record Encryption:
+- Passwords: IMAP/SMTP credentials on `users` and `mail_accounts`
+- Message content: `from_address`, `to_address`, `subject`, `stripped_body` on `collected_messages`
+- Boat replies: `to_address`, `body` on `boat_replies`
 
 ### Compression
 

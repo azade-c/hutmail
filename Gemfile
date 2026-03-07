@@ -62,3 +62,6 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "html2text", "~> 0.4.0"
+gem "email_reply_parser", "~> 0.5.11"
