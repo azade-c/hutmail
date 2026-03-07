@@ -589,7 +589,11 @@ A HutMail user can configure multiple mailboxes (e.g.: personal Gmail + work Ora
 
 ### Stack
 
-- **Ruby on Rails 8.1** (Tailwind, Importmaps, Turbo, Stimulus)
+- **Ruby on Rails 8.1** — vanilla, no CSS framework
+  - **Hotwire** (Turbo + Stimulus) for interactivity
+  - **Importmaps** for JS (no bundler)
+  - **Vanilla CSS** — no Tailwind, no Bootstrap. Hand-written, minimal
+  - Pages must be lightweight: minimal DOM, no bloat, fast on slow connections
 - **SQLite** for storage
 - **ActiveJob** + cron for periodic aggregation
 - **Active Record Encryption** for IMAP and SMTP passwords
