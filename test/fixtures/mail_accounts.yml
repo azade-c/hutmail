@@ -1,0 +1,25 @@
+gmail:
+  user: one
+  name: Personal Gmail
+  short_code: GM
+  imap_server: imap.gmail.com
+  imap_port: 993
+  imap_use_ssl: true
+  smtp_server: smtp.gmail.com
+  smtp_port: 587
+  smtp_use_starttls: true
+  is_default: true
+  skip_already_read: true
+
+orange:
+  user: one
+  name: Work Orange
+  short_code: OR
+  imap_server: imap.orange.fr
+  imap_port: 993
+  imap_use_ssl: true
+  smtp_server: smtp.orange.fr
+  smtp_port: 587
+  smtp_use_starttls: true
+  is_default: false
+  skip_already_read: true

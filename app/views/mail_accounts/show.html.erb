@@ -1,0 +1,53 @@
+<div class="page-header">
+  <h1>
+    <span class="badge"><%= @mail_account.short_code %></span>
+    <%= @mail_account.name %>
+  </h1>
+  <div class="flex gap">
+    <a href="<%= edit_mail_account_path(@mail_account) %>" class="btn">Edit</a>
+    <%= button_to "Delete", mail_account_path(@mail_account), method: :delete,
+        class: "btn btn--negative",
+        data: { turbo_confirm: "Delete this account and all its messages?" } %>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat">
+    <div class="stat__value"><%= @mail_account.collected_messages.pending.count %></div>
+    <div class="stat__label">Pending</div>
+  </div>
+  <div class="stat">
+    <div class="stat__value"><%= @mail_account.collected_messages.sent.count %></div>
+    <div class="stat__label">Sent</div>
+  </div>
+  <div class="stat">
+    <div class="stat__value"><%= @mail_account.collected_messages.count %></div>
+    <div class="stat__label">Total collected</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__header">Recent messages</div>
+
+  <% if @messages.any? %>
+    <ul class="message-list">
+      <% @messages.each do |msg| %>
+        <li class="message-item">
+          <div class="message-item__header">
+            <span class="message-item__code"><%= msg.hutmail_id %></span>
+            <span class="badge badge--<%= msg.status %>"><%= msg.status %></span>
+          </div>
+          <div>
+            <span class="message-item__from"><%= msg.from_name.presence || msg.from_address %></span>
+            <span class="message-item__subject">— <%= msg.subject %></span>
+          </div>
+          <div class="txt-x-small txt-subtle">
+            <%= msg.date&.strftime("%d %b %H:%M") %> · <%= BundleFormatter.format_size(msg.stripped_size || 0) %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="empty-state">No messages collected yet.</div>
+  <% end %>
+</div>

@@ -1,0 +1,35 @@
+<div class="page-header">
+  <h1>Bundles</h1>
+</div>
+
+<% if @bundles.any? %>
+  <% @bundles.each do |bundle| %>
+    <div class="card">
+      <a href="<%= bundle_path(bundle) %>">
+        <div class="flex align-center justify-space-between">
+          <span class="badge badge--<%= bundle.status %>"><%= bundle.status %></span>
+          <span class="txt-small">
+            <%= bundle.messages_count %> messages ·
+            <%= BundleFormatter.format_size(bundle.total_stripped_size || 0) %>
+          </span>
+        </div>
+        <% if bundle.sent_at %>
+          <div class="txt-x-small txt-subtle margin-block-start-half">
+            Sent <%= bundle.sent_at.strftime("%d %b %Y %H:%M") %>
+          </div>
+        <% else %>
+          <div class="txt-x-small txt-subtle margin-block-start-half">
+            Created <%= bundle.created_at.strftime("%d %b %Y %H:%M") %>
+          </div>
+        <% end %>
+        <% if bundle.remaining_count.to_i > 0 %>
+          <div class="txt-x-small txt-subtle">
+            + <%= bundle.remaining_count %> in screener
+          </div>
+        <% end %>
+      </a>
+    </div>
+  <% end %>
+<% else %>
+  <div class="empty-state">No bundles sent yet.</div>
+<% end %>

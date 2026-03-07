@@ -1,0 +1,32 @@
+<div class="page-header">
+  <h1>Mail accounts</h1>
+  <a href="<%= new_mail_account_path %>" class="btn btn--link">Add account</a>
+</div>
+
+<% if @mail_accounts.any? %>
+  <% @mail_accounts.each do |account| %>
+    <div class="card">
+      <div class="card__header">
+        <span class="badge"><%= account.short_code %></span>
+        <a href="<%= mail_account_path(account) %>"><%= account.name %></a>
+        <% if account.is_default %>
+          <span class="badge badge--sent">default</span>
+        <% end %>
+      </div>
+      <div class="txt-small txt-subtle">
+        IMAP: <%= account.imap_server %>:<%= account.imap_port %> ·
+        SMTP: <%= account.smtp_server %>:<%= account.smtp_port %>
+      </div>
+      <div class="txt-x-small txt-subtle">
+        <%= account.collected_messages.pending.count %> pending ·
+        <%= account.collected_messages.sent.count %> sent ·
+        skip read: <%= account.skip_already_read ? "yes" : "no" %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="empty-state">
+    <p>No mail accounts configured.</p>
+    <a href="<%= new_mail_account_path %>" class="btn btn--link">Add your first account</a>
+  </div>
+<% end %>

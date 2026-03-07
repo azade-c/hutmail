@@ -1,0 +1,12 @@
+production:
+  collect_all:
+    class: CollectAllJob
+    schedule: every 15 minutes
+
+  bundle_all:
+    class: BundleAllJob
+    schedule: every hour
+
+  relay_poll:
+    class: RelayPollJob
+    schedule: every 5 minutes
