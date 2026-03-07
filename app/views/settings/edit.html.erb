@@ -1,0 +1,100 @@
+<div class="page-header">
+  <h1>Settings</h1>
+</div>
+
+<%= form_with(model: @user, url: settings_path) do |f| %>
+  <% if @user.errors.any? %>
+    <div class="card" style="--border-color: var(--color-negative); margin-block-end: var(--block-space);">
+      <div class="card__header txt-negative">Errors</div>
+      <ul>
+        <% @user.errors.full_messages.each do |msg| %>
+          <li class="txt-small"><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="card">
+    <h2 class="card__header">SailMail</h2>
+    <div class="form-group">
+      <label>Boat SailMail address</label>
+      <%= f.text_field :sailmail_address, class: "input", placeholder: "CALLSIGN@sailmail.com" %>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card__header">Relay account (IMAP)</h2>
+    <p class="txt-small txt-subtle margin-block-end">This account bridges HutMail and the boat.</p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>IMAP server</label>
+        <%= f.text_field :relay_imap_server, class: "input" %>
+      </div>
+      <div class="form-group">
+        <label>Port</label>
+        <%= f.number_field :relay_imap_port, class: "input", value: @user.relay_imap_port || 993 %>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Username</label>
+        <%= f.text_field :relay_imap_username, class: "input" %>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <%= f.password_field :relay_imap_password, class: "input" %>
+      </div>
+    </div>
+    <div class="form-group">
+      <label><%= f.check_box :relay_imap_use_ssl %> Use SSL</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card__header">Relay account (SMTP)</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>SMTP server</label>
+        <%= f.text_field :relay_smtp_server, class: "input" %>
+      </div>
+      <div class="form-group">
+        <label>Port</label>
+        <%= f.number_field :relay_smtp_port, class: "input", value: @user.relay_smtp_port || 587 %>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Username</label>
+        <%= f.text_field :relay_smtp_username, class: "input" %>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <%= f.password_field :relay_smtp_password, class: "input" %>
+      </div>
+    </div>
+    <div class="form-group">
+      <label><%= f.check_box :relay_smtp_use_starttls %> Use STARTTLS</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card__header">Radio budget</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Daily budget (KB)</label>
+        <%= f.number_field :daily_budget_kb, class: "input", min: 1 %>
+      </div>
+      <div class="form-group">
+        <label>Bundle ratio (%)</label>
+        <%= f.number_field :bundle_ratio, class: "input", min: 1, max: 100 %>
+        <div class="txt-x-small txt-subtle">
+          <%= @user.bundle_ratio %>% for messages, <%= 100 - @user.bundle_ratio %>% for screener
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit "Save settings", class: "btn btn--link" %>
+  </div>
+<% end %>

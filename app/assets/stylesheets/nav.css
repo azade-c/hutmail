@@ -1,0 +1,47 @@
+@layer components {
+  .nav {
+    background-color: var(--color-wood-darkest);
+    color: var(--color-paper);
+    padding: var(--block-space-half) var(--main-padding);
+  }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-inline-size: var(--main-width);
+    margin-inline: auto;
+  }
+
+  .nav__logo {
+    color: var(--color-paper);
+    font-family: var(--font-display);
+    font-size: var(--text-large);
+    text-decoration: none;
+  }
+
+  .nav__links {
+    display: flex;
+    align-items: center;
+    gap: var(--inline-space-double);
+
+    a {
+      color: var(--color-wood-lighter);
+      text-decoration: none;
+      font-size: var(--text-small);
+
+      &:hover {
+        color: var(--color-paper);
+      }
+    }
+
+    .btn--plain {
+      color: var(--color-wood-light);
+      font-size: var(--text-small);
+
+      &:hover {
+        color: var(--color-paper);
+      }
+    }
+  }
+}
