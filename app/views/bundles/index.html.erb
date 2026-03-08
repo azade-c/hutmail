@@ -10,7 +10,7 @@
           <span class="badge badge--<%= bundle.status %>"><%= bundle.status %></span>
           <span class="txt-small">
             <%= bundle.messages_count %> messages ·
-            <%= BundleFormatter.format_size(bundle.total_stripped_size || 0) %>
+            <%= Bundle.format_size(bundle.total_stripped_size || 0) %>
           </span>
         </div>
         <% if bundle.sent_at %>

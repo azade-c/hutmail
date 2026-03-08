@@ -21,19 +21,8 @@ module Vessel::Bundling
       end
     end
 
-    screener_text = BundleFormatter.format_screener(remaining_msgs, screener_budget)
-
-    bundle = bundles.create!(
-      status: "draft",
-      total_raw_size: included_msgs.sum(&:raw_size),
-      total_stripped_size: included_msgs.sum(&:stripped_size),
-      bundle_text: BundleFormatter.format(included_msgs, remaining_msgs, screener_text, self),
-      messages_count: included_msgs.size,
-      remaining_count: remaining_msgs.size
-    )
-
-    included_msgs.each { |msg| msg.update!(bundle: bundle) }
-
+    bundle = bundles.create!(status: "draft")
+    bundle.compose!(included_msgs, remaining_msgs)
     bundle
   end
 
@@ -60,18 +49,8 @@ module Vessel::Bundling
       .where.not(id: messages.pluck(:id))
       .oldest_first
 
-    screener_text = BundleFormatter.format_screener(remaining, Float::INFINITY)
-
-    bundle = bundles.create!(
-      status: "draft",
-      total_raw_size: messages.sum(&:raw_size),
-      total_stripped_size: messages.sum(&:stripped_size),
-      bundle_text: BundleFormatter.format(messages, remaining, screener_text, self),
-      messages_count: messages.size,
-      remaining_count: remaining.size
-    )
-
-    messages.each { |msg| msg.update!(bundle: bundle) }
+    bundle = bundles.create!(status: "draft")
+    bundle.compose!(messages, remaining)
 
     RelayMailer.send_bundle(bundle).deliver_now
     mark_bundle_sent(bundle)

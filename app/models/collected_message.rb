@@ -1,4 +1,8 @@
 class CollectedMessage < ApplicationRecord
+  include CollectedMessage::Strippable
+  include CollectedMessage::Identifiable
+  include CollectedMessage::Presentable
+
   belongs_to :mail_account
   belongs_to :bundle, optional: true
 

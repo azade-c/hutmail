@@ -10,7 +10,7 @@ module MailAccount::Collecting
   end
 
   def collect_now
-    return if user_paused?
+    return if vessel_paused?
 
     messages = fetch_from_imap
     Rails.logger.info "MailAccount##{id} (#{short_code}): fetched #{messages.size} new messages"
@@ -19,8 +19,8 @@ module MailAccount::Collecting
 
   private
 
-  def user_paused?
-    # TODO: AC 07mar26 implement PAUSE/RESUME state on user
+  def vessel_paused?
+    # TODO: implement PAUSE/RESUME state on vessel
     false
   end
 
@@ -48,16 +48,10 @@ module MailAccount::Collecting
         raw_size = envelope.attr["RFC822.SIZE"] || raw&.bytesize || 0
         mail = Mail.new(raw)
 
-        stripped = MessageStripper.strip(mail)
+        stripped = CollectedMessage.strip_mail(mail)
         attachments_meta = extract_attachments_metadata(mail)
 
-        hutmail_id = HutmailIdGenerator.generate(
-          mail_account: self,
-          date: mail.date&.to_date || Date.current
-        )
-
         msg = collected_messages.create!(
-          hutmail_id: hutmail_id,
           imap_uid: uid,
           imap_message_id: message_id,
           from_address: mail.from&.first,

@@ -1,0 +1,75 @@
+module Bundle::Composable
+  extend ActiveSupport::Concern
+
+  class_methods do
+    def format_size(bytes)
+      if bytes >= 1024 * 1024
+        "%.1f MB" % (bytes / (1024.0 * 1024))
+      elsif bytes >= 1024
+        "%.1f KB" % (bytes / 1024.0)
+      else
+        "#{bytes} B"
+      end
+    end
+  end
+
+  def compose!(included_messages, remaining_messages)
+    screener_text = compose_screener(remaining_messages, vessel.screener_budget)
+
+    timestamp = Time.current.strftime("%d%b %H:%M").downcase
+    lines = []
+    lines << "=== HUTMAIL #{timestamp} ==="
+    lines << ""
+
+    included_messages.group_by(&:mail_account).each do |account, messages|
+      lines << "==[ #{account.short_code} — #{account.name} (#{account.imap_username}) ]=="
+      lines << ""
+      messages.each do |msg|
+        lines << msg.to_radio_text
+        lines << ""
+      end
+    end
+
+    lines << screener_text if screener_text.present?
+    lines << "=== END ==="
+
+    update!(
+      bundle_text: lines.join("\n"),
+      total_raw_size: included_messages.sum(&:raw_size),
+      total_stripped_size: included_messages.sum(&:stripped_size),
+      messages_count: included_messages.size,
+      remaining_count: remaining_messages.size
+    )
+
+    included_messages.each { |msg| msg.update!(bundle: self) }
+  end
+
+  private
+
+  def compose_screener(remaining, budget)
+    return nil if remaining.empty?
+
+    total_size = remaining.sum(&:stripped_size)
+    lines = []
+    lines << "=== SCREENER (#{remaining.size} messages, #{self.class.format_size(total_size)}) ==="
+
+    consumed = lines.first.bytesize
+    truncated = 0
+
+    remaining.each do |msg|
+      line = msg.to_screener_line
+
+      if consumed + line.bytesize + 1 > budget && budget > 0
+        truncated = remaining.size - lines.size + 1
+        break
+      end
+
+      lines << line
+      consumed += line.bytesize + 1
+    end
+
+    lines << "... and #{truncated} more messages pending" if truncated > 0
+    lines << "GET <id> to download a specific message"
+    lines.join("\n")
+  end
+end

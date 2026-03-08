@@ -1,6 +1,6 @@
 require "test_helper"
 
-class MessageStripperTest < ActiveSupport::TestCase
+class CollectedMessageStrippableTest < ActiveSupport::TestCase
   test "strips HTML to plain text" do
     mail = Mail.new do
       html_part do
@@ -9,7 +9,7 @@ class MessageStripperTest < ActiveSupport::TestCase
       end
     end
 
-    result = MessageStripper.strip(mail)
+    result = CollectedMessage.strip_mail(mail)
     assert_includes result, "Hello"
     assert_includes result, "World"
     assert_not_includes result, "<h1>"
@@ -26,7 +26,7 @@ class MessageStripperTest < ActiveSupport::TestCase
       end
     end
 
-    result = MessageStripper.strip(mail)
+    result = CollectedMessage.strip_mail(mail)
     assert_equal "Plain text version", result
   end
 
@@ -36,7 +36,7 @@ class MessageStripperTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = MessageStripper.strip(mail)
+    result = CollectedMessage.strip_mail(mail)
     assert_equal "Real content", result
   end
 
@@ -46,7 +46,7 @@ class MessageStripperTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = MessageStripper.strip(mail)
+    result = CollectedMessage.strip_mail(mail)
     assert_equal "Contenu réel", result
   end
 
@@ -56,7 +56,7 @@ class MessageStripperTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = MessageStripper.strip(mail)
+    result = CollectedMessage.strip_mail(mail)
     assert_equal "Line 1\n\nLine 2", result
   end
 
@@ -66,13 +66,13 @@ class MessageStripperTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = MessageStripper.strip(mail)
+    result = CollectedMessage.strip_mail(mail)
     assert_not_includes result, "tracking.example.com"
     assert_includes result, "Real content"
   end
 
   test "handles empty body" do
     mail = Mail.new
-    assert_equal "", MessageStripper.strip(mail)
+    assert_equal "", CollectedMessage.strip_mail(mail)
   end
 end

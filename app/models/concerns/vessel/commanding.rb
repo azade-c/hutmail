@@ -138,7 +138,7 @@ module Vessel::Commanding
     results << {
       command: "STATUS",
       status: :ok,
-      message: "#{pending_count} pending messages, #{BundleFormatter.format_size(budget_remaining)} budget remaining (7d)"
+      message: "#{pending_count} pending messages, #{Bundle.format_size(budget_remaining)} budget remaining (7d)"
     }
   end
 
@@ -154,14 +154,24 @@ module Vessel::Commanding
     all_messages = CollectedMessage.none
 
     ids.each do |id_str|
-      parsed = HutmailIdGenerator.parse(id_str)
       messages = CollectedMessage.pending
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: self.id })
 
-      messages = messages.where("DATE(collected_messages.date) = ?", parsed[:date]) if parsed[:date]
-      messages = messages.where(mail_accounts: { short_code: parsed[:short_code] }) if parsed[:short_code]
-      messages = messages.where("collected_messages.hutmail_id LIKE ?", "%.#{parsed[:sequence]}") if parsed[:sequence]
+      messages = if id_str.match?(/\A\d+\z/)
+        # Bare sequence number: GET 1
+        messages.where("collected_messages.hutmail_id LIKE ?", "%.#{id_str}")
+      elsif id_str.match?(/\A[A-Z]{2}\z/)
+        # Bare short code: GET GM
+        messages.where(mail_accounts: { short_code: id_str })
+      else
+        # Full or partial hutmail_id: 01mar.GM.1, 01mar.GM, 01mar
+        parsed = CollectedMessage.decompose_hutmail_id(id_str)
+        messages = messages.where("DATE(collected_messages.date) = ?", parsed[:date]) if parsed[:date]
+        messages = messages.where(mail_accounts: { short_code: parsed[:short_code] }) if parsed[:short_code]
+        messages = messages.where("collected_messages.hutmail_id LIKE ?", "%.#{parsed[:sequence]}") if parsed[:sequence]
+        messages
+      end
 
       all_messages = all_messages.or(messages)
     end

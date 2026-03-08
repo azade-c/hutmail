@@ -42,7 +42,7 @@
             <span class="message-item__subject">— <%= msg.subject %></span>
           </div>
           <div class="txt-x-small txt-subtle">
-            <%= msg.date&.strftime("%d %b %H:%M") %> · <%= BundleFormatter.format_size(msg.stripped_size || 0) %>
+            <%= msg.date&.strftime("%d %b %H:%M") %> · <%= Bundle.format_size(msg.stripped_size || 0) %>
           </div>
         </li>
       <% end %>

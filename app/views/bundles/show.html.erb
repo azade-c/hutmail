@@ -15,11 +15,11 @@
     <div class="stat__label">In screener</div>
   </div>
   <div class="stat">
-    <div class="stat__value"><%= BundleFormatter.format_size(@bundle.total_stripped_size || 0) %></div>
+    <div class="stat__value"><%= Bundle.format_size(@bundle.total_stripped_size || 0) %></div>
     <div class="stat__label">Stripped size</div>
   </div>
   <div class="stat">
-    <div class="stat__value"><%= BundleFormatter.format_size(@bundle.total_raw_size || 0) %></div>
+    <div class="stat__value"><%= Bundle.format_size(@bundle.total_raw_size || 0) %></div>
     <div class="stat__label">Raw size</div>
   </div>
 </div>

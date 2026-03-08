@@ -12,7 +12,7 @@
     <div class="stat__label">Mail accounts</div>
   </div>
   <div class="stat">
-    <div class="stat__value"><%= BundleFormatter.format_size(@budget_remaining) %></div>
+    <div class="stat__value"><%= Bundle.format_size(@budget_remaining) %></div>
     <div class="stat__label">Budget remaining (7d)</div>
   </div>
   <div class="stat">
@@ -27,7 +27,7 @@
   <div class="card margin-block-end">
     <div class="card__header">Radio budget (7 rolling days)</div>
     <div class="txt-small txt-subtle">
-      <%= BundleFormatter.format_size(@budget_consumed) %> used of <%= BundleFormatter.format_size(total) %>
+      <%= Bundle.format_size(@budget_consumed) %> used of <%= Bundle.format_size(total) %>
     </div>
     <div class="budget-bar">
       <div class="budget-bar__fill" style="inline-size: <%= pct %>%"></div>
@@ -51,7 +51,7 @@
             <span class="message-item__subject">— <%= msg.subject %></span>
           </div>
           <div class="txt-x-small txt-subtle">
-            <%= msg.date&.strftime("%d %b %H:%M") %> · <%= BundleFormatter.format_size(msg.stripped_size) %>
+            <%= msg.date&.strftime("%d %b %H:%M") %> · <%= Bundle.format_size(msg.stripped_size) %>
             <% if msg.attachments_metadata.present? %>
               · 📎 <%= msg.attachments_metadata.size %> attachment<%= msg.attachments_metadata.size > 1 ? "s" : "" %>
             <% end %>
@@ -73,7 +73,7 @@
           <a href="<%= bundle_path(bundle) %>">
             <span class="badge badge--<%= bundle.status %>"><%= bundle.status %></span>
             <%= bundle.messages_count %> messages
-            · <%= BundleFormatter.format_size(bundle.total_stripped_size || 0) %>
+            · <%= Bundle.format_size(bundle.total_stripped_size || 0) %>
             <% if bundle.sent_at %>
               · sent <%= bundle.sent_at.strftime("%d %b %H:%M") %>
             <% end %>
