@@ -54,7 +54,7 @@ module CollectedMessage::Strippable
       /^Télécharger Outlook .+$/i,
       /^Obtenir Outlook .+$/i,
       /^Sent from Mail for .+$/i,
-      /^Envoyé à partir de .+$/i,
+      /^Envoyé à partir de .+$/i
     ].freeze
 
     DISCLAIMER_PATTERNS = [
@@ -64,7 +64,7 @@ module CollectedMessage::Strippable
       /^Ce message .+ confidentiel/i,
       /^This email .+ confidential/i,
       /^If you are not the intended recipient/i,
-      /^Si vous n.?êtes pas le destinataire/i,
+      /^Si vous n.?êtes pas le destinataire/i
     ].freeze
 
     NOISE_PATTERNS = [
@@ -73,7 +73,7 @@ module CollectedMessage::Strippable
       /^manage (your )?preferences$/i,
       /^gérer (vos )?préférences$/i,
       /^view (this )?(email )?in (your )?browser$/i,
-      /^https?:\/\/\S+$/,
+      /^https?:\/\/\S+$/
     ].freeze
 
     def remove_signatures(text)
