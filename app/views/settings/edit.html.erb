@@ -2,12 +2,12 @@
   <h1>Settings</h1>
 </div>
 
-<%= form_with(model: @user, url: settings_path) do |f| %>
-  <% if @user.errors.any? %>
+<%= form_with(model: @vessel, url: settings_path) do |f| %>
+  <% if @vessel.errors.any? %>
     <div class="card" style="--border-color: var(--color-negative); margin-block-end: var(--block-space);">
       <div class="card__header txt-negative">Errors</div>
       <ul>
-        <% @user.errors.full_messages.each do |msg| %>
+        <% @vessel.errors.full_messages.each do |msg| %>
           <li class="txt-small"><%= msg %></li>
         <% end %>
       </ul>
@@ -32,7 +32,7 @@
       </div>
       <div class="form-group">
         <label>Port</label>
-        <%= f.number_field :relay_imap_port, class: "input", value: @user.relay_imap_port || 993 %>
+        <%= f.number_field :relay_imap_port, class: "input", value: @vessel.relay_imap_port || 993 %>
       </div>
     </div>
     <div class="form-row">
@@ -59,7 +59,7 @@
       </div>
       <div class="form-group">
         <label>Port</label>
-        <%= f.number_field :relay_smtp_port, class: "input", value: @user.relay_smtp_port || 587 %>
+        <%= f.number_field :relay_smtp_port, class: "input", value: @vessel.relay_smtp_port || 587 %>
       </div>
     </div>
     <div class="form-row">
@@ -88,7 +88,7 @@
         <label>Bundle ratio (%)</label>
         <%= f.number_field :bundle_ratio, class: "input", min: 1, max: 100 %>
         <div class="txt-x-small txt-subtle">
-          <%= @user.bundle_ratio %>% for messages, <%= 100 - @user.bundle_ratio %>% for screener
+          <%= @vessel.bundle_ratio %>% for messages, <%= 100 - @vessel.bundle_ratio %>% for screener
         </div>
       </div>
     </div>

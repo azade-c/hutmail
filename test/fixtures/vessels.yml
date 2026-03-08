@@ -1,0 +1,16 @@
+one:
+  name: Alibi
+  callsign: ALB1234
+  sailmail_address: ALB1234@sailmail.com
+  relay_imap_server: imap.relay.example
+  relay_imap_port: 993
+  relay_imap_username: relay@example.com
+  relay_imap_password: secret
+  relay_imap_use_ssl: true
+  relay_smtp_server: smtp.relay.example
+  relay_smtp_port: 587
+  relay_smtp_username: relay@example.com
+  relay_smtp_password: secret
+  relay_smtp_use_starttls: true
+  bundle_ratio: 80
+  daily_budget_kb: 100

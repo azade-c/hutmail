@@ -16,13 +16,13 @@
     <div class="stat__label">Budget remaining (7d)</div>
   </div>
   <div class="stat">
-    <div class="stat__value"><%= current_user.bundle_ratio %>%</div>
+    <div class="stat__value"><%= current_vessel.bundle_ratio %>%</div>
     <div class="stat__label">Bundle ratio</div>
   </div>
 </div>
 
 <% if @budget_remaining > 0 || @budget_consumed > 0 %>
-  <% total = current_user.daily_budget_kb * 7 * 1024 %>
+  <% total = current_vessel.daily_budget_kb * 7 * 1024 %>
   <% pct = total > 0 ? ((@budget_consumed.to_f / total) * 100).clamp(0, 100) : 0 %>
   <div class="card margin-block-end">
     <div class="card__header">Radio budget (7 rolling days)</div>

@@ -1,18 +1,18 @@
 class BundleBuilder
-  attr_reader :user, :bundle
+  attr_reader :vessel, :bundle
 
-  def initialize(user)
-    @user = user
+  def initialize(vessel)
+    @vessel = vessel
   end
 
   def build
-    pending = user.mail_accounts
+    pending = vessel.mail_accounts
       .includes(:collected_messages)
       .flat_map { |ma| ma.collected_messages.pending.oldest_first }
 
     return nil if pending.empty?
 
-    message_budget = user.message_budget
+    message_budget = vessel.message_budget
     included = []
     remaining = []
     consumed = 0
@@ -26,14 +26,14 @@ class BundleBuilder
       end
     end
 
-    screener_budget = user.screener_budget
+    screener_budget = vessel.screener_budget
     screener_text = BundleFormatter.format_screener(remaining, screener_budget)
 
-    @bundle = user.bundles.create!(
+    @bundle = vessel.bundles.create!(
       status: "draft",
       total_raw_size: included.sum(&:raw_size),
       total_stripped_size: included.sum(&:stripped_size),
-      bundle_text: BundleFormatter.format(included, remaining, screener_text, user),
+      bundle_text: BundleFormatter.format(included, remaining, screener_text, vessel),
       messages_count: included.size,
       remaining_count: remaining.size
     )

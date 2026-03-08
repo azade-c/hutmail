@@ -2,23 +2,23 @@ class RelayPollJob < ApplicationJob
   queue_as :default
 
   def perform
-    User.find_each do |user|
-      poll_relay(user)
+    Vessel.find_each do |vessel|
+      poll_relay(vessel)
     rescue => e
-      Rails.logger.error "RelayPollJob: User##{user.id} failed: #{e.message}"
+      Rails.logger.error "RelayPollJob: Vessel##{vessel.id} failed: #{e.message}"
     end
   end
 
   private
 
-  def poll_relay(user)
-    return if user.relay_imap_server.blank?
+  def poll_relay(vessel)
+    return if vessel.relay_imap_server.blank?
 
-    imap = Net::IMAP.new(user.relay_imap_server, port: user.relay_imap_port, ssl: user.relay_imap_use_ssl)
-    imap.login(user.relay_imap_username, user.relay_imap_password)
+    imap = Net::IMAP.new(vessel.relay_imap_server, port: vessel.relay_imap_port, ssl: vessel.relay_imap_use_ssl)
+    imap.login(vessel.relay_imap_username, vessel.relay_imap_password)
     imap.select("INBOX")
 
-    uids = imap.search([ "UNSEEN", "FROM", user.sailmail_address ])
+    uids = imap.search([ "UNSEEN", "FROM", vessel.sailmail_address ])
     return if uids.empty?
 
     uids.each do |uid|
@@ -29,12 +29,12 @@ class RelayPollJob < ApplicationJob
       mail = Mail.new(raw)
       body = mail.text_part&.decoded || mail.body.decoded.to_s
 
-      parser = BoatCommandParser.new(user)
+      parser = BoatCommandParser.new(vessel)
       parser.parse_and_execute(body)
 
       imap.store(uid, "+FLAGS", [ :Seen ])
 
-      Rails.logger.info "RelayPollJob: User##{user.id} processed #{parser.results.size} commands/messages"
+      Rails.logger.info "RelayPollJob: Vessel##{vessel.id} processed #{parser.results.size} commands/messages"
     end
   ensure
     imap&.logout rescue nil

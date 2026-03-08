@@ -1,25 +1,25 @@
 class GetResponseBuilder
-  attr_reader :user, :messages, :bundle
+  attr_reader :vessel, :messages, :bundle
 
-  def initialize(user, messages)
-    @user = user
+  def initialize(vessel, messages)
+    @vessel = vessel
     @messages = messages
   end
 
   def build_and_deliver
     remaining = CollectedMessage.pending
       .joins(:mail_account)
-      .where(mail_accounts: { user_id: user.id })
+      .where(mail_accounts: { vessel_id: vessel.id })
       .where.not(id: messages.pluck(:id))
       .oldest_first
 
     screener_text = BundleFormatter.format_screener(remaining, Float::INFINITY)
 
-    @bundle = user.bundles.create!(
+    @bundle = vessel.bundles.create!(
       status: "draft",
       total_raw_size: messages.sum(&:raw_size),
       total_stripped_size: messages.sum(&:stripped_size),
-      bundle_text: BundleFormatter.format(messages, remaining, screener_text, user),
+      bundle_text: BundleFormatter.format(messages, remaining, screener_text, vessel),
       messages_count: messages.size,
       remaining_count: remaining.size
     )

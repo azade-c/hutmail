@@ -1,8 +1,8 @@
 class BoatCommandParser
-  attr_reader :user, :results
+  attr_reader :vessel, :results
 
-  def initialize(user)
-    @user = user
+  def initialize(vessel)
+    @vessel = vessel
     @results = []
   end
 
@@ -73,7 +73,7 @@ class BoatCommandParser
 
   def handle_drop(args)
     if args&.upcase == "LAST"
-      last_bundle = user.bundles.sent.recent.first
+      last_bundle = vessel.bundles.sent.recent.first
       if last_bundle
         count = last_bundle.collected_messages.update_all(status: "pending", bundle_id: nil, sent_at: nil)
         results << { command: "DROP LAST", status: :ok, message: "#{count} messages returned to pending" }
@@ -89,7 +89,7 @@ class BoatCommandParser
     messages = find_by_wildcard(args)
     if messages.any?
       # Build a mini-bundle with these messages
-      builder = GetResponseBuilder.new(user, messages)
+      builder = GetResponseBuilder.new(vessel, messages)
       builder.build_and_deliver
       results << { command: "GET #{args}", status: :ok, message: "#{messages.size} messages sent" }
     else
@@ -104,7 +104,7 @@ class BoatCommandParser
       body = match[2]
       account = resolve_smtp_account(recipient)
 
-      reply = user.boat_replies.create!(
+      reply = vessel.boat_replies.create!(
         mail_account: account,
         to_address: recipient,
         body: body,
@@ -125,7 +125,7 @@ class BoatCommandParser
   end
 
   def handle_pause(args)
-    # TODO: AC 07mar26 implement pause duration on user model
+    # TODO: AC 07mar26 implement pause duration on vessel model
     results << { command: "PAUSE #{args}", status: :ok, message: "Aggregation paused" }
   end
 
@@ -134,8 +134,8 @@ class BoatCommandParser
   end
 
   def handle_status
-    pending_count = user.mail_accounts.joins(:collected_messages).where(collected_messages: { status: "pending" }).count
-    budget_remaining = user.budget_remaining
+    pending_count = vessel.mail_accounts.joins(:collected_messages).where(collected_messages: { status: "pending" }).count
+    budget_remaining = vessel.budget_remaining
     results << {
       command: "STATUS",
       status: :ok,
@@ -144,7 +144,7 @@ class BoatCommandParser
   end
 
   def handle_list(type, args)
-    # TODO: AC 07mar26 implement whitelist/blacklist on user model
+    # TODO: AC 07mar26 implement whitelist/blacklist on vessel model
     results << { command: "#{type.upcase} #{args}", status: :ok, message: "#{type} updated" }
   end
 
@@ -163,17 +163,13 @@ class BoatCommandParser
 
     # Multiple space-separated identifiers
     ids = args.split(/\s+/)
-    scope = user.mail_accounts.joins(:collected_messages)
-      .where(collected_messages: { status: "pending" })
-      .select("collected_messages.*")
-
     all_messages = CollectedMessage.none
 
     ids.each do |id|
       parsed = HutmailIdGenerator.parse(id)
       messages = CollectedMessage.pending
         .joins(:mail_account)
-        .where(mail_accounts: { user_id: user.id })
+        .where(mail_accounts: { vessel_id: vessel.id })
 
       if parsed[:date]
         messages = messages.where("DATE(collected_messages.date) = ?", parsed[:date])
@@ -198,13 +194,13 @@ class BoatCommandParser
     # Check if this recipient has previously written to us
     previous = CollectedMessage.where(from_address: recipient)
       .joins(:mail_account)
-      .where(mail_accounts: { user_id: user.id })
+      .where(mail_accounts: { vessel_id: vessel.id })
       .first
 
     if previous
       previous.mail_account
     else
-      user.mail_accounts.find_by(is_default: true) || user.mail_accounts.first
+      vessel.mail_accounts.find_by(is_default: true) || vessel.mail_accounts.first
     end
   end
 
@@ -212,7 +208,7 @@ class BoatCommandParser
     return if recipient.blank? || body.blank?
 
     account = resolve_smtp_account(recipient)
-    reply = user.boat_replies.create!(
+    reply = vessel.boat_replies.create!(
       mail_account: account,
       to_address: recipient,
       body: body.join.strip,

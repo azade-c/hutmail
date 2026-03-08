@@ -1,5 +1,5 @@
 first_reply:
-  user: one
+  vessel: one
   mail_account: gmail
   to_address: bob@example.com
   body: We are arriving Tuesday

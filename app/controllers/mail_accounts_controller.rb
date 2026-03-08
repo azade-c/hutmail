@@ -2,7 +2,7 @@ class MailAccountsController < ApplicationController
   before_action :set_mail_account, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @mail_accounts = current_user.mail_accounts
+    @mail_accounts = current_vessel.mail_accounts
   end
 
   def show
@@ -10,11 +10,11 @@ class MailAccountsController < ApplicationController
   end
 
   def new
-    @mail_account = current_user.mail_accounts.build
+    @mail_account = current_vessel.mail_accounts.build
   end
 
   def create
-    @mail_account = current_user.mail_accounts.build(mail_account_params)
+    @mail_account = current_vessel.mail_accounts.build(mail_account_params)
 
     if @mail_account.save
       redirect_to @mail_account, notice: "Account added."
@@ -42,7 +42,7 @@ class MailAccountsController < ApplicationController
   private
 
   def set_mail_account
-    @mail_account = current_user.mail_accounts.find(params[:id])
+    @mail_account = current_vessel.mail_accounts.find(params[:id])
   end
 
   def mail_account_params

@@ -1,7 +1,7 @@
 class MailAccount < ApplicationRecord
   include MailAccount::Collecting
 
-  belongs_to :user
+  belongs_to :vessel
   has_many :collected_messages, dependent: :destroy
   has_many :boat_replies, dependent: :destroy
 
@@ -13,7 +13,7 @@ class MailAccount < ApplicationRecord
   validates :name, presence: true
   validates :short_code, presence: true, length: { is: 2 },
     format: { with: /\A[A-Z]{2}\z/, message: "must be 2 uppercase letters" },
-    uniqueness: { scope: :user_id }
+    uniqueness: { scope: :vessel_id }
   validates :imap_server, presence: true
   validates :imap_port, presence: true
   validates :smtp_server, presence: true

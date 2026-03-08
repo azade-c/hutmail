@@ -2,7 +2,7 @@ require "test_helper"
 
 class BoatCommandParserTest < ActiveSupport::TestCase
   setup do
-    @user = users(:one)
+    @user = vessels(:one)
   end
 
   test "parses STATUS command" do

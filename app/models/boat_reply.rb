@@ -1,5 +1,5 @@
 class BoatReply < ApplicationRecord
-  belongs_to :user
+  belongs_to :vessel
   belongs_to :mail_account
 
   encrypts :to_address

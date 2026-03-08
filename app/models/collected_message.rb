@@ -17,8 +17,8 @@ class CollectedMessage < ApplicationRecord
   validates :imap_message_id, presence: true, uniqueness: { scope: :mail_account_id }
   validates :status, presence: true, inclusion: { in: %w[pending sent dropped] }
 
-  def user
-    mail_account.user
+  def vessel
+    mail_account.vessel
   end
 
   def short_code
