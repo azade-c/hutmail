@@ -1,10 +1,13 @@
 class Vessel < ApplicationRecord
+  include Vessel::Bundling
+  include Vessel::Commanding
+
   has_many :crews, dependent: :destroy
   has_many :users, through: :crews
 
   has_many :mail_accounts, dependent: :destroy
   has_many :bundles, dependent: :destroy
-  has_many :boat_replies, dependent: :destroy
+  has_many :vessel_replies, dependent: :destroy
 
   encrypts :relay_imap_password
   encrypts :relay_smtp_password

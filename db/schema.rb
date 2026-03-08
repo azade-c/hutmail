@@ -10,21 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_08_210000) do
-  create_table "boat_replies", force: :cascade do |t|
-    t.text "body"
-    t.datetime "created_at", null: false
-    t.string "error_message"
-    t.integer "mail_account_id", null: false
-    t.datetime "sent_at"
-    t.string "status"
-    t.string "to_address"
-    t.datetime "updated_at", null: false
-    t.integer "vessel_id", null: false
-    t.index ["mail_account_id"], name: "index_boat_replies_on_mail_account_id"
-    t.index ["vessel_id"], name: "index_boat_replies_on_vessel_id"
-  end
-
+ActiveRecord::Schema[8.1].define(version: 2026_03_08_220000) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -67,6 +53,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_210000) do
     t.index ["status"], name: "index_collected_messages_on_status"
   end
 
+  create_table "crews", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "role", default: "captain", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "vessel_id", null: false
+    t.index ["user_id", "vessel_id"], name: "index_crews_on_user_id_and_vessel_id", unique: true
+    t.index ["user_id"], name: "index_crews_on_user_id"
+    t.index ["vessel_id"], name: "index_crews_on_vessel_id"
+  end
+
   create_table "mail_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "imap_password"
@@ -87,17 +84,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_210000) do
     t.integer "vessel_id", null: false
     t.index ["vessel_id", "short_code"], name: "index_mail_accounts_on_vessel_id_and_short_code", unique: true
     t.index ["vessel_id"], name: "index_mail_accounts_on_vessel_id"
-  end
-
-  create_table "crews", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "role", default: "owner", null: false
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.integer "vessel_id", null: false
-    t.index ["user_id", "vessel_id"], name: "index_crews_on_user_id_and_vessel_id", unique: true
-    t.index ["user_id"], name: "index_crews_on_user_id"
-    t.index ["vessel_id"], name: "index_crews_on_vessel_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -130,6 +116,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_210000) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  create_table "vessel_replies", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.string "error_message"
+    t.integer "mail_account_id", null: false
+    t.datetime "sent_at"
+    t.string "status"
+    t.string "to_address"
+    t.datetime "updated_at", null: false
+    t.integer "vessel_id", null: false
+    t.index ["mail_account_id"], name: "index_vessel_replies_on_mail_account_id"
+    t.index ["vessel_id"], name: "index_vessel_replies_on_vessel_id"
+  end
+
   create_table "vessels", force: :cascade do |t|
     t.integer "bundle_ratio", default: 80
     t.string "callsign", null: false
@@ -151,13 +151,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_210000) do
     t.index ["callsign"], name: "index_vessels_on_callsign", unique: true
   end
 
-  add_foreign_key "boat_replies", "mail_accounts"
-  add_foreign_key "boat_replies", "vessels"
   add_foreign_key "bundles", "vessels"
   add_foreign_key "collected_messages", "bundles"
   add_foreign_key "collected_messages", "mail_accounts"
-  add_foreign_key "mail_accounts", "vessels"
   add_foreign_key "crews", "users"
   add_foreign_key "crews", "vessels"
+  add_foreign_key "mail_accounts", "vessels"
   add_foreign_key "sessions", "users"
+  add_foreign_key "vessel_replies", "mail_accounts"
+  add_foreign_key "vessel_replies", "vessels"
 end

@@ -29,12 +29,11 @@ class RelayPollJob < ApplicationJob
       mail = Mail.new(raw)
       body = mail.text_part&.decoded || mail.body.decoded.to_s
 
-      parser = BoatCommandParser.new(vessel)
-      parser.parse_and_execute(body)
+      results = vessel.parse_and_execute_commands(body)
 
       imap.store(uid, "+FLAGS", [ :Seen ])
 
-      Rails.logger.info "RelayPollJob: Vessel##{vessel.id} processed #{parser.results.size} commands/messages"
+      Rails.logger.info "RelayPollJob: Vessel##{vessel.id} processed #{results.size} commands/messages"
     end
   ensure
     imap&.logout rescue nil

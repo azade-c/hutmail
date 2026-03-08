@@ -1,4 +1,6 @@
-class BoatReply < ApplicationRecord
+class VesselReply < ApplicationRecord
+  self.table_name = "vessel_replies"
+
   belongs_to :vessel
   belongs_to :mail_account
 

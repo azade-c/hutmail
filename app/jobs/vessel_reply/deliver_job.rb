@@ -1,4 +1,4 @@
-class BoatReply::DeliverJob < ApplicationJob
+class VesselReply::DeliverJob < ApplicationJob
   queue_as :default
 
   def perform(reply)
@@ -6,6 +6,6 @@ class BoatReply::DeliverJob < ApplicationJob
     reply.update!(status: "sent", sent_at: Time.current)
   rescue => e
     reply.update!(status: "error", error_message: e.message)
-    Rails.logger.error "BoatReply::DeliverJob##{reply.id} failed: #{e.message}"
+    Rails.logger.error "VesselReply::DeliverJob##{reply.id} failed: #{e.message}"
   end
 end

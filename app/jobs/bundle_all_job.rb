@@ -3,8 +3,7 @@ class BundleAllJob < ApplicationJob
 
   def perform
     Vessel.find_each do |vessel|
-      builder = BundleBuilder.new(vessel)
-      builder.build_and_deliver
+      vessel.build_and_deliver_bundle
     rescue => e
       Rails.logger.error "BundleAllJob: Vessel##{vessel.id} failed: #{e.message}"
     end

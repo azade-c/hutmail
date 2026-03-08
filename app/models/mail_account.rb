@@ -3,7 +3,7 @@ class MailAccount < ApplicationRecord
 
   belongs_to :vessel
   has_many :collected_messages, dependent: :destroy
-  has_many :boat_replies, dependent: :destroy
+  has_many :vessel_replies, dependent: :destroy
 
   encrypts :imap_password
   encrypts :smtp_password
