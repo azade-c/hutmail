@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+require_relative "../lib/linters/smart_quotes"
+
+case ARGV[0]
+when "find", nil
+  exit Linters::SmartQuotes.new.find
+when "replace"
+  Linters::SmartQuotes.new.replace
+else
+  puts "Usage: bin/smart_quotes [find|replace]"
+  exit 1
+end

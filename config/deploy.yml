@@ -1,3 +1,5 @@
+<% require "dotenv"; Dotenv.load(".env") %>
+
 # Name of your application. Used to uniquely configure containers.
 service: hutmail
 
@@ -7,7 +9,7 @@ image: hutmail
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    - <%= ENV.fetch("KAMAL_WEB_HOST") %>
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -20,9 +22,9 @@ servers:
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
 #
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  ssl: true
+  host: hutmail.azade.dev
 
 # Where you keep your container images.
 registry:
@@ -76,16 +78,20 @@ volumes:
 # version inside the asset_path.
 asset_path: /rails/public/assets
 
+
 # Configure the image builder.
 builder:
-  arch: amd64
+  arch: arm64
+  cache:
+    type: gha
+    options: mode=max
 
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
   #
   # # Pass arguments and secrets to the Docker build process
   # args:
-  #   RUBY_VERSION: ruby-4.0.1
+  #   RUBY_VERSION: ruby-4.0.0
   # secrets:
   #   - GITHUB_TOKEN
   #   - RAILS_MASTER_KEY
