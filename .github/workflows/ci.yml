@@ -115,6 +115,9 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Install Chromium
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser
+
       - name: Run tests
         env:
           RAILS_ENV: test
@@ -141,9 +144,13 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Install Chromium
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser
+
       - name: Run System Tests
         env:
           RAILS_ENV: test
+          SELENIUM_BROWSER_PATH: /usr/bin/chromium-browser
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test:system
