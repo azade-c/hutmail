@@ -1,3 +1,6 @@
+READ ../garde-rails/RAILS.md BEFORE ANYTHING.
+If missing: git clone https://github.com/fcatuhe/garde-rails.git ../garde-rails
+
 # HutMail 🦫
 
 Automated shore-side mail relay for sailors communicating via SSB radio (SailMail/Winlink).
@@ -25,10 +28,6 @@ bin/rails g model MailAccount name:string imap_server:string
 bin/rails g controller MailAccounts index show new create
 bin/rails g migration AddShortCodeToMailAccounts short_code:string
 ```
-
-## Style
-
-@STYLE.md
 
 ## Code
 
