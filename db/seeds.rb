@@ -14,6 +14,11 @@ if Rails.env.development?
 
   Crew.find_or_create_by!(user: user, vessel: vessel) do |c|
     c.role = "captain"
-    puts "🦫 Linked francois → FX1234 (skipper)"
+    puts "🦫 Linked francois → FX1234 (captain)"
+  end
+
+  User.find_or_create_by!(email_address: "boris@castors.ovh") do |u|
+    u.password = "boris"
+    puts "🦫 Created dev user: boris@castors.ovh / boris (no vessel)"
   end
 end
