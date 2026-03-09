@@ -1,7 +1,8 @@
 <h1>Dashboard</h1>
 
 <% unless current_vessel %>
-  <p>No vessel configured yet. Ask an administrator to add you to a crew.</p>
+  <p>No vessel configured yet.</p>
+  <p><%= link_to "Set up your vessel →", new_vessel_path %></p>
   <% return %>
 <% end %>
 

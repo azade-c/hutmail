@@ -1,0 +1,31 @@
+<h1>Set up your vessel</h1>
+<p>Before you can use HutMail, register your boat.</p>
+
+<%= form_with(model: @vessel, url: vessels_path) do |f| %>
+  <% if @vessel.errors.any? %>
+    <div style="color: red; margin-bottom: 1em;">
+      <ul>
+        <% @vessel.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <p>
+    <label for="vessel_name">Vessel name</label><br>
+    <%= f.text_field :name, placeholder: "e.g. Alibi", autofocus: true %>
+  </p>
+
+  <p>
+    <label for="vessel_callsign">Callsign</label><br>
+    <%= f.text_field :callsign, placeholder: "e.g. FG1234" %>
+  </p>
+
+  <p>
+    <label for="vessel_sailmail_address">SailMail address</label><br>
+    <%= f.text_field :sailmail_address, placeholder: "CALLSIGN@sailmail.com" %>
+  </p>
+
+  <p><%= f.submit "Create vessel" %></p>
+<% end %>
