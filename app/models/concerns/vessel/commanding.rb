@@ -104,6 +104,7 @@ module Vessel::Commanding
         reply = vessel_replies.create!(
           mail_account: account,
           to_address: recipient,
+          subject: resolve_subject(recipient),
           body: body,
           status: "pending"
         )
@@ -190,6 +191,17 @@ module Vessel::Commanding
       end
     end
 
+    def resolve_subject(recipient)
+      original = CollectedMessage
+        .where(from_address: recipient)
+        .joins(:mail_account)
+        .where(mail_accounts: { vessel_id: self.id })
+        .order(date: :desc)
+        .first
+
+      original ? "Re: #{original.subject}" : "HutMail reply"
+    end
+
     def flush_outbound_message(recipient, body, results)
       return if recipient.blank? || body.blank?
 
@@ -197,6 +209,7 @@ module Vessel::Commanding
       reply = vessel_replies.create!(
         mail_account: account,
         to_address: recipient,
+        subject: resolve_subject(recipient),
         body: body.join.strip,
         status: "pending"
       )

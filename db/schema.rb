@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_08_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -123,6 +123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_220000) do
     t.integer "mail_account_id", null: false
     t.datetime "sent_at"
     t.string "status"
+    t.string "subject"
     t.string "to_address"
     t.datetime "updated_at", null: false
     t.integer "vessel_id", null: false

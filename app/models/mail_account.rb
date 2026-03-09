@@ -5,7 +5,9 @@ class MailAccount < ApplicationRecord
   has_many :collected_messages, dependent: :destroy
   has_many :vessel_replies, dependent: :destroy
 
+  encrypts :imap_username
   encrypts :imap_password
+  encrypts :smtp_username
   encrypts :smtp_password
 
   normalizes :short_code, with: ->(s) { s.strip.upcase }

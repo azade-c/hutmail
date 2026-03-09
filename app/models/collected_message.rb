@@ -6,9 +6,6 @@ class CollectedMessage < ApplicationRecord
   belongs_to :mail_account
   belongs_to :bundle, optional: true
 
-  encrypts :from_address, deterministic: true
-  encrypts :from_name
-  encrypts :to_address
   encrypts :subject
   encrypts :stripped_body
 
