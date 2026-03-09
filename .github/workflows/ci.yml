@@ -124,7 +124,7 @@ jobs:
 
   system-test:
     name: System Test
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-24.04  # Chrome not available on arm64 runners
 
     # services:
     #  redis:
