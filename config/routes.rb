@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   resource :settings, only: [ :edit, :update ]
 
   get "up" => "rails/health#show", as: :rails_health_check
+  get "dashboard" => "dashboard#show", as: :dashboard
+  get "home" => "home#show", as: :home
 
-  root "dashboard#show"
+  root "home#show"
 end
