@@ -21,20 +21,19 @@ module CollectedMessage::Identifiable
     end
 
     private
+      def parse_date_part(str)
+        match = str.match(/\A(\d{2})([a-z]{3})(\d{2})?\z/i)
+        return nil unless match
 
-    def parse_date_part(str)
-      match = str.match(/\A(\d{2})([a-z]{3})(\d{2})?\z/i)
-      return nil unless match
+        day = match[1].to_i
+        month_idx = MONTHS.index(match[2].downcase)
+        return nil unless month_idx
 
-      day = match[1].to_i
-      month_idx = MONTHS.index(match[2].downcase)
-      return nil unless month_idx
-
-      year = match[3] ? 2000 + match[3].to_i : Date.current.year
-      Date.new(year, month_idx + 1, day)
-    rescue Date::Error
-      nil
-    end
+        year = match[3] ? 2000 + match[3].to_i : Date.current.year
+        Date.new(year, month_idx + 1, day)
+      rescue Date::Error
+        nil
+      end
   end
 
   def hutmail_id_parts
@@ -42,22 +41,21 @@ module CollectedMessage::Identifiable
   end
 
   private
+    def assign_hutmail_id
+      return unless mail_account.present?
 
-  def assign_hutmail_id
-    return unless mail_account.present?
+      date = self.date&.to_date || Date.current
+      day = date.day.to_s.rjust(2, "0")
+      month = MONTHS[date.month - 1]
+      year_suffix = date.year != Date.current.year ? date.year.to_s[-2..] : ""
+      code = mail_account.short_code
 
-    date = self.date&.to_date || Date.current
-    day = date.day.to_s.rjust(2, "0")
-    month = MONTHS[date.month - 1]
-    year_suffix = date.year != Date.current.year ? date.year.to_s[-2..] : ""
-    code = mail_account.short_code
+      prefix = "#{day}#{month}#{year_suffix}.#{code}."
+      existing = mail_account.collected_messages
+        .where("hutmail_id LIKE ?", "#{prefix}%")
+        .pluck(:hutmail_id)
 
-    prefix = "#{day}#{month}#{year_suffix}.#{code}."
-    existing = mail_account.collected_messages
-      .where("hutmail_id LIKE ?", "#{prefix}%")
-      .pluck(:hutmail_id)
-
-    max_seq = existing.filter_map { |id| id.split(".").last.to_i }.max || 0
-    self.hutmail_id = "#{prefix}#{max_seq + 1}"
-  end
+      max_seq = existing.filter_map { |id| id.split(".").last.to_i }.max || 0
+      self.hutmail_id = "#{prefix}#{max_seq + 1}"
+    end
 end

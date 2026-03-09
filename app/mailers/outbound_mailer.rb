@@ -6,20 +6,9 @@ class OutboundMailer < ApplicationMailer
     mail(
       from: account.smtp_username,
       to: vessel_reply.to_address,
-      subject: "Re: #{original_subject(vessel_reply)}",
+      subject: vessel_reply.subject || "HutMail reply",
       body: vessel_reply.body,
       content_type: "text/plain"
     )
-  end
-
-  private
-
-  def original_subject(reply)
-    original = CollectedMessage
-      .where(from_address: reply.to_address, mail_account: reply.mail_account)
-      .order(date: :desc)
-      .first
-
-    original&.subject || "HutMail reply"
   end
 end

@@ -8,7 +8,9 @@ class Vessel < ApplicationRecord
   has_many :bundles, dependent: :destroy
   has_many :vessel_replies, dependent: :destroy
 
+  encrypts :relay_imap_username
   encrypts :relay_imap_password
+  encrypts :relay_smtp_username
   encrypts :relay_smtp_password
 
   validates :callsign, presence: true, uniqueness: true

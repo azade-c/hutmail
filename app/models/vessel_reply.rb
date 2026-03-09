@@ -4,7 +4,6 @@ class VesselReply < ApplicationRecord
   belongs_to :vessel
   belongs_to :mail_account
 
-  encrypts :to_address
   encrypts :body
 
   validates :to_address, presence: true

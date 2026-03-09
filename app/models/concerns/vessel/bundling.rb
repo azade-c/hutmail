@@ -2,9 +2,11 @@ module Vessel::Bundling
   extend ActiveSupport::Concern
 
   def build_bundle
-    pending = mail_accounts
-      .includes(:collected_messages)
-      .flat_map { |ma| ma.collected_messages.pending.oldest_first }
+    pending = CollectedMessage.pending
+      .joins(:mail_account)
+      .where(mail_accounts: { vessel_id: id })
+      .includes(:mail_account)
+      .oldest_first
 
     return nil if pending.empty?
 
@@ -37,8 +39,9 @@ module Vessel::Bundling
   end
 
   def build_and_deliver_bundle
-    bundle = build_bundle
-    deliver_bundle(bundle) if bundle
+    if (bundle = build_bundle)
+      deliver_bundle(bundle)
+    end
     bundle
   end
 
@@ -61,19 +64,18 @@ module Vessel::Bundling
   end
 
   private
-
-  def mark_bundle_sent(bundle)
-    now = Time.current
-    bundle.update!(status: "sent", sent_at: now)
-    bundle.collected_messages.update_all(status: "sent", sent_at: now)
-    mark_imap_read(bundle.collected_messages.includes(:mail_account))
-  end
-
-  def mark_imap_read(messages)
-    messages.group_by(&:mail_account).each do |account, msgs|
-      account.mark_as_read(msgs.map(&:imap_uid))
-    rescue => e
-      Rails.logger.warn "Failed to mark IMAP read for MailAccount##{account.id}: #{e.message}"
+    def mark_bundle_sent(bundle)
+      now = Time.current
+      bundle.update!(status: "sent", sent_at: now)
+      bundle.collected_messages.update_all(status: "sent", sent_at: now)
+      mark_imap_read(bundle.collected_messages.includes(:mail_account))
     end
-  end
+
+    def mark_imap_read(messages)
+      messages.group_by(&:mail_account).each do |account, msgs|
+        account.mark_as_read(msgs.map(&:imap_uid))
+      rescue => e
+        Rails.logger.warn "Failed to mark IMAP read for MailAccount##{account.id}: #{e.message}"
+      end
+    end
 end
