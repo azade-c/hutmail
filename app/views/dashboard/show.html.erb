@@ -1,6 +1,9 @@
-<div class="page-header">
-  <h1>Dashboard</h1>
-</div>
+<h1>Dashboard</h1>
+
+<% unless current_vessel %>
+  <p>No vessel configured yet. Ask an administrator to add you to a crew.</p>
+  <% return %>
+<% end %>
 
 <div class="stat-grid">
   <div class="stat">

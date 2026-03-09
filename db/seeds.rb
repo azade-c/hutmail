@@ -1,9 +1,19 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Default dev user + vessel
+if Rails.env.development?
+  user = User.find_or_create_by!(email_address: "francois@hey.com") do |u|
+    u.password = "francois"
+    puts "🦫 Created dev user: francois@hey.com / francois"
+  end
+
+  vessel = Vessel.find_or_create_by!(callsign: "FX1234") do |v|
+    v.sailmail_address = "fx1234@sailmail.com"
+    v.daily_budget_kb = 200
+    v.bundle_ratio = 80
+    puts "🦫 Created dev vessel: FX1234"
+  end
+
+  Crew.find_or_create_by!(user: user, vessel: vessel) do |c|
+    c.role = "captain"
+    puts "🦫 Linked francois → FX1234 (skipper)"
+  end
+end

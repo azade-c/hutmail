@@ -1,6 +1,6 @@
 class DashboardController < ApplicationController
   def show
-    return redirect_to new_session_path unless current_vessel
+    return unless current_vessel
 
     @pending_messages = current_vessel.mail_accounts
       .joins(:collected_messages)
