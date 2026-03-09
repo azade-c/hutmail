@@ -16,6 +16,11 @@ module Hutmail
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Allow reading unencrypted data alongside encrypted data.
+    # Required for fixtures and migration from unencrypted to encrypted columns.
+    config.active_record.encryption.support_unencrypted_data = true
+    config.active_record.encryption.extend_queries = true
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

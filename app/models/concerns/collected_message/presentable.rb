@@ -26,27 +26,26 @@ module CollectedMessage::Presentable
   end
 
   private
+    def format_recipients
+      return nil if to_address.blank?
 
-  def format_recipients
-    return nil if to_address.blank?
+      to_list = to_address.split(",").map(&:strip)
+      account_email = mail_account.imap_username
+      others = to_list.reject { |a| a.downcase == account_email&.downcase }
+      return nil if others.empty?
 
-    to_list = to_address.split(",").map(&:strip)
-    account_email = mail_account.imap_username
-    others = to_list.reject { |a| a.downcase == account_email&.downcase }
-    return nil if others.empty?
-
-    if others.size == 1
-      local = others.first.split("@").first
-      "(→ #{local})"
-    elsif others.size > 1
-      "(+#{others.size})"
+      if others.size == 1
+        local = others.first.split("@").first
+        "(→ #{local})"
+      elsif others.size > 1
+        "(+#{others.size})"
+      end
     end
-  end
 
-  def format_attachments
-    items = attachments_metadata.map do |att|
-      "#{att['name'] || att[:name]} (#{Bundle.format_size(att['size'] || att[:size])})"
+    def format_attachments
+      items = attachments_metadata.map do |att|
+        "#{att['name'] || att[:name]} (#{Bundle.format_size(att['size'] || att[:size])})"
+      end
+      "📎 #{items.join(', ')}"
     end
-    "📎 #{items.join(', ')}"
-  end
 end
