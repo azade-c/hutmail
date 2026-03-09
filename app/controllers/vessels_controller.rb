@@ -4,11 +4,14 @@ class VesselsController < ApplicationController
   end
 
   def create
-    @vessel = Vessel.setup(vessel_params, captain: current_user)
-    redirect_to dashboard_path, notice: "Vessel created — welcome aboard! ⛵"
-  rescue ActiveRecord::RecordInvalid => e
-    @vessel = e.record
-    render :new, status: :unprocessable_entity
+    @vessel = Vessel.new(vessel_params)
+    @vessel.captain = current_user
+
+    if @vessel.save
+      redirect_to dashboard_path, notice: "Vessel created — welcome aboard! ⛵"
+    else
+      render :new, status: :unprocessable_entity
+    end
   end
 
   private

@@ -16,13 +16,9 @@ class Vessel < ApplicationRecord
   validates :bundle_ratio, numericality: { in: 1..100 }, allow_nil: true
   validates :daily_budget_kb, numericality: { greater_than: 0 }, allow_nil: true
 
-  def self.setup(params, captain:)
-    transaction do
-      vessel = create!(params)
-      vessel.crews.create!(user: captain, role: "captain")
-      vessel
-    end
-  end
+  attr_accessor :captain
+
+  after_create { crews.create!(user: captain, role: "captain") if captain }
 
   def budget_consumed_7d
     bundles.where(status: "sent", sent_at: 7.days.ago..).sum(:total_stripped_size)
