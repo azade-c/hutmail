@@ -3,7 +3,7 @@
 
 <%= form_with(model: @vessel, url: vessels_path) do |f| %>
   <% if @vessel.errors.any? %>
-    <div style="color: red; margin-bottom: 1em;">
+    <div class="flash flash--alert">
       <ul>
         <% @vessel.errors.full_messages.each do |msg| %>
           <li><%= msg %></li>
