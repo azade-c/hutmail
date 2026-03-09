@@ -1,0 +1,183 @@
+@layer reset, base, components, modules, utilities, native, platform;
+
+:root {
+  /* Fonts — system stack, no external requests */
+  --font-display: ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+
+  /* Spacing */
+  --inline-space: 1ch;
+  --inline-space-half: calc(var(--inline-space) / 2);
+  --inline-space-double: calc(var(--inline-space) * 2);
+  --block-space: 1rem;
+  --block-space-half: calc(var(--block-space) / 2);
+  --block-space-double: calc(var(--block-space) * 2);
+
+  /* Text sizes */
+  --text-xx-small: 0.55rem;
+  --text-x-small: 0.75rem;
+  --text-small: 0.85rem;
+  --text-normal: 1rem;
+  --text-medium: 1.1rem;
+  --text-large: 1.5rem;
+  --text-x-large: 1.8rem;
+  --text-xx-large: 2.5rem;
+
+  @media (max-width: 639px) {
+    --text-xx-small: 0.65rem;
+    --text-x-small: 0.85rem;
+    --text-small: 0.95rem;
+    --text-normal: 1.1rem;
+    --text-medium: 1.2rem;
+    --text-large: 1.5rem;
+    --text-x-large: 1.8rem;
+    --text-xx-large: 2.5rem;
+  }
+
+  /* HutMail palette - OKLCH
+     Beaver lodge: warm wood browns + river blues */
+
+  /* Base tones */
+  --lch-paper: 97% 0.005 70;
+  --lch-ink: 22% 0.006 50;
+  --lch-graphite: 45% 0.01 60;
+  --lch-dust: 92% 0.003 55;
+  --lch-asphalt: 27% 0.006 40;
+
+  /* Wood scale (hue 65 — warm brown) */
+  --lch-wood-darkest: 26% 0.06 65;
+  --lch-wood-darker: 38% 0.08 65;
+  --lch-wood-dark: 50% 0.09 65;
+  --lch-wood-medium: 62% 0.08 65;
+  --lch-wood-light: 76% 0.06 65;
+  --lch-wood-lighter: 88% 0.04 65;
+  --lch-wood-lightest: 95% 0.02 70;
+
+  /* River scale (hue 230 — deep water blue) */
+  --lch-river-darkest: 26% 0.06 230;
+  --lch-river-darker: 36% 0.08 230;
+  --lch-river-dark: 46% 0.10 230;
+  --lch-river-medium: 55% 0.09 230;
+  --lch-river-light: 70% 0.06 230;
+  --lch-river-lighter: 85% 0.035 230;
+  --lch-river-lightest: 94% 0.015 230;
+
+  /* Colors: Named */
+  --color-paper: oklch(var(--lch-paper));
+  --color-ink: oklch(var(--lch-ink));
+  --color-graphite: oklch(var(--lch-graphite));
+  --color-dust: oklch(var(--lch-dust));
+  --color-asphalt: oklch(var(--lch-asphalt));
+
+  /* Wood colors */
+  --color-wood: oklch(var(--lch-wood-medium));
+  --color-wood-darkest: oklch(var(--lch-wood-darkest));
+  --color-wood-darker: oklch(var(--lch-wood-darker));
+  --color-wood-dark: oklch(var(--lch-wood-dark));
+  --color-wood-medium: oklch(var(--lch-wood-medium));
+  --color-wood-light: oklch(var(--lch-wood-light));
+  --color-wood-lighter: oklch(var(--lch-wood-lighter));
+  --color-wood-lightest: oklch(var(--lch-wood-lightest));
+
+  /* River colors */
+  --color-river: oklch(var(--lch-river-dark));
+  --color-river-darkest: oklch(var(--lch-river-darkest));
+  --color-river-darker: oklch(var(--lch-river-darker));
+  --color-river-dark: oklch(var(--lch-river-dark));
+  --color-river-medium: oklch(var(--lch-river-medium));
+  --color-river-light: oklch(var(--lch-river-light));
+  --color-river-lighter: oklch(var(--lch-river-lighter));
+  --color-river-lightest: oklch(var(--lch-river-lightest));
+
+  /* Colors: Semantic (mapped to Fizzy conventions) */
+  --color-canvas: var(--color-paper);
+  --color-ink-inverted: var(--color-paper);
+  --color-ink-darkest: var(--color-ink);
+  --color-ink-darker: var(--color-asphalt);
+  --color-ink-dark: var(--color-graphite);
+  --color-ink-medium: oklch(55% 0.008 55);
+  --color-ink-light: oklch(75% 0.005 60);
+  --color-ink-lighter: var(--color-dust);
+  --color-ink-lightest: oklch(95% 0.003 70);
+
+  /* Colors: Abstractions */
+  --color-link: var(--color-river);
+  --color-accent: var(--color-wood);
+  --color-positive: oklch(55% 0.162 147);
+  --color-negative: oklch(59% 0.19 38);
+  --color-highlight: var(--color-wood-light);
+  --color-selected: oklch(var(--lch-river-medium) / 20%);
+  --color-selected-light: oklch(var(--lch-river-medium) / 10%);
+  --color-selected-dark: oklch(var(--lch-river-medium) / 30%);
+  --color-marker: var(--color-negative);
+
+  /* Borders */
+  --border: 1px solid var(--color-dust);
+
+  /* Shadows */
+  --shadow: 0 0 0 1px oklch(var(--lch-ink) / 5%),
+            0 0.2em 0.2em oklch(var(--lch-ink) / 5%),
+            0 0.4em 0.4em oklch(var(--lch-ink) / 5%),
+            0 0.8em 0.8em oklch(var(--lch-ink) / 5%);
+
+  /* Components */
+  --btn-size: 2.65em;
+
+  /* Focus rings */
+  --focus-ring-color: var(--color-river);
+  --focus-ring-offset: 1px;
+  --focus-ring-size: 2px;
+  --focus-ring: var(--focus-ring-size) solid var(--focus-ring-color);
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-overshoot: cubic-bezier(0.25, 1.75, 0.5, 1);
+
+  /* Layout */
+  --main-padding: clamp(var(--inline-space), 3vw, calc(var(--inline-space) * 3));
+  --main-width: 960px;
+
+  /* Z-index */
+  --z-popup: 10;
+  --z-nav: 20;
+  --z-flash: 30;
+  --z-tooltip: 40;
+}
+
+/* Dark mode */
+html[data-theme="dark"] {
+  --lch-paper: 27% 0.006 40;
+  --lch-ink: 97% 0.005 70;
+  --lch-graphite: 75% 0.008 60;
+  --lch-dust: 35% 0.005 50;
+  --lch-asphalt: 18% 0.004 35;
+
+  --color-ink-inverted: oklch(var(--lch-asphalt));
+  --color-ink-medium: oklch(60% 0.006 55);
+  --color-ink-light: oklch(45% 0.005 50);
+  --color-ink-lightest: oklch(30% 0.004 45);
+
+  --shadow: 0 0 0 1px oklch(0% 0 0 / 30%),
+            0 0.2em 0.4em oklch(0% 0 0 / 20%),
+            0 0.4em 0.8em oklch(0% 0 0 / 15%);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    --lch-paper: 27% 0.006 40;
+    --lch-ink: 97% 0.005 70;
+    --lch-graphite: 75% 0.008 60;
+    --lch-dust: 35% 0.005 50;
+    --lch-asphalt: 18% 0.004 35;
+
+    --color-ink-inverted: oklch(var(--lch-asphalt));
+    --color-ink-medium: oklch(60% 0.006 55);
+    --color-ink-light: oklch(45% 0.005 50);
+    --color-ink-lightest: oklch(30% 0.004 45);
+
+    --shadow: 0 0 0 1px oklch(0% 0 0 / 30%),
+              0 0.2em 0.4em oklch(0% 0 0 / 20%),
+              0 0.4em 0.8em oklch(0% 0 0 / 15%);
+  }
+}

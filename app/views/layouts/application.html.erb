@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HutMail 🦫</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+  <% if authenticated? %>
+    <nav class="nav">
+      <div class="nav__inner">
+        <a href="<%= dashboard_path %>" class="nav__logo">🦫 HutMail</a>
+        <div class="nav__links">
+          <a href="<%= dashboard_path %>">Dashboard</a>
+          <a href="<%= mail_accounts_path %>">Accounts</a>
+          <a href="<%= bundles_path %>">Bundles</a>
+          <a href="<%= edit_settings_path %>">Settings</a>
+          <%= button_to "Log out", session_path, method: :delete, class: "btn btn--plain" %>
+        </div>
+      </div>
+    </nav>
+  <% end %>
+
+  <main class="main">
+    <% if notice.present? %>
+      <div class="flash">
+        <div class="flash__inner"><%= notice %></div>
+      </div>
+    <% end %>
+
+    <% if alert.present? %>
+      <div class="flash flash--alert">
+        <div class="flash__inner" style="--flash-background: var(--color-negative);"><%= alert %></div>
+      </div>
+    <% end %>
+
+    <%= yield %>
+  </main>
+</body>
+</html>

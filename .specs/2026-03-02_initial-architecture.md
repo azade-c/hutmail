@@ -132,20 +132,23 @@ When the crew has internet access (port of call, marina wifi), they can read the
 
 ### Message identifiers
 
-Each collected message receives a **stable identifier** based on its reception date, human-readable and usable in commands:
+Each collected message receives a **stable identifier** based on its reception date and source mailbox, human-readable and usable in commands:
 
 ```
-1mar.1    — 1st message of March 1st (current year by default)
-1mar.2    — 2nd message of March 1st
-28feb.1   — message from February 28th
-15jan26.3 — 3rd message from January 15th, 2026 (explicit year if different)
+01mar.GM.1    — 1st message of March 1st, mailbox "GM" (Gmail)
+01mar.OR.2    — 2nd message of March 1st, mailbox "OR" (Orange)
+28feb.GM.1    — message from February 28th, mailbox "GM"
+15jan26.GM.3  — 3rd message from January 15th 2026, explicit year
 ```
 
 Rules:
-- Format: `DDmon.N` (day + first 3 letters of month in English + `.` + daily sequence number)
-- Year is omitted by default (current year). If the year differs, it's appended: `15jan26.3`
+- Format: `DDmon.BB.N` (zero-padded day + first 3 letters of month in English + `.` + 2-letter mailbox code + `.` + per-mailbox daily sequence number)
+- The **mailbox code** (2 uppercase letters) is defined by the user when creating a `mail_account` (e.g.: `GM` for Gmail, `OR` for Orange, `WK` for Work). Stored as `short_code` on the `mail_accounts` table.
+- The sequence number N is **per mailbox per day** (not global)
+- Day is zero-padded: `01mar`, `09feb`, `28feb`
+- Year is omitted by default (current year). If the year differs, it's appended: `15jan26.GM.3`
 - The identifier is assigned at collection and remains stable (never changes, even if new messages arrive)
-- Allows the boat to reference a specific message in commands: `DROP 1mar.2` or `GET 28feb.1`
+- Allows the boat to reference a specific message in commands: `DROP 01mar.GM.2` or `GET 28feb.OR.1`
 
 ## Data model
 
@@ -172,6 +175,8 @@ The HutMail database is the **single source of truth**. We never rely on IMAP re
 | relay_smtp_username | string | |
 | relay_smtp_password | string | Encrypted |
 | relay_smtp_use_starttls | boolean | |
+| bundle_ratio | integer | Percentage of budget for full messages (default: 80). The remaining % is reserved for the screener. |
+| daily_budget_kb | integer | Daily email budget in KB (default: 100). Soft limit — the skipper can exceed it via GET. |
 
 #### `mail_accounts`
 | Field | Type | Description |
@@ -179,6 +184,7 @@ The HutMail database is the **single source of truth**. We never rely on IMAP re
 | id | integer | PK |
 | user_id | integer | FK → users |
 | name | string | Display name ("Personal Gmail") |
+| short_code | string | 2-letter uppercase code for hutmail_id (e.g.: `GM`, `OR`). Unique per user. |
 | imap_server | string | e.g.: imap.gmail.com |
 | imap_port | integer | e.g.: 993 |
 | imap_username | string | |
@@ -199,7 +205,7 @@ Source of truth for all messages known to HutMail. A message is added here at co
 |-------|------|-------------|
 | id | integer | PK |
 | mail_account_id | integer | FK → mail_accounts |
-| hutmail_id | string | Stable identifier (`1mar.1`), unique |
+| hutmail_id | string | Stable identifier (`01mar.GM.1`), unique |
 | imap_uid | integer | IMAP UID of the message on the source server |
 | imap_message_id | string | `Message-ID` email header (for deduplication) |
 | from_address | string | Sender |
@@ -249,14 +255,8 @@ Source of truth for all messages known to HutMail. A message is added here at co
 | status | string | `pending` → `sent` → `error` |
 | error_message | string | If error |
 
-#### `budget_entries`
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | PK |
-| user_id | integer | FK → users |
-| date | date | Day |
-| bytes_sent | integer | Bytes sent that day |
-| bundle_id | integer | FK → bundles (nullable, for traceability) |
+#### ~~`budget_entries`~~ (removed)
+Budget is calculated directly from `bundles` (`total_stripped_size` + `sent_at`) over 7 rolling days. No separate table needed.
 
 ### Collection flow (detailed)
 
@@ -275,7 +275,7 @@ For each mail_account of the user:
         - Download complete message (RFC822)
         - Parse with the Mail gem
         - Strip the body
-        - Assign a hutmail_id (1mar.1, 1mar.2, etc.)
+        - Assign a hutmail_id (01mar.GM.1, 01mar.GM.2, etc.)
         - INSERT into collected_messages with status = 'pending'
   4. Disconnect from IMAP
 ```
@@ -314,7 +314,7 @@ All messages from all configured IMAP accounts are collected and stripped. HutMa
 2. Multiple IMAP accounts per HutMail user (e.g.: personal Gmail, work Orange)
 3. Deduplication by `Message-ID` in the database (not by IMAP flag)
 4. Optionally skips messages already read in IMAP (`skip_already_read`)
-5. Each new message receives its stable identifier (`1mar.1`, `1mar.2`, etc.)
+5. Each new message receives its stable identifier (`01mar.GM.1`, `01mar.GM.2`, etc.)
 6. Filtering by configurable rules:
    - Sender whitelist/blacklist
    - Max size per message
@@ -335,38 +335,43 @@ The stripped body and its size are stored in the database (`stripped_body`, `str
 
 #### Step 3: Bundling with budget management
 
-`pending` messages are aggregated into a bundle, grouped by source account. **The bundle respects the radio budget**:
+`pending` messages are aggregated into a bundle, grouped by source account. **The bundle uses a configurable share of the radio budget for full messages, and always appends a screener of remaining messages**:
 
-1. HutMail calculates the remaining budget (100 KB/day over 7 rolling days via `budget_entries`)
-2. `pending` messages are sorted by date (oldest first)
-3. Messages are added to the bundle **as whole messages** (never cut mid-message)
-4. If the budget is sufficient: all `pending` messages are included
-5. If the budget is exceeded: the bundle is cut, and a **summary of remaining messages** is appended at the end
+1. HutMail calculates the remaining budget (`daily_budget_kb` KB/day over 7 rolling days via `budget_entries`)
+2. The **message budget** = remaining budget × `bundle_ratio` / 100 (default: 80%)
+3. The **screener budget** = remaining budget − message budget
+4. `pending` messages are sorted by date (oldest first)
+5. Messages are added to the bundle **as whole messages** (never cut mid-message) until the message budget is reached
+6. A **screener** of all remaining `pending` messages is appended (identifier, sender, subject, stripped size)
+7. If the screener itself exceeds the screener budget, it is truncated with a count: "and X more messages pending"
+8. If all pending messages fit within the message budget, no screener is appended
+
+**The budget is a soft limit.** HutMail respects it for automatic bundles, but the skipper can exceed it deliberately via `GET` commands — the boat manages its own airtime.
 
 ```
-=== HUTMAIL 1mar 09:30 ===
+=== HUTMAIL 01mar 09:30 ===
 
-==[ Personal Gmail (beavers@gmail.com) ]==
+==[ GM — Personal Gmail (beavers@gmail.com) ]==
 
-[1mar.1] From: bob@example.com | Re: Horta | 1mar 08:12
+[01mar.GM.1] From: bob@example.com | Re: Horta | 01mar 08:12
 Hey guys!
 Confirming Tuesday meetup at Horta harbor, we'll be there around 2pm.
 The anchorage is great, turquoise water.
 
-[1mar.2] From: mom@family.fr | Christmas news | 28feb 19:45
+[01mar.GM.2] From: mom@family.fr (+5 +2cc) | Christmas news | 28feb 19:45
 Hey sweethearts, how are you doing?
 Christmas here was great, we had a big dinner. Grandpa is doing better.
 We love you!
 
-==[ Work Orange (beavers@orange.fr) ]==
+==[ OR — Work Orange (beavers@orange.fr) ]==
 
-[28feb.1] From: bank@credit.fr | January statement | 28feb 10:00
+[28feb.OR.1] From: boss@work.com (→ team@ +3cc) | January statement | 28feb 10:00
 Balance as of 01/31: 4521.30 EUR
 
-=== REMAINING (2 messages, 12.4 KB) ===
-[28feb.2] newsletter@sailing.fr | "Vendée Globe results" | 8.2 KB
-[27feb.1] insurance@maif.fr | "Annual certificate" | 4.2 KB
-Reply: GET 28feb.2 to request a specific message
+=== SCREENER (2 messages, 12.4 KB) ===
+[28feb.OR.2] newsletter@sailing.fr | "Vendée Globe results" | 8.2 KB
+[27feb.OR.3] insurance@maif.fr | "Annual certificate" | 4.2 KB
+GET 28feb.OR.2 to download a specific message
 === END ===
 ```
 
@@ -380,21 +385,23 @@ Reply: GET 28feb.2 to request a specific message
    - A `budget_entry` is created with the bytes sent
 3. **As a courtesy**, sent messages are marked as read in their respective IMAP mailboxes (`\Seen` flag), but the database remains the source of truth
 
-#### Remaining messages summary
+#### Screener
 
-When the budget doesn't allow sending all messages, the bundle ends with a compact summary of queued messages:
-- Identifier, sender, subject, stripped size
-- The boat can request a specific message: `GET 28feb.2`
+When there are remaining `pending` messages after filling the message budget, the bundle ends with a `=== SCREENER ===` section:
+- Lists each remaining message: identifier, sender, subject, stripped size
+- The boat can request specific messages: `GET 28feb.OR.2`
+- If the screener exceeds the screener budget, it is truncated: "and X more messages pending"
 - Messages not included and not requested via `GET` will be **automatically included in the next bundle** (oldest first priority). Nothing is lost — they stay `pending` until sent.
+
+A `GET` response follows the same format: `=== HUTMAIL ===` with the requested messages, then `=== SCREENER ===` with whatever is still pending. The skipper always has an up-to-date view.
 
 ### Tracking
 
 HutMail keeps a complete record of all exchanges via the database:
 
 #### Radio budget
-- `budget_entries`: KB sent per day
-- Rolling calculation: `SUM(bytes_sent) WHERE date >= 7.days.ago`
-- Remaining budget = `(100 KB × 7) - consumed_7d`
+- Calculated from `bundles`: `SUM(total_stripped_size) WHERE sent_at >= 7.days.ago`
+- Remaining budget = `(daily_budget_kb × 7) - consumed_7d`
 - Alerts when budget is tight
 
 #### Sent bundles
@@ -442,8 +449,8 @@ The Beavers can send commands to the server to react:
 ===CMD===
 # Message management
 DROP LAST             — cancel the last send (too big to download)
-DROP 1mar.2 28feb.1   — exclude specific messages from the next send
-GET 28feb.2           — request a message from the summary (boat manages its budget)
+DROP 01mar.GM.2 28feb.OR.1   — exclude specific messages from the next send
+GET 28feb.OR.2        — request a message from the screener (boat manages its budget)
 
 # Direct sending
 SEND bob@example.com "We're arriving Tuesday"
@@ -464,8 +471,20 @@ BLACKLIST remove bob@example.com
 
 Comments (`#`) are ignored. Commands are case-insensitive.
 
-**`DROP`** sets the `collected_message` status to `dropped`. It will not be re-proposed.
-**`GET`** forces sending a `pending` message in an immediate mini-bundle, without checking the budget.
+**`DROP`** sets the `collected_message` status to `dropped`. It will not be re-proposed. Supports the same implicit wildcards as `GET` (e.g.: `DROP 01mar` drops all pending from March 1st, `DROP GM` drops all pending from mailbox GM).
+**`GET`** sends the requested `pending` message(s) in a response that uses the same format as a regular bundle: `=== HUTMAIL ===` with the full messages, followed by `=== SCREENER ===` with any remaining `pending` messages. The budget is not checked — the skipper manages their own airtime.
+
+`GET` supports **implicit wildcards** — each omitted segment broadens the filter to all matching `pending` messages:
+
+```
+GET 01mar.GM.1     — one specific message
+GET 01mar.GM       — all pending from mailbox GM on 01mar
+GET 01mar          — all pending from 01mar, all mailboxes
+GET GM             — all pending from mailbox GM, any date
+GET 1              — all pending with sequence number 1, all mailboxes and dates
+```
+
+Parsing rule: if the argument contains no `.`, it's either a mailbox code (2 uppercase letters) or a sequence number (digits). If it contains `.`, segments are parsed left to right as `DDmon[YY].BB.N`.
 **`DROP LAST`** sets all `collected_messages` from the last bundle back to `pending` (they will be re-proposed).
 
 ### Web interface
@@ -494,31 +513,75 @@ Reasons:
 - Some IMAP servers don't reliably preserve flags
 - The database is local, fast, and fully under HutMail's control
 
-### No systematic screener
+### Integrated screener (not a separate round-trip)
 
-The screener (summary sent before messages) was abandoned as a systematic step. Reasons:
-- Adds a radio round-trip (screener → response → delivery), costing time and budget
-- Aggressive stripping reduces size sufficiently (99% reduction typical)
-- The boat can react after the fact with `DROP LAST` if a send is too large
-- Simpler = more reliable on a temperamental radio link
+The screener is **not** a separate step requiring a radio round-trip (screener → response → delivery). Instead, it is **always appended** at the end of a bundle when there are remaining `pending` messages. This avoids wasting budget on an extra exchange while still giving the skipper full visibility.
 
-However, a **remaining messages summary** is appended at the end of the bundle when the budget doesn't allow sending everything. This summary plays the role of a partial screener.
+The `bundle_ratio` setting (default: 80%) controls how much of the budget goes to full messages vs. the screener. The skipper can tune this:
+- **Higher ratio (90%)**: more messages delivered, smaller screener
+- **Lower ratio (70%)**: fewer messages, but a guaranteed comprehensive screener
 
-### Radio budget (7 rolling days)
+Every response to the boat uses the same format — whether it's an automatic bundle or a `GET` response: `=== HUTMAIL ===` section with full messages, then `=== SCREENER ===` with remaining messages. The skipper always knows what's pending.
 
-- Email budget estimated at **100 KB/day** (out of ~200 KB/day total bandwidth)
+### Radio budget (7 rolling days, soft limit)
+
+- Email budget configurable via `daily_budget_kb` (default: **100 KB/day**, out of ~200 KB/day total bandwidth)
 - Tracked over **7 rolling days** via `budget_entries` in the database
-- The budget is not a hard quota on HutMail's side — it's a conservative estimate. If the boat requests a message via `GET`, HutMail sends it even if the budget is exceeded (the boat manages)
+- **Soft limit**: HutMail respects the budget for automatic bundles (using `bundle_ratio` to split between messages and screener), but the skipper can exceed it via `GET` — the boat manages its own airtime
 - The bundle is cut on **whole message boundaries** (never mid-message)
+- `bundle_ratio` (default: **80%**) determines the split: 80% of remaining budget for full messages, 20% for screener
 
 ### Stable identifiers
 
-Messages are identified by `DDmon.N` (e.g.: `1mar.1`, `28feb.2`). Benefits:
-- Human-readable in Airmail
+Messages are identified by `DDmon.BB.N` (e.g.: `01mar.GM.1`, `28feb.OR.2`). Benefits:
+- Human-readable in Airmail — the mailbox code tells you which account it came from
 - Stable: doesn't change when new messages arrive (stored in database)
 - Compact: just a few characters
-- Implicit year unless different (`15jan26.3`)
+- Zero-padded day for consistent sorting (`01mar`, `09feb`)
+- Implicit year unless different (`15jan26.GM.3`)
 - Easy to type on an Airmail keyboard
+
+### Stripping pipeline
+
+Two gems handle the heavy lifting, with a custom layer to compensate their gaps:
+
+1. **`html2text`** (soundasleep) — HTML → plain text conversion
+   - Handles `<p>`, `<br>`, `<li>`, `<table>`, `<a>` → structured text
+   - We post-process: strip URLs from links (useless on radio, waste bytes), clean excess whitespace
+
+2. **`email_reply_parser`** (GitHub) — removes quoted replies and standard signatures
+   - Detects `>` quoted blocks, `On ... wrote:` headers, `--` signatures
+   - **Gap: English only.** We add French patterns: `Le ... a écrit :`, `De :`, `Envoyé :`
+
+3. **Custom `MessageStripper`** (~50-80 lines) — compensates both gems:
+   - Mobile signatures: `Sent from my iPhone`, `Envoyé de mon iPad`, `Get Outlook for iOS`
+   - Legal disclaimers: blocks with `DISCLAIMER`, `CONFIDENTIAL`, `AVERTISSEMENT`
+   - Unsubscribe noise: `unsubscribe`, `se désinscrire`, `manage preferences`
+   - Orphan URLs: lines containing only a URL
+   - Whitespace normalization: multiple blank lines → one, trim
+
+**Pipeline:**
+```
+Email (Mail gem)
+  → text/plain if exists, else text/html → html2text, else empty
+  → email_reply_parser (quoted replies + signatures)
+  → custom MessageStripper (French patterns, mobile sigs, disclaimers)
+  → normalize whitespace
+  = stripped_body
+```
+
+**Attachments:** stripped from body, metadata stored as JSON on `collected_messages`:
+```json
+[{"name": "facture.pdf", "size": 245000, "content_type": "application/pdf"}]
+```
+Displayed in bundle: `📎 facture.pdf (245 KB)`. No attachment download via radio (V1).
+
+### Encryption
+
+All personal data is encrypted at rest using Active Record Encryption:
+- Passwords: IMAP/SMTP credentials on `users` and `mail_accounts`
+- Message content: `from_address`, `to_address`, `subject`, `stripped_body` on `collected_messages`
+- Boat replies: `to_address`, `body` on `boat_replies`
 
 ### Compression
 
@@ -528,10 +591,32 @@ Messages are identified by `DDmon.N` (e.g.: `1mar.1`, `28feb.2`). Benefits:
 ### Message format
 
 - Plain text, simple human-readable delimiters
-- Stable identifiers in brackets (`[1mar.1]`)
-- Grouped by source account for readability
-- Remaining messages summary at the end of the bundle
+- Stable identifiers in brackets (`[01mar.GM.1]`)
+- Grouped by source mailbox for readability
+- Screener of remaining messages at the end of the bundle
 - No JSON, no binary — if the script breaks, the message is still readable in Airmail
+
+#### Compact headers
+
+Every byte counts on the radio link. Message headers are compressed:
+
+- **From**: always shown (sender name or address)
+- **To**: omitted if the only recipient is the monitored mailbox. Otherwise abbreviated: `(→ alice@)` for a single extra recipient, or `(+3)` for the count of extra To recipients
+- **CC**: shown as count only: `+2cc`. Never the full list
+- **Combined example**: `From: mom@family.fr (+5 +2cc)` = 5 other To recipients, 2 CC
+- **Reply-To**: shown only if different from From
+
+Examples:
+```
+[01mar.GM.1] From: bob@example.com | Subject | 01mar 08:12
+  → simple email, just From
+
+[01mar.GM.2] From: mom@family.fr (+5 +2cc) | Subject | 01mar 09:00
+  → 5 other To recipients, 2 CC
+
+[01mar.OR.1] From: boss@work.com (→ team@ +3cc) | Subject | 01mar 10:00
+  → sent to team@, plus 3 CC
+```
 
 ### Multi-account (IMAP + SMTP)
 
@@ -539,7 +624,11 @@ A HutMail user can configure multiple mailboxes (e.g.: personal Gmail + work Ora
 
 ### Stack
 
-- **Ruby on Rails 8.1** (Tailwind, Importmaps, Turbo, Stimulus)
+- **Ruby on Rails 8.1** — vanilla, no CSS framework
+  - **Hotwire** (Turbo + Stimulus) for interactivity
+  - **Importmaps** for JS (no bundler)
+  - **Vanilla CSS** — no Tailwind, no Bootstrap. Hand-written, minimal
+  - Pages must be lightweight: minimal DOM, no bloat, fast on slow connections
 - **SQLite** for storage
 - **ActiveJob** + cron for periodic aggregation
 - **Active Record Encryption** for IMAP and SMTP passwords
@@ -571,7 +660,7 @@ Open source potential: thousands of boats circumnavigating each year have this p
 - Radio budget: ~100 KB/day for email. Based on 90 min / 7 rolling days, throughput 0.1–0.6 KB/s. The 200 KB/day is shared with weather/GRIB, so ~100 KB for mail.
 - If the bundle exceeds the budget, cut on whole message boundary. Never cut mid-message.
 - When cutting, send a summary of remaining messages. The boat can request a specific message with GET. The boat manages if it exceeds its quota.
-- Numbering: include the date for a stable ID. Format `DDmon.N` (e.g.: `1mar.1`). Year omitted if current year, otherwise `15jan26.3`.
+- Numbering: include the date + mailbox code for a stable ID. Format `DDmon.BB.N` (e.g.: `01mar.GM.1`). Zero-padded day. Year omitted if current year, otherwise `15jan26.GM.3`. BB = 2-letter mailbox code defined by user.
 - Messages not included in the current bundle (and not requested via GET) are automatically carried over to the next bundle. Nothing is lost.
 - Don't rely on IMAP read/unread status. The HutMail DB is the source of truth. Deduplication by Message-ID. IMAP marking as courtesy only.
 - No 35 KB per-message SailMail limit (unconfirmed). The only constraint is the time/bandwidth budget.

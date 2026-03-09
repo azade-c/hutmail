@@ -1,0 +1,9 @@
+captain:
+  user: one
+  vessel: one
+  role: captain
+
+shore_agent:
+  user: two
+  vessel: one
+  role: shore_agent
