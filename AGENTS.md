@@ -29,10 +29,6 @@ bin/rails g controller MailAccounts index show new create
 bin/rails g migration AddShortCodeToMailAccounts short_code:string
 ```
 
-## Style
-
-@STYLE.md
-
 ## Code
 
 - No comments. If needed, use Rails notes (`bin/rails notes`):
