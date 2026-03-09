@@ -4,10 +4,16 @@ on:
   pull_request:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   scan_ruby:
-    runs-on: ubuntu-latest
+    name: Scan Ruby (brakeman, bundler-audit)
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout code
@@ -20,12 +26,13 @@ jobs:
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
-      
+
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
-      
+
   scan_js:
-    runs-on: ubuntu-latest
+    name: Scan JS (importmap audit)
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout code
@@ -39,8 +46,9 @@ jobs:
       - name: Scan for security vulnerabilities in JavaScript dependencies
         run: bin/importmap audit
 
-  lint:
-    runs-on: ubuntu-latest
+  lint_ruby:
+    name: Lint Ruby (rubocop)
+    runs-on: ubuntu-24.04-arm
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
@@ -53,7 +61,7 @@ jobs:
           bundler-cache: true
 
       - name: Prepare RuboCop cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           DEPENDENCIES_HASH: ${{ hashFiles('.ruby-version', '**/.rubocop.yml', '**/.rubocop_todo.yml', 'Gemfile.lock') }}
         with:
@@ -65,8 +73,32 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  lint_herb:
+    name: Lint Herb
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run Herb Linter
+        run: npx @herb-tools/linter
+
+  lint_smart_quotes:
+    name: Lint Smart Quotes
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Check for smart quotes
+        run: bin/smart_quotes find
+
   test:
-    runs-on: ubuntu-latest
+    name: Test
+    runs-on: ubuntu-24.04-arm
 
     # services:
     #  redis:
@@ -91,7 +123,8 @@ jobs:
         run: bin/rails db:test:prepare test
 
   system-test:
-    runs-on: ubuntu-latest
+    name: System Test
+    runs-on: ubuntu-24.04-arm
 
     # services:
     #  redis:
@@ -116,9 +149,44 @@ jobs:
         run: bin/rails db:test:prepare test:system
 
       - name: Keep screenshots from failed system tests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: screenshots
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-24.04-arm
+    needs: [scan_ruby, scan_js, lint_ruby, lint_herb, lint_smart_quotes, test, system-test]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Expose GitHub Runtime for cache
+        uses: crazy-max/ghaction-github-runtime@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy with Kamal
+        run: bundle exec kamal deploy
+        env:
+          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          KAMAL_WEB_HOST: ${{ secrets.KAMAL_WEB_HOST }}
