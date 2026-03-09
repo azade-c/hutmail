@@ -15,10 +15,12 @@
       <div class="nav__inner">
         <a href="<%= dashboard_path %>" class="nav__logo">🦫 HutMail</a>
         <div class="nav__links">
-          <a href="<%= dashboard_path %>">Dashboard</a>
-          <a href="<%= mail_accounts_path %>">Accounts</a>
-          <a href="<%= bundles_path %>">Bundles</a>
-          <a href="<%= edit_settings_path %>">Settings</a>
+          <% if current_vessel %>
+            <a href="<%= dashboard_path %>">Dashboard</a>
+            <a href="<%= mail_accounts_path %>">Accounts</a>
+            <a href="<%= bundles_path %>">Bundles</a>
+            <a href="<%= edit_settings_path %>">Settings</a>
+          <% end %>
           <%= button_to "Log out", session_path, method: :delete, class: "btn btn--plain" %>
         </div>
       </div>

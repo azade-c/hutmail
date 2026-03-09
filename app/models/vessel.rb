@@ -4,7 +4,6 @@ class Vessel < ApplicationRecord
 
   has_many :crews, dependent: :destroy
   has_many :users, through: :crews
-
   has_many :mail_accounts, dependent: :destroy
   has_many :bundles, dependent: :destroy
   has_many :vessel_replies, dependent: :destroy
@@ -16,6 +15,10 @@ class Vessel < ApplicationRecord
   validates :sailmail_address, presence: true
   validates :bundle_ratio, numericality: { in: 1..100 }, allow_nil: true
   validates :daily_budget_kb, numericality: { greater_than: 0 }, allow_nil: true
+
+  attr_accessor :captain
+
+  after_create { crews.create!(user: captain, role: "captain") if captain }
 
   def budget_consumed_7d
     bundles.where(status: "sent", sent_at: 7.days.ago..).sum(:total_stripped_size)
