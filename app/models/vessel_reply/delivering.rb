@@ -1,4 +1,4 @@
-module VesselReply::Deliverable
+module VesselReply::Delivering
   extend ActiveSupport::Concern
 
   def deliver_later

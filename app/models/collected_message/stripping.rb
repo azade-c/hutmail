@@ -1,4 +1,4 @@
-module CollectedMessage::Strippable
+module CollectedMessage::Stripping
   extend ActiveSupport::Concern
 
   class_methods do
@@ -27,7 +27,7 @@ module CollectedMessage::Strippable
         ""
       end
     rescue => e
-      Rails.logger.warn "CollectedMessage::Strippable: failed to extract text: #{e.message}"
+      Rails.logger.warn "CollectedMessage::Stripping: failed to extract text: #{e.message}"
       ""
     end
 

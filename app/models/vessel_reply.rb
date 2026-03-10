@@ -1,5 +1,5 @@
 class VesselReply < ApplicationRecord
-  include VesselReply::Deliverable
+  include VesselReply::Delivering
 
   self.table_name = "vessel_replies"
 

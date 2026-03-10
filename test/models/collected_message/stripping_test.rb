@@ -1,6 +1,6 @@
 require "test_helper"
 
-class CollectedMessageStrippableTest < ActiveSupport::TestCase
+class CollectedMessage::StrippingTest < ActiveSupport::TestCase
   test "strips HTML to plain text" do
     mail = Mail.new do
       html_part do
