@@ -14,13 +14,12 @@ class SettingsController < ApplicationController
   end
 
   private
-
-  def settings_params
-    params.require(:vessel).permit(
-      :callsign, :sailmail_address,
-      :relay_imap_server, :relay_imap_port, :relay_imap_username, :relay_imap_password, :relay_imap_use_ssl,
-      :relay_smtp_server, :relay_smtp_port, :relay_smtp_username, :relay_smtp_password, :relay_smtp_use_starttls,
-      :bundle_ratio, :daily_budget_kb
-    )
-  end
+    def settings_params
+      params.require(:vessel).permit(
+        :callsign, :sailmail_address,
+        :relay_imap_server, :relay_imap_port, :relay_imap_username, :relay_imap_password, :relay_imap_use_ssl,
+        :relay_smtp_server, :relay_smtp_port, :relay_smtp_username, :relay_smtp_password, :relay_smtp_use_starttls,
+        :bundle_ratio, :daily_budget_kb,
+      )
+    end
 end

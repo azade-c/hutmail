@@ -40,17 +40,16 @@ class MailAccountsController < ApplicationController
   end
 
   private
+    def set_mail_account
+      @mail_account = current_vessel.mail_accounts.find(params[:id])
+    end
 
-  def set_mail_account
-    @mail_account = current_vessel.mail_accounts.find(params[:id])
-  end
-
-  def mail_account_params
-    params.require(:mail_account).permit(
-      :name, :short_code,
-      :imap_server, :imap_port, :imap_username, :imap_password, :imap_use_ssl,
-      :smtp_server, :smtp_port, :smtp_username, :smtp_password, :smtp_use_starttls,
-      :is_default, :skip_already_read
-    )
-  end
+    def mail_account_params
+      params.require(:mail_account).permit(
+        :name, :short_code,
+        :imap_server, :imap_port, :imap_username, :imap_password, :imap_use_ssl,
+        :smtp_server, :smtp_port, :smtp_username, :smtp_password, :smtp_use_starttls,
+        :is_default, :skip_already_read,
+      )
+    end
 end
