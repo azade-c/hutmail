@@ -1,6 +1,7 @@
 class Vessel < ApplicationRecord
   include Vessel::Bundling
   include Vessel::Commanding
+  include Vessel::RelayPolling
 
   has_many :crews, dependent: :destroy
   has_many :users, through: :crews
