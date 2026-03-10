@@ -1,4 +1,4 @@
-module Bundle::Composable
+module Bundle::Composing
   extend ActiveSupport::Concern
 
   class_methods do
