@@ -6,7 +6,7 @@
   <title>HutMail 🦫</title>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+  <%= stylesheet_link_tag "application" %>
   <%= javascript_importmap_tags %>
 </head>
 <body>
@@ -36,7 +36,7 @@
 
     <% if alert.present? %>
       <div class="flash flash--alert">
-        <div class="flash__inner" style="--flash-background: var(--color-negative);"><%= alert %></div>
+        <div class="flash__inner flash__inner--alert"><%= alert %></div>
       </div>
     <% end %>
 
