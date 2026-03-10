@@ -8,14 +8,14 @@ class Vessel < ApplicationRecord
   has_many :mail_accounts, dependent: :destroy
   has_many :bundles, dependent: :destroy
   has_many :vessel_replies, dependent: :destroy
+  has_one :relay_account, dependent: :destroy
 
-  encrypts :relay_imap_username
-  encrypts :relay_imap_password
-  encrypts :relay_smtp_username
-  encrypts :relay_smtp_password
+  accepts_nested_attributes_for :relay_account, update_only: true
 
   validates :callsign, presence: true, uniqueness: true
   validates :sailmail_address, presence: true
+  validates :relay_account, presence: true
+  validates_associated :relay_account
   validates :bundle_ratio, numericality: { in: 1..100 }, allow_nil: true
   validates :daily_budget_kb, numericality: { greater_than: 0 }, allow_nil: true
 

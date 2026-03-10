@@ -1,31 +1,94 @@
 <h1>Set up your vessel</h1>
-<p>Before you can use HutMail, register your boat.</p>
+<p>Before you can use HutMail, register your boat and its relay account.</p>
 
 <%= form_with(model: @vessel, url: vessels_path) do |f| %>
   <% if @vessel.errors.any? %>
-    <div class="flash flash--alert">
+    <div class="card card--error">
+      <div class="card__header txt-negative">Errors</div>
       <ul>
         <% @vessel.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
+          <li class="txt-small"><%= msg %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <p>
-    <label for="vessel_name">Vessel name</label><br>
-    <%= f.text_field :name, placeholder: "e.g. Alibi", autofocus: true %>
-  </p>
+  <div class="card">
+    <h2 class="card__header">Vessel</h2>
+    <div class="form-group">
+      <label>Vessel name</label>
+      <%= f.text_field :name, class: "input", placeholder: "e.g. Alibi", autofocus: true %>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Callsign</label>
+        <%= f.text_field :callsign, class: "input", placeholder: "e.g. FG1234" %>
+      </div>
+      <div class="form-group">
+        <label>SailMail address</label>
+        <%= f.text_field :sailmail_address, class: "input", placeholder: "CALLSIGN@sailmail.com" %>
+      </div>
+    </div>
+  </div>
 
-  <p>
-    <label for="vessel_callsign">Callsign</label><br>
-    <%= f.text_field :callsign, placeholder: "e.g. FG1234" %>
-  </p>
+  <%= f.fields_for :relay_account do |ra| %>
+    <div class="card">
+      <h2 class="card__header">Relay account (IMAP)</h2>
+      <p class="txt-small txt-subtle margin-block-end">This account bridges HutMail and the boat.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>IMAP server</label>
+          <%= ra.text_field :imap_server, class: "input" %>
+        </div>
+        <div class="form-group">
+          <label>Port</label>
+          <%= ra.number_field :imap_port, class: "input", value: @vessel.relay_account.imap_port || 993 %>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Username</label>
+          <%= ra.text_field :imap_username, class: "input" %>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <%= ra.password_field :imap_password, class: "input" %>
+        </div>
+      </div>
+      <div class="form-group">
+        <label><%= ra.check_box :imap_use_ssl %> Use SSL</label>
+      </div>
+    </div>
 
-  <p>
-    <label for="vessel_sailmail_address">SailMail address</label><br>
-    <%= f.text_field :sailmail_address, placeholder: "CALLSIGN@sailmail.com" %>
-  </p>
+    <div class="card">
+      <h2 class="card__header">Relay account (SMTP)</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>SMTP server</label>
+          <%= ra.text_field :smtp_server, class: "input" %>
+        </div>
+        <div class="form-group">
+          <label>Port</label>
+          <%= ra.number_field :smtp_port, class: "input", value: @vessel.relay_account.smtp_port || 587 %>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Username</label>
+          <%= ra.text_field :smtp_username, class: "input" %>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <%= ra.password_field :smtp_password, class: "input" %>
+        </div>
+      </div>
+      <div class="form-group">
+        <label><%= ra.check_box :smtp_use_starttls %> Use STARTTLS</label>
+      </div>
+    </div>
+  <% end %>
 
-  <p><%= f.submit "Create vessel" %></p>
+  <div class="form-actions">
+    <%= f.submit "Create vessel", class: "btn btn--link" %>
+  </div>
 <% end %>

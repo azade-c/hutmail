@@ -6,8 +6,6 @@ module Vessel::RelayPolling
   end
 
   def poll_relay_now
-    return if relay_imap_server.blank?
-
     with_relay_connection do |imap|
       imap.select("INBOX")
 
@@ -33,8 +31,9 @@ module Vessel::RelayPolling
 
   private
     def with_relay_connection
-      imap = Net::IMAP.new(relay_imap_server, port: relay_imap_port, ssl: relay_imap_use_ssl)
-      imap.login(relay_imap_username, relay_imap_password)
+      account = relay_account
+      imap = Net::IMAP.new(account.imap_server, port: account.imap_port, ssl: account.imap_use_ssl)
+      imap.login(account.imap_username, account.imap_password)
       yield imap
     ensure
       imap&.logout rescue nil

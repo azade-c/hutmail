@@ -1,6 +1,7 @@
 class VesselsController < ApplicationController
   def new
     @vessel = Vessel.new
+    @vessel.build_relay_account
   end
 
   def create
@@ -16,6 +17,12 @@ class VesselsController < ApplicationController
 
   private
     def vessel_params
-      params.expect(vessel: %i[ name callsign sailmail_address ])
+      params.require(:vessel).permit(
+        :name, :callsign, :sailmail_address,
+        relay_account_attributes: %i[
+          imap_server imap_port imap_username imap_password imap_use_ssl
+          smtp_server smtp_port smtp_username smtp_password smtp_use_starttls
+        ],
+      )
     end
 end

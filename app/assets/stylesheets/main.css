@@ -25,6 +25,11 @@
     max-inline-size: initial;
   }
 
+  .card--error {
+    border-color: var(--color-negative);
+    margin-block-end: var(--block-space);
+  }
+
   .card + .card {
     margin-block-start: var(--block-space);
   }

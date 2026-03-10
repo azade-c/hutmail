@@ -1,6 +1,7 @@
 class SettingsController < ApplicationController
   def edit
     @vessel = current_vessel
+    @vessel.build_relay_account unless @vessel.relay_account
   end
 
   def update
@@ -17,9 +18,11 @@ class SettingsController < ApplicationController
     def settings_params
       params.require(:vessel).permit(
         :callsign, :sailmail_address,
-        :relay_imap_server, :relay_imap_port, :relay_imap_username, :relay_imap_password, :relay_imap_use_ssl,
-        :relay_smtp_server, :relay_smtp_port, :relay_smtp_username, :relay_smtp_password, :relay_smtp_use_starttls,
         :bundle_ratio, :daily_budget_kb,
+        relay_account_attributes: %i[
+          imap_server imap_port imap_username imap_password imap_use_ssl
+          smtp_server smtp_port smtp_username smtp_password smtp_use_starttls
+        ],
       )
     end
 end
