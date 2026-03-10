@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resource :user, only: %i[ new create ]
   resource :session
   resources :passwords, param: :token
 
@@ -8,10 +9,10 @@ Rails.application.routes.draw do
   resources :bundles, only: [ :index, :show ]
 
   resource :settings, only: [ :edit, :update ]
+  resource :dashboard, only: :show, controller: "dashboard"
+  resource :home, only: :show, controller: "home"
 
   get "up" => "rails/health#show", as: :rails_health_check
-  get "dashboard" => "dashboard#show", as: :dashboard
-  get "home" => "home#show", as: :home
 
   root "home#show"
 end

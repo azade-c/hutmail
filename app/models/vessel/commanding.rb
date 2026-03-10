@@ -110,9 +110,9 @@ module Vessel::Commanding
         )
 
         if urgent
-          VesselReply::DeliverJob.perform_now(reply)
+          reply.deliver_now
         else
-          VesselReply::DeliverJob.perform_later(reply)
+          reply.deliver_later
         end
 
         label = urgent ? "URGENT" : "SEND"
@@ -123,7 +123,7 @@ module Vessel::Commanding
     end
 
     def execute_pause(args, results)
-      # TODO: implement pause duration on vessel model
+      # TODO: fcatuhe 10mar26 implement pause duration on vessel model
       results << { command: "PAUSE #{args}", status: :ok, message: "Aggregation paused" }
     end
 
@@ -145,7 +145,7 @@ module Vessel::Commanding
     end
 
     def execute_list(type, args, results)
-      # TODO: implement whitelist/blacklist on vessel model
+      # TODO: fcatuhe 10mar26 implement whitelist/blacklist on vessel model
       results << { command: "#{type.upcase} #{args}", status: :ok, message: "#{type} updated" }
     end
 
@@ -214,7 +214,7 @@ module Vessel::Commanding
         status: "pending"
       )
 
-      VesselReply::DeliverJob.perform_later(reply)
+      reply.deliver_later
       results << { command: "MSG #{recipient}", status: :ok, message: "Reply queued" }
     end
 end

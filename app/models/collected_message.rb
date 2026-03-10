@@ -1,5 +1,5 @@
 class CollectedMessage < ApplicationRecord
-  include CollectedMessage::Strippable
+  include CollectedMessage::Stripping
   include CollectedMessage::Identifiable
   include CollectedMessage::Presentable
 

@@ -8,7 +8,8 @@ class OutboundMailer < ApplicationMailer
       to: vessel_reply.to_address,
       subject: vessel_reply.subject || "HutMail reply",
       body: vessel_reply.body,
-      content_type: "text/plain"
+      content_type: "text/plain",
+      delivery_method_options: smtp_options_for(account),
     )
   end
 end

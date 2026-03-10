@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_10_221707) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -86,6 +86,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
     t.index ["vessel_id"], name: "index_mail_accounts_on_vessel_id"
   end
 
+  create_table "relay_accounts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "imap_password"
+    t.integer "imap_port"
+    t.string "imap_server"
+    t.boolean "imap_use_ssl"
+    t.string "imap_username"
+    t.string "smtp_password"
+    t.integer "smtp_port"
+    t.string "smtp_server"
+    t.boolean "smtp_use_starttls"
+    t.string "smtp_username"
+    t.datetime "updated_at", null: false
+    t.integer "vessel_id", null: false
+    t.index ["vessel_id"], name: "index_relay_accounts_on_vessel_id", unique: true
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -96,22 +113,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.integer "bundle_ratio", default: 80
     t.datetime "created_at", null: false
-    t.integer "daily_budget_kb", default: 100
     t.string "email_address", null: false
     t.string "password_digest", null: false
-    t.string "relay_imap_password"
-    t.integer "relay_imap_port"
-    t.string "relay_imap_server"
-    t.boolean "relay_imap_use_ssl"
-    t.string "relay_imap_username"
-    t.string "relay_smtp_password"
-    t.integer "relay_smtp_port"
-    t.string "relay_smtp_server"
-    t.boolean "relay_smtp_use_starttls"
-    t.string "relay_smtp_username"
-    t.string "sailmail_address"
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
@@ -137,16 +141,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
     t.datetime "created_at", null: false
     t.integer "daily_budget_kb", default: 100
     t.string "name"
-    t.string "relay_imap_password"
-    t.integer "relay_imap_port"
-    t.string "relay_imap_server"
-    t.boolean "relay_imap_use_ssl"
-    t.string "relay_imap_username"
-    t.string "relay_smtp_password"
-    t.integer "relay_smtp_port"
-    t.string "relay_smtp_server"
-    t.boolean "relay_smtp_use_starttls"
-    t.string "relay_smtp_username"
     t.string "sailmail_address"
     t.datetime "updated_at", null: false
     t.index ["callsign"], name: "index_vessels_on_callsign", unique: true
@@ -158,6 +152,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
   add_foreign_key "crews", "users"
   add_foreign_key "crews", "vessels"
   add_foreign_key "mail_accounts", "vessels"
+  add_foreign_key "relay_accounts", "vessels"
   add_foreign_key "sessions", "users"
   add_foreign_key "vessel_replies", "mail_accounts"
   add_foreign_key "vessel_replies", "vessels"

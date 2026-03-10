@@ -16,13 +16,17 @@
 
   .flash__inner {
     animation: appear-then-fade 3s 300ms both;
-    background-color: var(--flash-background, var(--color-ink));
+    background-color: var(--color-ink);
     border-radius: 4em;
-    color: var(--flash-color, var(--color-ink-inverted));
+    color: var(--color-ink-inverted);
     display: inline-flex;
     font-size: var(--text-small);
     inline-size: max-content;
     max-inline-size: 90vw;
     padding: 0.7em 1.4em;
+  }
+
+  .flash__inner--alert {
+    background-color: var(--color-negative);
   }
 }

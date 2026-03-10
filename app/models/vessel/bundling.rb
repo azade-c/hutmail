@@ -1,6 +1,16 @@
 module Vessel::Bundling
   extend ActiveSupport::Concern
 
+  class_methods do
+    def bundle_all_now
+      find_each do |vessel|
+        vessel.build_and_deliver_bundle
+      rescue => e
+        Rails.logger.error "Vessel##{vessel.id} bundle failed: #{e.message}"
+      end
+    end
+  end
+
   def build_bundle
     pending = CollectedMessage.pending
       .joins(:mail_account)

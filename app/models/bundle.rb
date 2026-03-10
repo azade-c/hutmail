@@ -1,5 +1,5 @@
 class Bundle < ApplicationRecord
-  include Bundle::Composable
+  include Bundle::Composing
 
   belongs_to :vessel
   has_many :collected_messages

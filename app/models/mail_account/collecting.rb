@@ -5,6 +5,16 @@ module MailAccount::Collecting
     after_create_commit :collect_later
   end
 
+  class_methods do
+    def collect_all_now
+      joins(:vessel).find_each do |account|
+        account.collect_now
+      rescue => e
+        Rails.logger.error "MailAccount##{account.id} collect failed: #{e.message}"
+      end
+    end
+  end
+
   def collect_later
     MailAccount::CollectJob.perform_later(self)
   end
@@ -19,7 +29,7 @@ module MailAccount::Collecting
 
   private
     def vessel_paused?
-      # TODO: implement PAUSE/RESUME state on vessel
+      # TODO: fcatuhe 10mar26 implement PAUSE/RESUME state on vessel
       false
     end
 
@@ -63,7 +73,7 @@ module MailAccount::Collecting
             stripped_size: stripped.bytesize,
             status: "pending",
             collected_at: Time.current,
-            attachments_metadata: attachments_meta
+            attachments_metadata: attachments_meta,
           )
 
           collected << msg
