@@ -8,10 +8,10 @@ Rails.application.routes.draw do
   resources :bundles, only: [ :index, :show ]
 
   resource :settings, only: [ :edit, :update ]
+  resource :dashboard, only: :show
+  resource :home, only: :show
 
   get "up" => "rails/health#show", as: :rails_health_check
-  get "dashboard" => "dashboard#show", as: :dashboard
-  get "home" => "home#show", as: :home
 
   root "home#show"
 end
