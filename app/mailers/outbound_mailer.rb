@@ -18,7 +18,7 @@ class OutboundMailer < ApplicationMailer
       options = {
         address: account.smtp_server,
         port: account.smtp_port,
-        enable_starttls_auto: account.smtp_use_starttls,
+        enable_starttls_auto: account.smtp_use_starttls
       }
 
       if account.smtp_username.present?

@@ -112,7 +112,7 @@ module MailAccount::Collecting
         {
           name: att.filename,
           size: att.body.decoded.bytesize,
-          content_type: att.content_type.split(";").first,
+          content_type: att.content_type.split(";").first
         }
       end
     end

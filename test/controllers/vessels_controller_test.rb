@@ -64,8 +64,8 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
       post vessels_path, params: {
         vessel: {
           name: "Incomplete", callsign: "IC0001", sailmail_address: "IC0001@sailmail.com",
-          relay_account_attributes: { imap_server: "imap.example.com" },
-        },
+          relay_account_attributes: { imap_server: "imap.example.com" }
+        }
       }
     end
 
@@ -100,8 +100,8 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
           smtp_server: "smtp.example.com",
           smtp_port: 587,
           smtp_username: "relay@example.com",
-          smtp_password: "secret",
-        },
+          smtp_password: "secret"
+        }
       }.merge(overrides)
     end
 end
