@@ -1,4 +1,6 @@
 class VesselReply < ApplicationRecord
+  include VesselReply::Deliverable
+
   self.table_name = "vessel_replies"
 
   belongs_to :vessel

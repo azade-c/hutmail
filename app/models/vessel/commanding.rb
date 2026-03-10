@@ -110,9 +110,9 @@ module Vessel::Commanding
         )
 
         if urgent
-          VesselReply::DeliverJob.perform_now(reply)
+          reply.deliver_now
         else
-          VesselReply::DeliverJob.perform_later(reply)
+          reply.deliver_later
         end
 
         label = urgent ? "URGENT" : "SEND"
@@ -214,7 +214,7 @@ module Vessel::Commanding
         status: "pending"
       )
 
-      VesselReply::DeliverJob.perform_later(reply)
+      reply.deliver_later
       results << { command: "MSG #{recipient}", status: :ok, message: "Reply queued" }
     end
 end
