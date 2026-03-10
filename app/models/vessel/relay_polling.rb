@@ -2,7 +2,7 @@ module Vessel::RelayPolling
   extend ActiveSupport::Concern
 
   def poll_relay_later
-    # TODO: dedicated job if needed
+    # TODO: fcatuhe 10mar26 add dedicated recurring job if needed
   end
 
   def poll_relay_now

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_10_070000) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -96,22 +96,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_142244) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.integer "bundle_ratio", default: 80
     t.datetime "created_at", null: false
-    t.integer "daily_budget_kb", default: 100
     t.string "email_address", null: false
     t.string "password_digest", null: false
-    t.string "relay_imap_password"
-    t.integer "relay_imap_port"
-    t.string "relay_imap_server"
-    t.boolean "relay_imap_use_ssl"
-    t.string "relay_imap_username"
-    t.string "relay_smtp_password"
-    t.integer "relay_smtp_port"
-    t.string "relay_smtp_server"
-    t.boolean "relay_smtp_use_starttls"
-    t.string "relay_smtp_username"
-    t.string "sailmail_address"
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
