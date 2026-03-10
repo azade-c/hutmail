@@ -226,6 +226,30 @@
     }
   }
 
+  .input-with-toggle {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+
+    .input {
+      flex: 1;
+      padding-inline-end: 4em;
+    }
+  }
+
+  .input-toggle {
+    background: none;
+    border: none;
+    color: var(--color-graphite);
+    cursor: pointer;
+    font-size: var(--text-small);
+    font-weight: 600;
+    padding-inline: 0.8em;
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+  }
+
   /* Containers that act like (and contain) inputs */
   .input--actor {
     outline-offset: -1px;
