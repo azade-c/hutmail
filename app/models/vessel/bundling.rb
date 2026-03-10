@@ -11,7 +11,6 @@ module Vessel::Bundling
     end
   end
 
-
   def build_bundle
     pending = CollectedMessage.pending
       .joins(:mail_account)

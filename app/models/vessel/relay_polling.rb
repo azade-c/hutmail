@@ -1,8 +1,14 @@
 module Vessel::RelayPolling
   extend ActiveSupport::Concern
 
-  def poll_relay_later
-    # TODO: fcatuhe 10mar26 add dedicated recurring job if needed
+  class_methods do
+    def poll_all_now
+      find_each do |vessel|
+        vessel.poll_relay_now
+      rescue => e
+        Rails.logger.error "Vessel##{vessel.id} relay poll failed: #{e.message}"
+      end
+    end
   end
 
   def poll_relay_now
