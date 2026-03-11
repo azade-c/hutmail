@@ -27,7 +27,7 @@
     cursor: pointer;
     display: inline-flex;
     font-size: 1em;
-    font-weight: var(--btn-font-weight, 600);
+    font-weight: var(--btn-font-weight, bold);
     gap: var(--btn-gap, 0.5em);
     justify-content: center;
     padding: var(--btn-padding, 0.5em 1.1em);

@@ -35,7 +35,7 @@
   }
 
   .card__header {
-    font-weight: 600;
+    font-weight: bold;
     margin-block-end: var(--block-space-half);
   }
 
@@ -56,7 +56,7 @@
 
   .stat__value {
     font-size: var(--text-x-large);
-    font-weight: 700;
+    font-weight: bold;
     color: var(--color-river-dark);
   }
 
@@ -86,7 +86,7 @@
   }
 
   .message-item__from {
-    font-weight: 600;
+    font-weight: bold;
     color: var(--color-ink);
   }
 
@@ -103,7 +103,7 @@
   .badge {
     display: inline-block;
     font-size: var(--text-x-small);
-    font-weight: 600;
+    font-weight: bold;
     padding: 0.15em 0.6em;
     border-radius: 2em;
     background: var(--color-dust);
@@ -118,25 +118,42 @@
   .form-group {
     margin-block-end: var(--block-space);
 
-    label {
+    > label {
       display: block;
       font-size: var(--text-small);
-      font-weight: 600;
-      margin-block-end: var(--block-space-half);
+      font-weight: bold;
+      margin-block-end: 0.35em;
       color: var(--color-ink-dark);
+    }
+
+    > label:has(input[type="checkbox"]),
+    > label:has(input[type="radio"]) {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      font-size: var(--text-normal);
+      font-weight: normal;
+      margin-block-end: 0;
+      cursor: pointer;
     }
   }
 
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--inline-space);
+    gap: var(--inline-space-double);
+
+    @media (max-width: 639px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   .form-actions {
     display: flex;
     gap: var(--inline-space);
     margin-block-start: var(--block-space-double);
+    padding-block-start: var(--block-space);
+    border-block-start: var(--border);
   }
 
   .budget-bar {

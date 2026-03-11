@@ -18,6 +18,7 @@
   }
 
   .auth__form .form-actions {
+    border-block-start: none;
     justify-content: stretch;
   }
 

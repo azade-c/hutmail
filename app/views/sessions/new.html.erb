@@ -1,11 +1,22 @@
-<%= tag.div(flash[:alert], style: "color:red") if flash[:alert] %>
-<%= tag.div(flash[:notice], style: "color:green") if flash[:notice] %>
+<div class="auth">
+  <h1 class="auth__title">🦫 HutMail</h1>
+  <p class="auth__subtitle">Shore-side mail relay for sailors</p>
 
-<%= form_with url: session_path do |form| %>
-  <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address] %><br>
-  <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %><br>
-  <%= form.submit "Sign in" %>
-<% end %>
-<br>
+  <%= form_with url: session_path, class: "auth__form" do |form| %>
+    <div class="form-group">
+      <label for="email_address">Email</label>
+      <%= form.email_field :email_address, class: "input", required: true, autofocus: true, autocomplete: "username", placeholder: "you@example.com", value: params[:email_address] %>
+    </div>
 
-<%= link_to "Sign up", new_user_path %>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <%= form.password_field :password, class: "input", required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit "Sign in", class: "btn btn--link auth__submit" %>
+    </div>
+  <% end %>
+
+  <p class="auth__alt">Don't have an account? <%= link_to "Sign up", new_user_path %></p>
+</div>

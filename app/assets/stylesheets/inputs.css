@@ -34,7 +34,7 @@
 
       font-family: var(--font-mono);
       font-size: var(--text-large);
-      font-weight: 900;
+      font-weight: bold;
       inline-size: 18ch;
       letter-spacing: 1ch;
       min-inline-size: 18ch;
@@ -243,7 +243,7 @@
     color: var(--color-graphite);
     cursor: pointer;
     font-size: var(--text-small);
-    font-weight: 600;
+    font-weight: bold;
     padding-inline: 0.8em;
     position: absolute;
     inset-block: 0;
