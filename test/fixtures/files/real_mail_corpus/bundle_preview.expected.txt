@@ -56,11 +56,11 @@ Sam Sender
 […message précédent…]
 
 [01mar.CR.5] From: sender@example.test | Message avec une image en PJ et en corps de texte | 01mar 21:50
-📎 inline-photo.jpg (150.8 KB), chart.jpg (66.5 KB)
 = ci-dessous une image dans le corps :
 
 [image : inline-photo.jpg (150.8 KB)]
 
 Sam Sender
+📎 chart.jpg (66.5 KB)
 
 === END ===

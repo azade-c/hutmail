@@ -15,8 +15,8 @@ module CollectedMessage::Presentable
 
   def to_radio_text
     parts = [ to_radio_header ]
-    parts << format_attachments if attachments_metadata.present?
     parts << stripped_body if stripped_body.present?
+    parts << format_attachments if displayed_attachments.present?
     parts.join("\n")
   end
 
@@ -43,9 +43,31 @@ module CollectedMessage::Presentable
     end
 
     def format_attachments
-      items = attachments_metadata.map do |att|
-        "#{att['name'] || att[:name]} (#{Bundle.format_size(att['size'] || att[:size])})"
+      items = displayed_attachments.map do |att|
+        "#{attachment_name(att)} (#{Bundle.format_size(att['size'] || att[:size])})"
       end
       "📎 #{items.join(', ')}"
+    end
+
+    def displayed_attachments
+      Array(attachments_metadata).reject do |attachment|
+        embedded_attachment?(attachment)
+      end
+    end
+
+    def embedded_attachment?(attachment)
+      attachment_inline?(attachment) || inline_image_placeholder_present?(attachment_name(attachment))
+    end
+
+    def attachment_inline?(attachment)
+      attachment["inline"] || attachment[:inline]
+    end
+
+    def inline_image_placeholder_present?(name)
+      stripped_body.to_s.include?("[image : #{name} (")
+    end
+
+    def attachment_name(attachment)
+      attachment["name"] || attachment[:name]
     end
 end

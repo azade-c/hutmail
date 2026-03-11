@@ -93,7 +93,8 @@ class RealMailFixtureTest < ActiveSupport::TestCase
         {
           name: attachment.filename,
           size: attachment.body.decoded.bytesize,
-          content_type: attachment.mime_type
+          content_type: attachment.mime_type,
+          inline: attachment.inline? || attachment.content_disposition&.include?("inline") || attachment.content_id.present?
         }
       end.presence
     end

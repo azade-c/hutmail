@@ -117,8 +117,13 @@ module MailAccount::Collecting
         {
           name: att.filename,
           size: att.body.decoded.bytesize,
-          content_type: att.content_type.split(";").first
+          content_type: att.content_type.split(";").first,
+          inline: attachment_inline?(att)
         }
       end
+    end
+
+    def attachment_inline?(attachment)
+      attachment.inline? || attachment.content_disposition&.include?("inline") || attachment.content_id.present?
     end
 end
