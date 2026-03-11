@@ -41,10 +41,8 @@ module CollectedMessage::Stripping
         html_to_text(mail_message.html_part.decoded.to_s)
       elsif mail_message.content_type&.include?("text/html")
         html_to_text(mail_message.body.decoded.to_s)
-      elsif mail_message.content_type&.include?("text/plain")
-        mail_message.body.decoded.to_s
       else
-        ""
+        mail_message.body.decoded.to_s
       end
     rescue => e
       Rails.logger.warn "CollectedMessage::Stripping: failed to extract text: #{e.message}"

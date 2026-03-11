@@ -7,6 +7,6 @@ class BundlesController < ApplicationController
 
   def show
     @bundle = @vessel.bundles.find(params[:id])
-    @messages = @bundle.collected_messages.includes(:mail_account).oldest_first
+    @messages = @bundle.collected_messages.includes(:mail_account).ordered
   end
 end

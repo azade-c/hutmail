@@ -6,6 +6,9 @@
     <%= @mail_account.name %>
   </h1>
   <div class="flex gap">
+    <%= button_to "Relancer la collecte", vessel_mail_account_collection_path(@vessel, @mail_account),
+        method: :post, class: "btn btn--link",
+        data: { turbo_confirm: "Supprimer les messages en attente et relancer la collecte IMAP ?" } %>
     <a href="<%= edit_vessel_mail_account_path(@vessel, @mail_account) %>" class="btn">Modifier</a>
     <%= button_to "Supprimer", vessel_mail_account_path(@vessel, @mail_account), method: :delete,
         class: "btn btn--negative",

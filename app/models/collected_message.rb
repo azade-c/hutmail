@@ -12,7 +12,7 @@ class CollectedMessage < ApplicationRecord
   scope :pending, -> { where(status: "pending") }
   scope :sent, -> { where(status: "sent") }
   scope :dropped, -> { where(status: "dropped") }
-  scope :oldest_first, -> { order(date: :asc) }
+  scope :ordered, -> { order(id: :asc) }
 
   validates :hutmail_id, presence: true, uniqueness: true
   validates :imap_message_id, presence: true, uniqueness: { scope: :mail_account_id }

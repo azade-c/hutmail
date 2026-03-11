@@ -27,7 +27,7 @@ class VesselsController < ApplicationController
       .joins(:mail_account)
       .where(mail_accounts: { vessel_id: @vessel.id })
       .includes(:mail_account)
-      .oldest_first
+      .ordered
     @pending_count = @pending_messages.size
     @recent_bundles = @vessel.bundles.recent.limit(5)
     @budget_consumed = @vessel.budget_consumed_7d

@@ -19,6 +19,11 @@ module MailAccount::Collecting
     MailAccount::CollectJob.perform_later(self)
   end
 
+  def recollect!
+    collected_messages.pending.delete_all
+    collect_now
+  end
+
   def collect_now
     return if vessel_paused?
 
