@@ -30,7 +30,7 @@ module Bundle::Composing
     included_messages.group_by(&:mail_account).each do |account, messages|
       lines << "==[ #{account.short_code} — #{account.name} (#{account.imap_username}) ]=="
       lines << ""
-      messages.each do |msg|
+      messages.sort_by { |m| m.date || Time.at(0) }.each do |msg|
         lines << msg.to_radio_text
         lines << ""
       end

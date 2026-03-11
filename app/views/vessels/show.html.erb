@@ -5,7 +5,7 @@
 
 <div class="stat-grid">
   <div class="stat">
-    <div class="stat__value"><%= @pending_messages.size %></div>
+    <div class="stat__value"><%= @pending_count %></div>
     <div class="stat__label">Messages en attente</div>
   </div>
   <div class="stat">
@@ -64,20 +64,22 @@
   </div>
 <% end %>
 
-<%= turbo_frame_tag "dispatch-preview" do %>
-  <% if @pending_messages.any? %>
-    <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="dispatch-preview">Simuler le prochain envoi</a>
-  <% end %>
-<% end %>
+<hr class="section-divider">
+
+<h2>Tous les comptes</h2>
 
 <% if @pending_messages.any? %>
   <div class="card">
-    <div class="card__header">Messages en attente</div>
+    <div class="card__header">
+      Messages en attente
+      <span class="badge badge--pending"><%= @pending_messages.size %></span>
+    </div>
     <ul class="message-list">
       <% @pending_messages.each do |msg| %>
         <li class="message-item">
           <div class="message-item__header">
             <span class="message-item__code"><%= msg.hutmail_id %></span>
+            <span class="badge"><%= msg.mail_account.short_code %></span>
             <span class="badge badge--pending">en attente</span>
           </div>
           <div>
@@ -94,13 +96,21 @@
       <% end %>
     </ul>
   </div>
+<% else %>
+  <div class="empty-state">Aucun message en attente.</div>
+<% end %>
+
+<%= turbo_frame_tag "dispatch-preview" do %>
+  <% if @pending_messages.any? %>
+    <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link margin-block-start" data-turbo-frame="dispatch-preview">Simuler le prochain envoi</a>
+  <% end %>
 <% end %>
 
 <% if @recent_bundles.any? %>
   <div class="card">
-    <div class="page-header">
-      <div class="card__header">Envois récents</div>
-      <a href="<%= vessel_bundles_path(@vessel) %>" class="btn">Tous les envois</a>
+    <div class="card__header">
+      Envois récents
+      <a href="<%= vessel_bundles_path(@vessel) %>" class="btn btn--link flex-item-justify-end">Tous les envois</a>
     </div>
     <ul class="message-list">
       <% @recent_bundles.each do |bundle| %>

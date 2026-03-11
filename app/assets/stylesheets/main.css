@@ -25,9 +25,26 @@
     max-inline-size: initial;
   }
 
+  .card--clickable {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 200ms var(--ease-out-expo);
+
+    &:hover {
+      border-color: var(--color-river-light);
+    }
+  }
+
   .card--error {
     border-color: var(--color-negative);
     margin-block-end: var(--block-space);
+  }
+
+  .section-divider {
+    border: 0;
+    border-block-start: 2px solid var(--color-dust);
+    margin-block: var(--block-space-double);
   }
 
   .card + .card {
@@ -35,6 +52,9 @@
   }
 
   .card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--inline-space-half);
     font-weight: bold;
     margin-block-end: var(--block-space-half);
   }

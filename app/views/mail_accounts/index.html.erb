@@ -5,12 +5,12 @@
 
 <% if @mail_accounts.any? %>
   <% @mail_accounts.each do |account| %>
-    <div class="card">
+    <a href="<%= vessel_mail_account_path(@vessel, account) %>" class="card card--clickable">
       <div class="card__header">
         <span class="badge"><%= account.short_code %></span>
-        <a href="<%= vessel_mail_account_path(@vessel, account) %>"><%= account.name %></a>
+        <span><%= account.name %></span>
         <% if account.is_default %>
-          <span class="badge badge--sent">par défaut</span>
+          <span class="badge badge--sent">défaut</span>
         <% end %>
       </div>
       <div class="txt-small txt-subtle">
@@ -22,7 +22,7 @@
         <%= account.collected_messages.sent.count %> envoyés ·
         ignorer lus : <%= account.skip_already_read ? "oui" : "non" %>
       </div>
-    </div>
+    </a>
   <% end %>
 <% else %>
   <div class="empty-state">
