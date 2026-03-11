@@ -148,6 +148,24 @@
     }
   }
 
+  .relay-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--inline-space-double);
+
+    @media (max-width: 639px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .relay-column .form-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .relay-column .form-row .form-group:last-child {
+    max-inline-size: 6rem;
+  }
+
   .form-actions {
     display: flex;
     gap: var(--inline-space);

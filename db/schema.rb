@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_10_221707) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -137,13 +137,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_10_221707) do
 
   create_table "vessels", force: :cascade do |t|
     t.integer "bundle_ratio", default: 80
-    t.string "callsign", null: false
     t.datetime "created_at", null: false
     t.integer "daily_budget_kb", default: 100
-    t.string "name"
+    t.string "name", null: false
     t.string "sailmail_address"
     t.datetime "updated_at", null: false
-    t.index ["callsign"], name: "index_vessels_on_callsign", unique: true
   end
 
   add_foreign_key "bundles", "vessels"

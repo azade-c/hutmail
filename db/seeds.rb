@@ -5,11 +5,11 @@ if Rails.env.development?
     puts "🦫 Created dev user: francois@hey.com / francois"
   end
 
-  vessel = Vessel.find_or_create_by!(callsign: "FX1234") do |v|
+  vessel = Vessel.find_or_create_by!(name: "Alibi") do |v|
     v.sailmail_address = "fx1234@sailmail.com"
     v.daily_budget_kb = 200
     v.bundle_ratio = 80
-    puts "🦫 Created dev vessel: FX1234"
+    puts "🦫 Created dev vessel: Alibi"
   end
 
   Crew.find_or_create_by!(user: user, vessel: vessel) do |c|
