@@ -5,6 +5,33 @@
     padding: var(--block-space-double) var(--main-padding);
   }
 
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--inline-space-half);
+    font-size: var(--text-small);
+    color: var(--color-graphite);
+    margin-block-end: var(--block-space);
+  }
+
+  .breadcrumbs__link {
+    color: var(--color-river);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .breadcrumbs__sep {
+    color: var(--color-dust);
+    user-select: none;
+  }
+
+  .breadcrumbs__current {
+    color: var(--color-ink);
+  }
+
   .page-header {
     display: flex;
     align-items: center;
