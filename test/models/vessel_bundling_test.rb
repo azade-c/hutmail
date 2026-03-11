@@ -61,6 +61,41 @@ class VesselBundlingTest < ActiveSupport::TestCase
     RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
   end
 
+  test "preview_bundle returns non-persisted bundle with text" do
+    assert @account.collected_messages.pending.any?
+
+    preview = @vessel.preview_bundle
+
+    assert preview.present?
+    assert preview.new_record?
+    assert_equal "preview", preview.status
+    assert preview.bundle_text.include?("=== HUTMAIL")
+    assert preview.bundle_text.include?("=== END ===")
+    assert preview.messages_count.positive?
+    assert_equal 0, Bundle.where(status: "preview").count
+  end
+
+  test "preview_bundle returns nil when no pending messages" do
+    CollectedMessage.where(
+      mail_account_id: @vessel.mail_accounts.select(:id)
+    ).update_all(status: "sent")
+
+    assert_nil @vessel.preview_bundle
+  end
+
+  test "preview_bundle does not change message statuses" do
+    pending_before = CollectedMessage.pending.where(
+      mail_account_id: @vessel.mail_accounts.select(:id)
+    ).count
+
+    @vessel.preview_bundle
+
+    pending_after = CollectedMessage.pending.where(
+      mail_account_id: @vessel.mail_accounts.select(:id)
+    ).count
+    assert_equal pending_before, pending_after
+  end
+
   test "deliver_bundle marks bundle as error when mailer raises" do
     bundle = @vessel.bundles.create!(status: "draft")
 

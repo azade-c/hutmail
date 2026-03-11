@@ -1,0 +1,20 @@
+<%= turbo_frame_tag "bundle-preview" do %>
+  <% if @preview %>
+    <div class="card">
+      <div class="card__header">
+        Simulation du prochain envoi
+        <span class="badge"><%= @preview.messages_count %> messages · <%= Bundle.format_size(@preview.total_stripped_size || 0) %></span>
+      </div>
+      <% if @preview.remaining_count&.positive? %>
+        <p class="txt-small txt-subtle">
+          + <%= @preview.remaining_count %> message<%= @preview.remaining_count > 1 ? "s" : "" %> dans le screener
+        </p>
+      <% end %>
+      <div class="bundle-preview"><%= @preview.bundle_text %></div>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>Aucun message en attente — rien à envoyer.</p>
+    </div>
+  <% end %>
+<% end %>

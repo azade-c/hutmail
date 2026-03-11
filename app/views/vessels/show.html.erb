@@ -64,6 +64,12 @@
   </div>
 <% end %>
 
+<%= turbo_frame_tag "bundle-preview" do %>
+  <% if @pending_messages.any? %>
+    <a href="<%= vessel_bundle_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="bundle-preview">Simuler le prochain envoi</a>
+  <% end %>
+<% end %>
+
 <% if @pending_messages.any? %>
   <div class="card">
     <div class="card__header">Messages en attente</div>

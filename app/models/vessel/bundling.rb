@@ -11,30 +11,23 @@ module Vessel::Bundling
     end
   end
 
-  def build_bundle
-    pending = CollectedMessage.pending
-      .joins(:mail_account)
-      .where(mail_accounts: { vessel_id: id })
-      .includes(:mail_account)
-      .oldest_first
-
+  def preview_bundle
+    pending = pending_messages
     return nil if pending.empty?
 
-    included_msgs = []
-    remaining_msgs = []
-    consumed = 0
+    included, remaining = split_by_budget(pending)
+    bundle = bundles.build(status: "preview")
+    bundle.compose_text(included, remaining)
+    bundle
+  end
 
-    pending.each do |msg|
-      if consumed + msg.stripped_size <= message_budget
-        included_msgs << msg
-        consumed += msg.stripped_size
-      else
-        remaining_msgs << msg
-      end
-    end
+  def build_bundle
+    pending = pending_messages
+    return nil if pending.empty?
 
+    included, remaining = split_by_budget(pending)
     bundle = bundles.create!(status: "draft")
-    bundle.compose!(included_msgs, remaining_msgs)
+    bundle.compose!(included, remaining)
     bundle
   end
 
@@ -74,6 +67,31 @@ module Vessel::Bundling
   end
 
   private
+    def pending_messages
+      CollectedMessage.pending
+        .joins(:mail_account)
+        .where(mail_accounts: { vessel_id: id })
+        .includes(:mail_account)
+        .oldest_first
+    end
+
+    def split_by_budget(messages)
+      included = []
+      remaining = []
+      consumed = 0
+
+      messages.each do |msg|
+        if consumed + msg.stripped_size <= message_budget
+          included << msg
+          consumed += msg.stripped_size
+        else
+          remaining << msg
+        end
+      end
+
+      [ included, remaining ]
+    end
+
     def mark_bundle_sent(bundle)
       now = Time.current
       bundle.update!(status: "sent", sent_at: now)
