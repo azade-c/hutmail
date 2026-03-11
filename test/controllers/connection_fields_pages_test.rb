@@ -18,7 +18,7 @@ class ConnectionFieldsPagesTest < ActionDispatch::IntegrationTest
   end
 
   test "edit mail account page renders" do
-    get edit_vessel_mail_account_path(@vessel, mail_accounts(:gmail))
+    get edit_mail_account_path(mail_accounts(:gmail))
     assert_response :success
   end
 
@@ -34,7 +34,7 @@ class ConnectionFieldsPagesTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    assert_redirected_to vessel_mail_account_path(@vessel, MailAccount.last)
+    assert_redirected_to mail_account_path(MailAccount.last)
   end
 
   test "create mail account renders errors on invalid params" do
@@ -55,7 +55,7 @@ class ConnectionFieldsPagesTest < ActionDispatch::IntegrationTest
   end
 
   test "show mail account page renders" do
-    get vessel_mail_account_path(@vessel, mail_accounts(:gmail))
+    get mail_account_path(mail_accounts(:gmail))
     assert_response :success
   end
 
@@ -67,5 +67,18 @@ class ConnectionFieldsPagesTest < ActionDispatch::IntegrationTest
   test "bundles index page renders" do
     get vessel_bundles_path(@vessel)
     assert_response :success
+  end
+
+  test "show mail account rejects unrelated user" do
+    sign_in_as users(:no_vessel)
+    get mail_account_path(mail_accounts(:gmail))
+    assert_redirected_to vessels_path
+  end
+
+  test "show bundle rejects unrelated user" do
+    bundle = @vessel.bundles.create!(status: "draft")
+    sign_in_as users(:no_vessel)
+    get bundle_path(bundle)
+    assert_redirected_to vessels_path
   end
 end

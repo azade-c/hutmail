@@ -5,9 +5,9 @@ module CollectedMessage::Stripping
 
   class_methods do
     QUOTED_REPLY_MARKERS = [
-      /^>/,
-      /^On .+ wrote:\s*$/i,
-      /^Le .+ a écrit\s*:\s*$/i
+      /^\s*>/,
+      /^\s*On .+ wrote:\s*$/i,
+      /^\s*Le .+ a écrit\s*:\s*$/i
     ].freeze
 
     def strip_mail(mail_message)
@@ -54,26 +54,61 @@ module CollectedMessage::Stripping
       text.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
     end
 
-    FRENCH_REPLY_BLOCK = /
-      ^De\s*:\s*.+$\n
-      (?:^(?:À|A|Cc|Objet|Date|Envoyé)\s*:\s*.+$\n)*
-      (?:^(?:À|A|Cc|Objet|Date|Envoyé)\s*:\s*.+$)
-      (?:\n|\z).*
-    /xmi
+    FRENCH_REPLY_HEADERS = /\A(?:De|À|A|Cc|Objet|Date|Envoyé)\s*:\s*.+\z/i
 
     def remove_french_reply_block(text)
-      if text.match?(FRENCH_REPLY_BLOCK)
-        [ text.sub(FRENCH_REPLY_BLOCK, ""), true ]
+      lines = text.lines
+      reply_start = find_french_reply_start(lines)
+
+      if reply_start
+        [ lines[0...reply_start].join, true ]
       else
         [ text, false ]
       end
     end
 
+    def find_french_reply_start(lines)
+      lines.each_index do |index|
+        next unless french_reply_origin?(lines[index])
+        next unless french_reply_header_count(lines, index) >= 2
+
+        return index
+      end
+
+      nil
+    end
+
+    def french_reply_origin?(line)
+      normalize_reply_line(line).match?(/\ADe\s*:\s*.+\z/i)
+    end
+
+    def french_reply_header_count(lines, start_index)
+      count = 0
+
+      lines[start_index..].each do |line|
+        normalized_line = normalize_reply_line(line)
+
+        if normalized_line.empty?
+          next
+        elsif normalized_line.match?(FRENCH_REPLY_HEADERS)
+          count += 1
+        else
+          break
+        end
+      end
+
+      count
+    end
+
+    def normalize_reply_line(line)
+      line.to_s.sub(/\A(?:>\s*)+/, "").strip
+    end
+
     def remove_quoted_replies(text)
       text = EmailReplyParser.parse_reply(text)
-      text = text.sub(/^Le .+? a écrit\s*:\s*\z/m, "")
-      text = text.sub(/^-{2,}\s*Message transféré\s*-{2,}.*\z/m, "")
-      text = text.sub(/^-{2,}\s*Forwarded message\s*-{2,}.*\z/m, "")
+      text = text.sub(/^\s*Le .+? a écrit\s*:\s*\z/m, "")
+      text = text.sub(/^\s*-{2,}\s*Message transféré\s*-{2,}.*\z/m, "")
+      text = text.sub(/^\s*-{2,}\s*Forwarded message\s*-{2,}.*\z/m, "")
       text
     end
 
@@ -153,15 +188,19 @@ module CollectedMessage::Stripping
     def collect_inline_images(mail_message)
       return [] unless mail_message.multipart?
 
-      mail_message.parts.filter_map do |part|
-        next unless part.content_type&.start_with?("image/")
-        next unless part.content_disposition&.include?("inline")
+      Array(mail_message.all_parts).filter_map do |part|
+        next unless inline_image?(part)
 
         name = part.filename.presence || "image"
         size = part.body.decoded.bytesize rescue 0
 
         { name:, size: }
-      end
+      end.uniq
+    end
+
+    def inline_image?(part)
+      part.mime_type&.start_with?("image/") &&
+        (part.inline? || part.content_disposition&.include?("inline") || part.content_id.present?)
     end
   end
 end

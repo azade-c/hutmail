@@ -3,7 +3,6 @@ require "test_helper"
 class CollectionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
-    @vessel = vessels(:one)
     @account = mail_accounts(:gmail)
     sign_in_as @user
   end
@@ -19,9 +18,9 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     original = MailAccount.instance_method(:collect_now)
     MailAccount.define_method(:collect_now) { 0 }
 
-    post vessel_mail_account_collection_path(@vessel, @account)
+    post mail_account_collection_path(@account)
 
-    assert_redirected_to vessel_mail_account_path(@vessel, @account)
+    assert_redirected_to mail_account_path(@account)
     assert_equal "Collecte relancée.", flash[:notice]
     assert_not @account.collected_messages.pending.exists?(imap_message_id: "stale@test")
   ensure
@@ -30,7 +29,7 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
 
   test "create rejects access from unrelated user" do
     sign_in_as users(:no_vessel)
-    post vessel_mail_account_collection_path(@vessel, @account)
+    post mail_account_collection_path(@account)
     assert_redirected_to vessels_path
   end
 

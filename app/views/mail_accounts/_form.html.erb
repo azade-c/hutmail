@@ -1,4 +1,4 @@
-<%= form_with(model: mail_account, url: mail_account.persisted? ? vessel_mail_account_path(mail_account.vessel, mail_account) : vessel_mail_accounts_path(mail_account.vessel)) do |f| %>
+<%= form_with(model: mail_account, url: mail_account.persisted? ? mail_account_path(mail_account) : vessel_mail_accounts_path(mail_account.vessel)) do |f| %>
   <% if mail_account.errors.any? %>
     <div class="card" style="--border-color: var(--color-negative); margin-block-end: var(--block-space);">
       <div class="card__header txt-negative">Erreurs</div>
