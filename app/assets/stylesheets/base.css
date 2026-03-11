@@ -2,10 +2,6 @@
 
   html {
     font-size: 100%;
-
-    @media (min-width: 100ch) {
-      font-size: 1.1875rem;
-    }
   }
 
   body {

@@ -176,7 +176,7 @@
   .max-width-prose { max-inline-size: 38rem; }
   .max-width-medium { max-inline-size: 44rem; }
   .max-width-wide { max-inline-size: 54rem; }
-  .card { flex: 1 1 14rem; max-inline-size: 16rem; }
+  .card-grid > .card { flex: 1 1 14rem; max-inline-size: 16rem; }
   .center-block { margin-block: auto; }
 
   /* Position */

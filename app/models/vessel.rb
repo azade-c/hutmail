@@ -12,7 +12,7 @@ class Vessel < ApplicationRecord
 
   accepts_nested_attributes_for :relay_account, update_only: true
 
-  validates :callsign, presence: true, uniqueness: true
+  validates :name, presence: true
   validates :sailmail_address, presence: true
   validates :relay_account, presence: true
   validates_associated :relay_account

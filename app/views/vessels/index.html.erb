@@ -7,8 +7,7 @@
   <% @vessels.each do |vessel| %>
     <a href="<%= vessel_path(vessel) %>" class="card card--clickable">
       <div class="card__header">
-        <span class="txt-medium"><%= vessel.name.presence || vessel.callsign %></span>
-        <span class="badge"><%= vessel.callsign %></span>
+        <span class="txt-medium"><%= vessel.name %></span>
       </div>
       <div class="txt-small txt-subtle">
         <%= vessel.mail_accounts.size %> compte<%= vessel.mail_accounts.size == 1 ? "" : "s" %> mail

@@ -44,7 +44,7 @@ class VesselsController < ApplicationController
 
     def vessel_params
       params.require(:vessel).permit(
-        :name, :callsign, :sailmail_address,
+        :name, :sailmail_address,
         relay_account_attributes: %i[
           imap_server imap_port imap_username imap_password imap_use_ssl
           smtp_server smtp_port smtp_username smtp_password smtp_use_starttls

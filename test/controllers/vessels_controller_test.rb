@@ -38,7 +38,7 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     get new_vessel_path
     assert_response :success
     assert_select "form"
-    assert_select "input[name='vessel[callsign]']"
+    assert_select "input[name='vessel[name]']"
     assert_select "input[name='vessel[relay_account_attributes][imap_server]']"
   end
 
@@ -53,10 +53,10 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user_without_vessel
 
     assert_difference [ "Vessel.count", "Crew.count", "RelayAccount.count" ], 1 do
-      post vessels_path, params: { vessel: valid_vessel_params(callsign: "ZZ9999") }
+      post vessels_path, params: { vessel: valid_vessel_params }
     end
 
-    vessel = Vessel.find_by(callsign: "ZZ9999")
+    vessel = Vessel.find_by(name: "Test Vessel")
     assert_redirected_to vessel_path(vessel)
     assert vessel.relay_account
     assert_equal "imap.example.com", vessel.relay_account.imap_server
@@ -67,10 +67,10 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user_with_vessel
 
     assert_difference [ "Vessel.count", "Crew.count", "RelayAccount.count" ], 1 do
-      post vessels_path, params: { vessel: valid_vessel_params(callsign: "SW0001", name: "Second Wind") }
+      post vessels_path, params: { vessel: valid_vessel_params(name: "Second Wind") }
     end
 
-    vessel = Vessel.find_by(callsign: "SW0001")
+    vessel = Vessel.find_by(name: "Second Wind")
     assert_redirected_to vessel_path(vessel)
   end
 
@@ -78,7 +78,7 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user_without_vessel
 
     assert_no_difference "Vessel.count" do
-      post vessels_path, params: { vessel: { name: "No Relay", callsign: "NR0001", sailmail_address: "NR0001@sailmail.com" } }
+      post vessels_path, params: { vessel: { name: "No Relay", sailmail_address: "NR0001@sailmail.com" } }
     end
 
     assert_response :unprocessable_entity
@@ -90,7 +90,7 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference "Vessel.count" do
       post vessels_path, params: {
         vessel: {
-          name: "Incomplete", callsign: "IC0001", sailmail_address: "IC0001@sailmail.com",
+          name: "Incomplete", sailmail_address: "IC0001@sailmail.com",
           relay_account_attributes: { imap_server: "imap.example.com" }
         }
       }
@@ -103,7 +103,7 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user_without_vessel
 
     assert_no_difference "Vessel.count" do
-      post vessels_path, params: { vessel: { name: "No Callsign" } }
+      post vessels_path, params: { vessel: { name: "" } }
     end
 
     assert_response :unprocessable_entity
@@ -117,7 +117,6 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     def valid_vessel_params(overrides = {})
       {
         name: "Test Vessel",
-        callsign: "TV0001",
         sailmail_address: "TV0001@sailmail.com",
         relay_account_attributes: {
           imap_server: "imap.example.com",
