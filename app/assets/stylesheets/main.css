@@ -148,6 +148,10 @@
     }
   }
 
+  .form-row--encryption {
+    grid-template-columns: 1fr 6rem;
+  }
+
   .relay-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;

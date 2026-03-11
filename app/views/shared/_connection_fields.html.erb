@@ -1,21 +1,25 @@
+<%
+  imap_placeholder = local_assigns.fetch(:imap_server_placeholder, local_assigns.fetch(:server_placeholder, "imap.example.com"))
+  smtp_placeholder = local_assigns.fetch(:smtp_server_placeholder, local_assigns.fetch(:server_placeholder, "smtp.example.com"))
+%>
 <%= tag.div data: { controller: "encryption-ports" } do %>
   <h2 class="txt-medium margin-block-start"><%= imap_title %></h2>
-  <div class="form-row">
-    <div class="form-group">
-      <label>Serveur IMAP</label>
-      <%= f.text_field :imap_server, class: "input", placeholder: server_placeholder %>
-    </div>
+  <div class="form-group">
+    <label>Serveur IMAP</label>
+    <%= f.text_field :imap_server, class: "input", placeholder: imap_placeholder %>
+  </div>
+  <div class="form-row form-row--encryption">
     <div class="form-group">
       <label>Chiffrement</label>
       <%= f.select :imap_encryption,
-        options_for_select([["SSL/TLS", "ssl"], ["STARTTLS", "starttls"], ["Aucun", "none"]], f.object.imap_encryption || "ssl"),
+        options_for_select([["SSL/TLS (993)", "ssl"], ["STARTTLS (143)", "starttls"], ["Aucun (143)", "none"]], f.object.imap_encryption || "ssl"),
         {},
         class: "input input--select",
         data: { encryption_ports_target: "imapEncryption", action: "encryption-ports#imapEncryptionChanged" } %>
     </div>
     <div class="form-group">
       <label>Port</label>
-      <%= f.number_field :imap_port, class: "input", placeholder: "993",
+      <%= f.number_field :imap_port, class: "input",
         data: { encryption_ports_target: "imapPort" } %>
     </div>
   </div>
@@ -31,22 +35,22 @@
   </div>
 
   <h2 class="txt-medium margin-block-start"><%= smtp_title %></h2>
-  <div class="form-row">
-    <div class="form-group">
-      <label>Serveur SMTP</label>
-      <%= f.text_field :smtp_server, class: "input", placeholder: server_placeholder %>
-    </div>
+  <div class="form-group">
+    <label>Serveur SMTP</label>
+    <%= f.text_field :smtp_server, class: "input", placeholder: smtp_placeholder %>
+  </div>
+  <div class="form-row form-row--encryption">
     <div class="form-group">
       <label>Chiffrement</label>
       <%= f.select :smtp_encryption,
-        options_for_select([["SSL/TLS", "ssl"], ["STARTTLS", "starttls"], ["Aucun", "none"]], f.object.smtp_encryption || "ssl"),
+        options_for_select([["SSL/TLS (465)", "ssl"], ["STARTTLS (587)", "starttls"], ["Aucun (25)", "none"]], f.object.smtp_encryption || "ssl"),
         {},
         class: "input input--select",
         data: { encryption_ports_target: "smtpEncryption", action: "encryption-ports#smtpEncryptionChanged" } %>
     </div>
     <div class="form-group">
       <label>Port</label>
-      <%= f.number_field :smtp_port, class: "input", placeholder: "465",
+      <%= f.number_field :smtp_port, class: "input",
         data: { encryption_ports_target: "smtpPort" } %>
     </div>
   </div>
