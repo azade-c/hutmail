@@ -180,7 +180,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     assert_includes result, "See attached photo"
   end
 
-  test "adds inline image placeholder from nested multipart messages" do
+  test "places inline image placeholder where html shows it" do
     raw = <<~MAIL
       MIME-Version: 1.0
       Content-Type: multipart/mixed; boundary="MIX"
@@ -220,8 +220,13 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     MAIL
 
     result = CollectedMessage.strip_mail(Mail.new(raw))
-    assert_includes result, "[image : IMG_4232_B-mini.jpg (2.0 KB)]"
-    assert_includes result, "= ci-dessous une image dans le corps :"
+    assert_equal <<~TEXT.strip, result
+      = ci-dessous une image dans le corps :
+
+      [image : IMG_4232_B-mini.jpg (2.0 KB)]
+
+      Boris Cousin
+    TEXT
     assert_not_includes result, "[image : Balises.jpg"
   end
 end

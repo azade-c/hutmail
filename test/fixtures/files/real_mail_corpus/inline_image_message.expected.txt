@@ -1,0 +1,5 @@
+= ci-dessous une image dans le corps :
+
+[image : inline-photo.jpg (150.8 KB)]
+
+Sam Sender
