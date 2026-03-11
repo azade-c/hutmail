@@ -1,14 +1,10 @@
 class MailAccount < ApplicationRecord
+  include Connectable
   include MailAccount::Collecting
 
   belongs_to :vessel
   has_many :collected_messages, dependent: :destroy
   has_many :vessel_replies, dependent: :destroy
-
-  encrypts :imap_username
-  encrypts :imap_password
-  encrypts :smtp_username
-  encrypts :smtp_password
 
   normalizes :short_code, with: ->(s) { s.strip.upcase }
 
@@ -16,20 +12,13 @@ class MailAccount < ApplicationRecord
   validates :short_code, presence: true, length: { is: 2 },
     format: { with: /\A[A-Z]{2}\z/, message: "must be 2 uppercase letters" },
     uniqueness: { scope: :vessel_id }
-  validates :imap_server, presence: true
-  validates :imap_port, presence: true
-  validates :smtp_server, presence: true
-  validates :smtp_port, presence: true
 
   def mark_as_read(imap_uids)
     return if imap_uids.empty?
 
-    imap = Net::IMAP.new(imap_server, port: imap_port, ssl: imap_use_ssl)
-    imap.login(imap_username, imap_password)
-    imap.select("INBOX")
-    imap.store(imap_uids, "+FLAGS", [ :Seen ])
-  ensure
-    imap&.logout rescue nil
-    imap&.disconnect rescue nil
+    with_imap_connection do |imap|
+      imap.select("INBOX")
+      imap.store(imap_uids, "+FLAGS", [ :Seen ])
+    end
   end
 end

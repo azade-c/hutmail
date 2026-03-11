@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_164210) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -86,6 +86,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
     t.index ["vessel_id"], name: "index_mail_accounts_on_vessel_id"
   end
 
+  create_table "processed_relay_messages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "imap_message_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "vessel_id", null: false
+    t.index ["vessel_id", "imap_message_id"], name: "idx_processed_relay_dedup", unique: true
+    t.index ["vessel_id"], name: "index_processed_relay_messages_on_vessel_id"
+  end
+
   create_table "relay_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "imap_password"
@@ -150,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
   add_foreign_key "crews", "users"
   add_foreign_key "crews", "vessels"
   add_foreign_key "mail_accounts", "vessels"
+  add_foreign_key "processed_relay_messages", "vessels"
   add_foreign_key "relay_accounts", "vessels"
   add_foreign_key "sessions", "users"
   add_foreign_key "vessel_replies", "mail_accounts"

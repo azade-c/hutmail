@@ -12,21 +12,26 @@ module Vessel::RelayPolling
   end
 
   def poll_relay_now
-    with_relay_connection do |imap|
+    relay_account.with_imap_connection do |imap|
       imap.select("INBOX")
 
-      uids = imap.search([ "UNSEEN", "FROM", sailmail_address ])
+      uids = imap.search([ "FROM", sailmail_address ])
       return if uids.empty?
 
       uids.each do |uid|
-        data = imap.fetch(uid, "RFC822")&.first
+        data = imap.fetch(uid, [ "ENVELOPE", "BODY.PEEK[]" ])&.first
         next unless data
 
-        raw = data.attr["RFC822"]
+        message_id = data.attr["ENVELOPE"]&.message_id
+        next if message_id.blank?
+        next if processed_relay_messages.exists?(imap_message_id: message_id)
+
+        raw = data.attr["BODY[]"]
         mail = Mail.new(raw)
         body = mail.text_part&.decoded || mail.body.decoded.to_s
 
         results = parse_and_execute_commands(body)
+        processed_relay_messages.create!(imap_message_id: message_id)
 
         imap.store(uid, "+FLAGS", [ :Seen ])
 
@@ -34,15 +39,4 @@ module Vessel::RelayPolling
       end
     end
   end
-
-  private
-    def with_relay_connection
-      account = relay_account
-      imap = Net::IMAP.new(account.imap_server, port: account.imap_port, ssl: account.imap_use_ssl)
-      imap.login(account.imap_username, account.imap_password)
-      yield imap
-    ensure
-      imap&.logout rescue nil
-      imap&.disconnect rescue nil
-    end
 end

@@ -63,9 +63,9 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     fake_imap.define_singleton_method(:search) { |_query| [ 1, 2 ] }
     fake_imap.define_singleton_method(:fetch) do |uid, _attrs|
       if uid == 1
-        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("dup@example.com"), "RFC822" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
+        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("dup@example.com"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
       else
-        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("new@example.com"), "RFC822" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
+        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("new@example.com"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
       end
     end
     fake_imap.define_singleton_method(:logout) { true }
@@ -84,6 +84,58 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     assert_equal "Hello crew", msg.stripped_body
     assert_equal 1, msg.attachments_metadata.size
     assert_equal "note.txt", msg.attachments_metadata.first["name"]
+  ensure
+    Net::IMAP.define_singleton_method(:new, original_new)
+  end
+
+  test "collect_now skips messages from sailmail address" do
+    vessel = @account.vessel
+    sailmail_from = vessel.sailmail_address
+
+    relay_mail = <<~MAIL
+      From: #{sailmail_from}
+      To: test@example.com
+      Subject: Commands from boat
+      Date: Mon, 08 Mar 2026 10:00:00 +0000
+
+      ===CMD===
+      STATUS
+      ===END===
+    MAIL
+
+    normal_mail = <<~MAIL
+      From: friend@example.com
+      To: test@example.com
+      Subject: Hello
+      Date: Mon, 08 Mar 2026 11:00:00 +0000
+
+      How are you?
+    MAIL
+
+    fake_imap = Object.new
+    fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:select) { |_box| true }
+    fake_imap.define_singleton_method(:search) { |_query| [ 1, 2 ] }
+    fake_imap.define_singleton_method(:fetch) do |uid, _attrs|
+      if uid == 1
+        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("relay-cmd@sailmail.com"), "BODY[]" => relay_mail, "RFC822.SIZE" => relay_mail.bytesize }) ]
+      else
+        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("friend-msg@example.com"), "BODY[]" => normal_mail, "RFC822.SIZE" => normal_mail.bytesize }) ]
+      end
+    end
+    fake_imap.define_singleton_method(:logout) { true }
+    fake_imap.define_singleton_method(:disconnect) { true }
+
+    original_new = Net::IMAP.method(:new)
+    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
+      fake_imap
+    end
+
+    count = @account.collect_now
+    assert_equal 1, count
+
+    assert_not @account.collected_messages.exists?(imap_message_id: "relay-cmd@sailmail.com")
+    assert @account.collected_messages.exists?(imap_message_id: "friend-msg@example.com")
   ensure
     Net::IMAP.define_singleton_method(:new, original_new)
   end

@@ -8,6 +8,7 @@ class Vessel < ApplicationRecord
   has_many :mail_accounts, dependent: :destroy
   has_many :bundles, dependent: :destroy
   has_many :vessel_replies, dependent: :destroy
+  has_many :processed_relay_messages, dependent: :delete_all
   has_one :relay_account, dependent: :destroy
 
   accepts_nested_attributes_for :relay_account, update_only: true
