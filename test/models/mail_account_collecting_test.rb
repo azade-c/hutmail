@@ -84,6 +84,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     assert_equal "Hello crew", msg.stripped_body
     assert_equal 1, msg.attachments_metadata.size
     assert_equal "note.txt", msg.attachments_metadata.first["name"]
+    assert_equal false, msg.attachments_metadata.first["inline"]
   ensure
     Net::IMAP.define_singleton_method(:new, original_new)
   end
