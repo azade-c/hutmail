@@ -2,7 +2,7 @@
   <h1>Réglages</h1>
 </div>
 
-<%= form_with(model: @vessel, url: settings_path) do |f| %>
+<%= form_with(model: @vessel, url: vessel_settings_path(@vessel)) do |f| %>
   <% if @vessel.errors.any? %>
     <div class="card card--error">
       <div class="card__header txt-negative">Erreurs</div>
