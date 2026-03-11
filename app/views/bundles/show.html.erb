@@ -25,7 +25,7 @@
 </div>
 
 <% if @bundle.error_message.present? %>
-  <div class="card" style="--border-color: var(--color-negative);">
+  <div class="card card--error">
     <div class="card__header txt-negative">Erreur</div>
     <p class="txt-small"><%= @bundle.error_message %></p>
   </div>
