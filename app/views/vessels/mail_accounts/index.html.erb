@@ -7,7 +7,7 @@
 
 <% if @mail_accounts.any? %>
   <% @mail_accounts.each do |account| %>
-    <a href="<%= vessel_mail_account_path(@vessel, account) %>" class="card card--clickable">
+    <a href="<%= mail_account_path(account) %>" class="card card--clickable">
       <div class="card__header">
         <span class="badge"><%= account.short_code %></span>
         <span><%= account.name %></span>

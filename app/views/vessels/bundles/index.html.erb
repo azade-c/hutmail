@@ -7,7 +7,7 @@
 <% if @bundles.any? %>
   <% @bundles.each do |bundle| %>
     <div class="card">
-      <a href="<%= vessel_bundle_path(@vessel, bundle) %>">
+      <a href="<%= bundle_path(bundle) %>">
         <div class="flex align-center justify-space-between">
           <span class="badge badge--<%= bundle.status %>"><%= bundle.status %></span>
           <span class="txt-small">
