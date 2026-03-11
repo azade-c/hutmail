@@ -4,6 +4,33 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user_without_vessel = users(:no_vessel)
     @user_with_vessel = users(:one)
+    @vessel = vessels(:one)
+  end
+
+  test "index lists user vessels" do
+    sign_in_as @user_with_vessel
+    get vessels_path
+    assert_response :success
+    assert_select "a[href='#{vessel_path(@vessel)}']"
+  end
+
+  test "index shows empty state for user without vessel" do
+    sign_in_as @user_without_vessel
+    get vessels_path
+    assert_response :success
+    assert_select ".empty-state"
+  end
+
+  test "show displays vessel detail" do
+    sign_in_as @user_with_vessel
+    get vessel_path(@vessel)
+    assert_response :success
+  end
+
+  test "show rejects access to unrelated vessel" do
+    sign_in_as @user_without_vessel
+    get vessel_path(@vessel)
+    assert_redirected_to vessels_path
   end
 
   test "new shows form for user without vessel" do
@@ -29,9 +56,8 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
       post vessels_path, params: { vessel: valid_vessel_params(callsign: "ZZ9999") }
     end
 
-    assert_redirected_to dashboard_path
     vessel = Vessel.find_by(callsign: "ZZ9999")
-    assert vessel
+    assert_redirected_to vessel_path(vessel)
     assert vessel.relay_account
     assert_equal "imap.example.com", vessel.relay_account.imap_server
     assert_equal "captain", @user_without_vessel.crews.find_by(vessel:).role
@@ -44,7 +70,8 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
       post vessels_path, params: { vessel: valid_vessel_params(callsign: "SW0001", name: "Second Wind") }
     end
 
-    assert_redirected_to dashboard_path
+    vessel = Vessel.find_by(callsign: "SW0001")
+    assert_redirected_to vessel_path(vessel)
   end
 
   test "create rejects vessel without relay account" do

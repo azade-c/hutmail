@@ -1,0 +1,114 @@
+<div class="page-header">
+  <h1><%= @vessel.name.presence || @vessel.callsign %></h1>
+  <a href="<%= edit_vessel_settings_path(@vessel) %>" class="btn">Réglages</a>
+</div>
+
+<div class="stat-grid">
+  <div class="stat">
+    <div class="stat__value"><%= @pending_messages.size %></div>
+    <div class="stat__label">Messages en attente</div>
+  </div>
+  <div class="stat">
+    <div class="stat__value"><%= @mail_accounts.size %></div>
+    <div class="stat__label">Comptes mail</div>
+  </div>
+  <div class="stat">
+    <div class="stat__value"><%= Bundle.format_size(@budget_remaining) %></div>
+    <div class="stat__label">Budget restant (7j)</div>
+  </div>
+  <div class="stat">
+    <div class="stat__value"><%= @vessel.bundle_ratio %>%</div>
+    <div class="stat__label">Ratio bundle</div>
+  </div>
+</div>
+
+<% if @budget_remaining > 0 || @budget_consumed > 0 %>
+  <% total = @vessel.daily_budget_kb * 7 * 1024 %>
+  <% pct = total > 0 ? ((@budget_consumed.to_f / total) * 100).clamp(0, 100) : 0 %>
+  <div class="card margin-block-end">
+    <div class="card__header">Budget radio (7 jours glissants)</div>
+    <div class="txt-small txt-subtle">
+      <%= Bundle.format_size(@budget_consumed) %> utilisés sur <%= Bundle.format_size(total) %>
+    </div>
+    <div class="budget-bar">
+      <div class="budget-bar__fill budget-bar__fill--<%= pct > 90 ? "danger" : "ok" %>" data-width="<%= pct %>%"></div>
+    </div>
+  </div>
+<% end %>
+
+<div class="page-header">
+  <h2>Comptes mail</h2>
+  <a href="<%= new_vessel_mail_account_path(@vessel) %>" class="btn btn--link">Ajouter un compte</a>
+</div>
+
+<% if @mail_accounts.any? %>
+  <% @mail_accounts.each do |account| %>
+    <a href="<%= vessel_mail_account_path(@vessel, account) %>" class="card card--clickable">
+      <div class="card__header">
+        <span class="badge"><%= account.short_code %></span>
+        <span><%= account.name %></span>
+        <% if account.is_default %>
+          <span class="badge badge--sent">défaut</span>
+        <% end %>
+      </div>
+      <div class="txt-small txt-subtle">
+        IMAP : <%= account.imap_server %>:<%= account.imap_port %> ·
+        SMTP : <%= account.smtp_server %>:<%= account.smtp_port %>
+      </div>
+    </a>
+  <% end %>
+<% else %>
+  <div class="empty-state">
+    <p>Aucun compte mail configuré.</p>
+    <a href="<%= new_vessel_mail_account_path(@vessel) %>" class="btn btn--link">Ajouter votre premier compte</a>
+  </div>
+<% end %>
+
+<% if @pending_messages.any? %>
+  <div class="card">
+    <div class="card__header">Messages en attente</div>
+    <ul class="message-list">
+      <% @pending_messages.each do |msg| %>
+        <li class="message-item">
+          <div class="message-item__header">
+            <span class="message-item__code"><%= msg.hutmail_id %></span>
+            <span class="badge badge--pending">en attente</span>
+          </div>
+          <div>
+            <span class="message-item__from"><%= msg.from_name.presence || msg.from_address %></span>
+            <span class="message-item__subject">— <%= msg.subject %></span>
+          </div>
+          <div class="txt-x-small txt-subtle">
+            <%= msg.date&.strftime("%d %b %H:%M") %> · <%= Bundle.format_size(msg.stripped_size) %>
+            <% if msg.attachments_metadata.present? %>
+              · 📎 <%= msg.attachments_metadata.size %> pièce<%= msg.attachments_metadata.size > 1 ? "s" : "" %> jointe<%= msg.attachments_metadata.size > 1 ? "s" : "" %>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<% if @recent_bundles.any? %>
+  <div class="card">
+    <div class="page-header">
+      <div class="card__header">Envois récents</div>
+      <a href="<%= vessel_bundles_path(@vessel) %>" class="btn">Tous les envois</a>
+    </div>
+    <ul class="message-list">
+      <% @recent_bundles.each do |bundle| %>
+        <li class="message-item">
+          <a href="<%= vessel_bundle_path(@vessel, bundle) %>">
+            <span class="badge badge--<%= bundle.status %>"><%= bundle.status %></span>
+            <%= bundle.messages_count %> messages
+            · <%= Bundle.format_size(bundle.total_stripped_size || 0) %>
+            <% if bundle.sent_at %>
+              · envoyé le <%= bundle.sent_at.strftime("%d %b %H:%M") %>
+            <% end %>
+          </a>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

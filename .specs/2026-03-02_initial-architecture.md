@@ -663,6 +663,5 @@ Open source potential: thousands of boats circumnavigating each year have this p
 - Numbering: include the date + mailbox code for a stable ID. Format `DDmon.BB.N` (e.g.: `01mar.GM.1`). Zero-padded day. Year omitted if current year, otherwise `15jan26.GM.3`. BB = 2-letter mailbox code defined by user.
 - Messages not included in the current bundle (and not requested via GET) are automatically carried over to the next bundle. Nothing is lost.
 - Don't rely on IMAP read/unread status. The HutMail DB is the source of truth. Deduplication by Message-ID. IMAP marking as courtesy only.
-- No 35 KB per-message SailMail limit (unconfirmed). The only constraint is the time/bandwidth budget.
 - Already-read emails: `skip_already_read` option per account. Default true (if read at marina, not resent via radio). Configurable to false if the crew wants everything.
 - Configure the boat's SailMail address + the HutMail relay account (IMAP+SMTP) for communication with the boat. The relay is separate from monitored mail accounts.

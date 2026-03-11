@@ -9,9 +9,4 @@ class ApplicationController < ActionController::Base
       Current.user
     end
     helper_method :current_user
-
-    def current_vessel
-      @current_vessel ||= current_user&.primary_vessel
-    end
-    helper_method :current_vessel
 end

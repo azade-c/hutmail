@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,15 +13,10 @@
   <% if authenticated? %>
     <nav class="nav">
       <div class="nav__inner">
-        <a href="<%= dashboard_path %>" class="nav__logo">🦫 HutMail</a>
+        <a href="<%= vessels_path %>" class="nav__logo">🦫 HutMail</a>
         <div class="nav__links">
-          <% if current_vessel %>
-            <a href="<%= dashboard_path %>">Dashboard</a>
-            <a href="<%= mail_accounts_path %>">Accounts</a>
-            <a href="<%= bundles_path %>">Bundles</a>
-            <a href="<%= edit_settings_path %>">Settings</a>
-          <% end %>
-          <%= button_to "Log out", session_path, method: :delete, class: "btn btn--plain" %>
+          <a href="<%= vessels_path %>">Bateaux</a>
+          <%= button_to "Déconnexion", session_path, method: :delete, class: "btn btn--plain" %>
         </div>
       </div>
     </nav>

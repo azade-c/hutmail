@@ -1,14 +1,13 @@
 Rails.application.routes.draw do
-  resource :user, only: %i[ new create ]
+  resource :user, only: %i[new create]
   resource :session
 
-  resources :vessels, only: [ :new, :create ]
+  resources :vessels, only: %i[index new create show] do
+    resources :mail_accounts
+    resources :bundles, only: %i[index show]
+    resource :settings, only: %i[edit update]
+  end
 
-  resources :mail_accounts
-  resources :bundles, only: [ :index, :show ]
-
-  resource :settings, only: [ :edit, :update ]
-  resource :dashboard, only: :show, controller: "dashboard"
   resource :home, only: :show, controller: "home"
 
   get "up" => "rails/health#show", as: :rails_health_check

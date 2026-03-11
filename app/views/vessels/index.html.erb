@@ -1,0 +1,24 @@
+<div class="page-header">
+  <h1>Vos bateaux</h1>
+  <a href="<%= new_vessel_path %>" class="btn btn--link">Ajouter un bateau</a>
+</div>
+
+<% if @vessels.any? %>
+  <% @vessels.each do |vessel| %>
+    <a href="<%= vessel_path(vessel) %>" class="card card--clickable">
+      <div class="card__header">
+        <span class="txt-medium"><%= vessel.name.presence || vessel.callsign %></span>
+        <span class="badge"><%= vessel.callsign %></span>
+      </div>
+      <div class="txt-small txt-subtle">
+        <%= vessel.mail_accounts.size %> compte<%= vessel.mail_accounts.size == 1 ? "" : "s" %> mail
+        · <%= vessel.sailmail_address %>
+      </div>
+    </a>
+  <% end %>
+<% else %>
+  <div class="empty-state">
+    <p>Aucun bateau pour l'instant.</p>
+    <a href="<%= new_vessel_path %>" class="btn btn--link">Configurer votre premier bateau</a>
+  </div>
+<% end %>

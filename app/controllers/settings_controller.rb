@@ -1,14 +1,13 @@
 class SettingsController < ApplicationController
+  include VesselScoped
+
   def edit
-    @vessel = current_vessel
     @vessel.build_relay_account unless @vessel.relay_account
   end
 
   def update
-    @vessel = current_vessel
-
     if @vessel.update(settings_params)
-      redirect_to edit_settings_path, notice: "Settings saved."
+      redirect_to edit_vessel_settings_path(@vessel), notice: "Réglages enregistrés."
     else
       render :edit, status: :unprocessable_entity
     end

@@ -11,7 +11,6 @@ Des navigateurs ("les Castors") partent en tour du monde en voilier pour ~18 moi
 - **BLU/SailMail** : ~200 ko/jour, 90 min/semaine glissante, protocole PACTOR (compression Huffman intégrée)
 - **Iridium** : ~400 kbps mais 1.5€/min (backup uniquement)
 - **Airmail** : logiciel Windows côté bateau, pas de filtrage IMAP, tout ce qui arrive est téléchargé
-- **Limite par message** : 35 ko max (SailMail)
 
 ### Le problème
 

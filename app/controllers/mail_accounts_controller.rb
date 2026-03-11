@@ -1,8 +1,10 @@
 class MailAccountsController < ApplicationController
-  before_action :set_mail_account, only: [ :show, :edit, :update, :destroy ]
+  include VesselScoped
+
+  before_action :set_mail_account, only: %i[show edit update destroy]
 
   def index
-    @mail_accounts = current_vessel.mail_accounts
+    @mail_accounts = @vessel.mail_accounts
   end
 
   def show
@@ -10,14 +12,14 @@ class MailAccountsController < ApplicationController
   end
 
   def new
-    @mail_account = current_vessel.mail_accounts.build
+    @mail_account = @vessel.mail_accounts.build
   end
 
   def create
-    @mail_account = current_vessel.mail_accounts.build(mail_account_params)
+    @mail_account = @vessel.mail_accounts.build(mail_account_params)
 
     if @mail_account.save
-      redirect_to @mail_account, notice: "Account added."
+      redirect_to vessel_mail_account_path(@vessel, @mail_account), notice: "Compte ajouté."
     else
       render :new, status: :unprocessable_entity
     end
@@ -28,7 +30,7 @@ class MailAccountsController < ApplicationController
 
   def update
     if @mail_account.update(mail_account_params)
-      redirect_to @mail_account, notice: "Account updated."
+      redirect_to vessel_mail_account_path(@vessel, @mail_account), notice: "Compte mis à jour."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -36,12 +38,12 @@ class MailAccountsController < ApplicationController
 
   def destroy
     @mail_account.destroy
-    redirect_to mail_accounts_path, notice: "Account removed."
+    redirect_to vessel_mail_accounts_path(@vessel), notice: "Compte supprimé."
   end
 
   private
     def set_mail_account
-      @mail_account = current_vessel.mail_accounts.find(params[:id])
+      @mail_account = @vessel.mail_accounts.find(params[:id])
     end
 
     def mail_account_params

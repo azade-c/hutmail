@@ -4,30 +4,30 @@
     <%= @mail_account.name %>
   </h1>
   <div class="flex gap">
-    <a href="<%= edit_mail_account_path(@mail_account) %>" class="btn">Edit</a>
-    <%= button_to "Delete", mail_account_path(@mail_account), method: :delete,
+    <a href="<%= edit_mail_account_path(@mail_account) %>" class="btn">Modifier</a>
+    <%= button_to "Supprimer", mail_account_path(@mail_account), method: :delete,
         class: "btn btn--negative",
-        data: { turbo_confirm: "Delete this account and all its messages?" } %>
+        data: { turbo_confirm: "Supprimer ce compte et tous ses messages ?" } %>
   </div>
 </div>
 
 <div class="stat-grid">
   <div class="stat">
     <div class="stat__value"><%= @mail_account.collected_messages.pending.count %></div>
-    <div class="stat__label">Pending</div>
+    <div class="stat__label">En attente</div>
   </div>
   <div class="stat">
     <div class="stat__value"><%= @mail_account.collected_messages.sent.count %></div>
-    <div class="stat__label">Sent</div>
+    <div class="stat__label">Envoyés</div>
   </div>
   <div class="stat">
     <div class="stat__value"><%= @mail_account.collected_messages.count %></div>
-    <div class="stat__label">Total collected</div>
+    <div class="stat__label">Total collectés</div>
   </div>
 </div>
 
 <div class="card">
-  <div class="card__header">Recent messages</div>
+  <div class="card__header">Messages récents</div>
 
   <% if @messages.any? %>
     <ul class="message-list">
@@ -48,6 +48,6 @@
       <% end %>
     </ul>
   <% else %>
-    <div class="empty-state">No messages collected yet.</div>
+    <div class="empty-state">Aucun message collecté pour l'instant.</div>
   <% end %>
 </div>

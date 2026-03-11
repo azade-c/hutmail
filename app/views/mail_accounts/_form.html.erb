@@ -1,7 +1,7 @@
 <%= form_with(model: mail_account) do |f| %>
   <% if mail_account.errors.any? %>
     <div class="card" style="--border-color: var(--color-negative); margin-block-end: var(--block-space);">
-      <div class="card__header txt-negative">Errors</div>
+      <div class="card__header txt-negative">Erreurs</div>
       <ul>
         <% mail_account.errors.full_messages.each do |msg| %>
           <li class="txt-small"><%= msg %></li>
@@ -12,19 +12,19 @@
 
   <div class="form-row">
     <div class="form-group">
-      <label>Account name</label>
-      <%= f.text_field :name, class: "input", placeholder: "Personal Gmail" %>
+      <label>Nom du compte</label>
+      <%= f.text_field :name, class: "input", placeholder: "Gmail perso" %>
     </div>
     <div class="form-group">
-      <label>Short code (2 letters)</label>
+      <label>Code court (2 lettres)</label>
       <%= f.text_field :short_code, class: "input", placeholder: "GM", maxlength: 2, style: "max-inline-size: 6ch; text-transform: uppercase;" %>
     </div>
   </div>
 
-  <h2 class="txt-medium margin-block-start">Receiving (IMAP)</h2>
+  <h2 class="txt-medium margin-block-start">Réception (IMAP)</h2>
   <div class="form-row">
     <div class="form-group">
-      <label>IMAP server</label>
+      <label>Serveur IMAP</label>
       <%= f.text_field :imap_server, class: "input", placeholder: "imap.gmail.com" %>
     </div>
     <div class="form-group">
@@ -34,24 +34,24 @@
   </div>
   <div class="form-row">
     <div class="form-group">
-      <label>Username</label>
+      <label>Identifiant</label>
       <%= f.text_field :imap_username, class: "input", placeholder: "user@gmail.com" %>
     </div>
     <div class="form-group">
-      <label>Password</label>
+      <label>Mot de passe</label>
       <%= f.password_field :imap_password, class: "input" %>
     </div>
   </div>
   <div class="form-group">
     <label>
-      <%= f.check_box :imap_use_ssl %> Use SSL
+      <%= f.check_box :imap_use_ssl %> Utiliser SSL
     </label>
   </div>
 
-  <h2 class="txt-medium margin-block-start">Sending (SMTP)</h2>
+  <h2 class="txt-medium margin-block-start">Envoi (SMTP)</h2>
   <div class="form-row">
     <div class="form-group">
-      <label>SMTP server</label>
+      <label>Serveur SMTP</label>
       <%= f.text_field :smtp_server, class: "input", placeholder: "smtp.gmail.com" %>
     </div>
     <div class="form-group">
@@ -61,34 +61,34 @@
   </div>
   <div class="form-row">
     <div class="form-group">
-      <label>Username</label>
+      <label>Identifiant</label>
       <%= f.text_field :smtp_username, class: "input", placeholder: "user@gmail.com" %>
     </div>
     <div class="form-group">
-      <label>Password</label>
+      <label>Mot de passe</label>
       <%= f.password_field :smtp_password, class: "input" %>
     </div>
   </div>
   <div class="form-group">
     <label>
-      <%= f.check_box :smtp_use_starttls %> Use STARTTLS
+      <%= f.check_box :smtp_use_starttls %> Utiliser STARTTLS
     </label>
   </div>
 
   <h2 class="txt-medium margin-block-start">Options</h2>
   <div class="form-group">
     <label>
-      <%= f.check_box :skip_already_read %> Skip messages already read (marina wifi)
+      <%= f.check_box :skip_already_read %> Ignorer les messages déjà lus (wifi marina)
     </label>
   </div>
   <div class="form-group">
     <label>
-      <%= f.check_box :is_default %> Default account for replies
+      <%= f.check_box :is_default %> Compte par défaut pour les réponses
     </label>
   </div>
 
   <div class="form-actions">
     <%= f.submit class: "btn btn--link" %>
-    <a href="<%= mail_accounts_path %>" class="btn">Cancel</a>
+    <a href="<%= mail_accounts_path %>" class="btn">Annuler</a>
   </div>
 <% end %>
