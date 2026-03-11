@@ -35,6 +35,7 @@
       </div>
     <% end %>
 
+    <%= content_for?(:breadcrumbs) ? yield(:breadcrumbs) : nil %>
     <%= yield %>
   </main>
 </body>

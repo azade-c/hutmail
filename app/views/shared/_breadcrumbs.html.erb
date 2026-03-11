@@ -1,0 +1,12 @@
+<nav class="breadcrumbs" aria-label="Fil d'Ariane">
+  <% crumbs.each_with_index do |(label, url), i| %>
+    <% if i > 0 %>
+      <span class="breadcrumbs__sep" aria-hidden="true">›</span>
+    <% end %>
+    <% if url && i < crumbs.size - 1 %>
+      <a href="<%= url %>" class="breadcrumbs__link"><%= label %></a>
+    <% else %>
+      <span class="breadcrumbs__current" aria-current="page"><%= label %></span>
+    <% end %>
+  <% end %>
+</nav>
