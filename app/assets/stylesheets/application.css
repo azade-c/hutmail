@@ -1,11 +1,2 @@
-/* HutMail 🦫 — Layers: reset → base → components → modules → utilities */
-@import "_global.css";
-@import "reset.css";
-@import "base.css";
-@import "buttons.css";
-@import "inputs.css";
-@import "utilities.css";
-@import "nav.css";
-@import "flash.css";
-@import "main.css";
-@import "auth.css";
+/* HutMail 🦫 — All stylesheets auto-loaded by Propshaft via :app */
+/* Layer order declared in _global.css: reset → base → components → modules → utilities */
