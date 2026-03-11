@@ -27,7 +27,7 @@ module CollectedMessage::Stripping
       text = normalize_whitespace(text)
 
       text = append_placeholder(text, PLACEHOLDER_QUOTED) if had_quoted
-      text = prepend_image_placeholders(text, mail_message)
+      text = place_inline_image_placeholders(text, mail_message)
 
       text
     end
@@ -101,7 +101,7 @@ module CollectedMessage::Stripping
     end
 
     def normalize_reply_line(line)
-      line.to_s.sub(/\A(?:>\s*)+/, "").strip
+      line.to_s.tr("\u00A0", " ").sub(/\A(?:>\s*)+/, "").strip
     end
 
     def remove_quoted_replies(text)
@@ -173,16 +173,102 @@ module CollectedMessage::Stripping
       "#{text}\n\n#{placeholder}"
     end
 
-    def prepend_image_placeholders(text, mail_message)
+    def place_inline_image_placeholders(text, mail_message)
       images = collect_inline_images(mail_message)
       return text if images.empty?
 
-      labels = images.map do |img|
-        "[image : #{img[:name]} (#{Bundle.format_size(img[:size])})]"
+      positioned_text = position_image_placeholders_from_html(text, mail_message, images)
+      return positioned_text if positioned_text
+
+      prepend_image_placeholders(text, images)
+    end
+
+    def position_image_placeholders_from_html(text, mail_message, images)
+      html = extract_html(mail_message)
+      return if html.blank?
+
+      html_text = html_to_text(replace_inline_images_in_html(html, images))
+      html_lines = normalize_whitespace(html_text).lines(chomp: true)
+      text_lines = text.lines(chomp: true)
+      inserted = 0
+
+      html_lines.each_with_index do |line, index|
+        next unless image_placeholder?(line)
+        next if text_lines.include?(line)
+
+        insert_at = find_placeholder_position(text_lines, html_lines, index)
+        next unless insert_at
+
+        text_lines.insert(insert_at, line, "")
+        inserted += 1
       end
 
-      prefix = labels.join("\n")
+      if inserted.positive?
+        normalize_whitespace(text_lines.join("\n"))
+      end
+    end
+
+    def replace_inline_images_in_html(html, images)
+      html.gsub(/<img\b[^>]*src=(['"])cid:([^'"]+)\1[^>]*>/i) do |tag|
+        cid = normalize_content_id(Regexp.last_match(2))
+        image = images.find { |img| img[:cid] == cid }
+
+        image ? image_placeholder(image) : tag
+      end
+    end
+
+    def find_placeholder_position(text_lines, html_lines, placeholder_index)
+      before_anchor = html_lines[0...placeholder_index].reverse.find(&:present?)
+      after_anchor = html_lines[(placeholder_index + 1)..].to_a.find(&:present?)
+
+      if before_anchor
+        before_index = find_anchor_line(text_lines, before_anchor)
+        return insertion_index_after(text_lines, before_index) if before_index
+      end
+
+      if after_anchor
+        after_index = find_anchor_line(text_lines, after_anchor)
+        after_index if after_index
+      end
+    end
+
+    def find_anchor_line(lines, anchor)
+      normalized_anchor = comparable_line(anchor)
+
+      lines.index do |line|
+        comparable_line(line) == normalized_anchor
+      end
+    end
+
+    def insertion_index_after(lines, index)
+      insert_at = index + 1
+      insert_at += 1 while insert_at < lines.length && lines[insert_at].blank?
+      insert_at
+    end
+
+    def comparable_line(line)
+      line.to_s.tr("\u00A0", " ").squish
+    end
+
+    def prepend_image_placeholders(text, images)
+      prefix = images.map { |img| image_placeholder(img) }.join("\n")
       text.empty? ? prefix : "#{prefix}\n\n#{text}"
+    end
+
+    def image_placeholder(image)
+      "[image : #{image[:name]} (#{Bundle.format_size(image[:size])})]"
+    end
+
+    def image_placeholder?(line)
+      line.start_with?("[image : ")
+    end
+
+    def extract_html(mail_message)
+      if mail_message.html_part
+        mail_message.html_part.decoded.to_s
+      elsif mail_message.content_type&.include?("text/html")
+        mail_message.body.decoded.to_s
+      end
     end
 
     def collect_inline_images(mail_message)
@@ -193,9 +279,14 @@ module CollectedMessage::Stripping
 
         name = part.filename.presence || "image"
         size = part.body.decoded.bytesize rescue 0
+        cid = normalize_content_id(part.content_id)
 
-        { name:, size: }
+        { name:, size:, cid: }
       end.uniq
+    end
+
+    def normalize_content_id(content_id)
+      content_id.to_s.delete_prefix("<").delete_suffix(">")
     end
 
     def inline_image?(part)

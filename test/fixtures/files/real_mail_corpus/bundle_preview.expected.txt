@@ -1,0 +1,66 @@
+=== HUTMAIL <timestamp> ===
+
+==[ CR — Crew (crew@example.test) ]==
+
+[01mar.CR.1] From: Mailo | Bienvenue sur Mailo | 01mar 20:44
+Bonjour crew@example.test
+
+Nous vous remercions pour votre confiance et vous souhaitons la bienvenue sur Mailo.
+
+Votre compte est maintenant actif. Vous pouvez dès à présent envoyer et recevoir des messages avec votre adresse e-mail crew@example.test, utiliser tous les services disponibles à l'adresse www.mailo.com, et installer l'app Mailo gratuite, disponible sur les principaux magasins d'applications.
+
+Par le lanceur d'applications en haut à gauche du webmail, ou le menu dans la version mobile ou l'app Mailo, vous pouvez accéder à toutes les applications Mailo :
+
+- votre tableau de bord
+- votre messagerie
+- votre agenda
+- votre carnet d'adresses
+- votre disque virtuel et vos albums photo
+- plus d'applications : tâches, notes, porte-clés, signets...
+
+Vous pouvez accéder aux informations de votre compte et en modifier les réglages dans le menu Options (en cliquant sur la roue dentée en haut à droite dans le webmail, ou dans le menu de l'app Mailo).
+
+Organisez votre boîte aux lettres
+
+Pour faciliter la gestion de votre boîte aux lettres, les newsletters et e-mails commerciaux sont automatiquement placés à la réception dans le dossier Newsletters, et les notifications de réseaux sociaux dans le dossier Réseaux sociaux. Si vous désirez désactiver ce classement, créer vos propres filtres ou activer un répondeur, choisissez Réception d'e-mails dans le menu Options.
+
+En choisissant Espaces Mailo en haut à droite du webmail (ou dans le menu Options de l'app), vous pouvez retrouver votre espace Mailo et communiquer avec ses autres membres.
+
+Vous pouvez nous contacter à l'adresse premium@mailo.com pour nous faire part de vos remarques, problèmes et suggestions concernant Mailo. Nous sommes à votre écoute.
+
+Bien cordialement
+
+L'équipe Mailo
+premium@mailo.com
+
+[01mar.CR.2] From: SENDER Sam | Test 1 sur CrewInbox | 01mar 20:44
+Sam Sender
+Harbor Co
+Port City
++00.00.00.00.00
+
+[01mar.CR.3] From: sender@example.test | Des nouvelles du port | 01mar 21:39
+Voici un message de nouvelles etc.
+
+Et c'est beau, il ne pleut pas
+
+Sam Sender
+
+[01mar.CR.4] From: sender@example.test | Re: Sailmail montant 1 | 01mar 21:41
+Voici un test avec réponse
+
+et dessus des blocs
+
+Sam Sender
+
+[…message précédent…]
+
+[01mar.CR.5] From: sender@example.test | Message avec une image en PJ et en corps de texte | 01mar 21:50
+📎 inline-photo.jpg (150.8 KB), chart.jpg (66.5 KB)
+= ci-dessous une image dans le corps :
+
+[image : inline-photo.jpg (150.8 KB)]
+
+Sam Sender
+
+=== END ===

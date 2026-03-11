@@ -1,0 +1,85 @@
+Return-Path: <sender@example.test>
+Received: from mailo.com [213.182.54.12]
+	by mx141-2.in.mailobj.net [192.168.90.192] with ESMTP
+	via ip-3.mailobj.net [213.182.54.3]
+	for <crew@example.test>; Sun,  1 Mar 2026 22:41:09 +0100 (CET)
+X-EA-Recv: time=1772401269;spf=2;dmarc=1;block(0,0,0,0)=0;adbook=0;
+	antispam=0
+Received: by www.netcourrier.com with http webmail; Sun,  1 Mar 2026
+  22:41:08 +0100 (CET)
+X-EA-Auth: 6cOJZK9mL70MKqh6KuDvrcSnIpJCYERKFWlXzmBeZ3DdnLvMIaYUXQlNTtFrkx792U9SCQZD5nUAbi+yrrD/0YceECqG1BF+
+From: sender@example.test
+To: "Family Crew" <crew@example.test>
+Date: Sun,  1 Mar 2026 22:41:08 +0100 (CET)
+Subject: Re: Sailmail montant 1
+X-Priority: 3
+MIME-Version: 1.0
+X-Mailer: COMS/EA24.10/r20260116
+Message-ID: <ea-mime-69a4b274-1a8b-7aa77c46@www.netcourrier.com>
+In-Reply-To: <ea-mime-69a4b22c-1339-45b1a40a@www.netcourrier.com>
+Content-Type: multipart/alternative;
+ boundary="----=_NextPart_001_69a4b274_1a8b_2085b181"
+
+------=_NextPart_001_69a4b274_1a8b_2085b181
+Content-Type: text/plain;
+ charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Voici un test avec r=C3=A9ponse
+
+et dessus des blocs
+
+
+
+
+
+
+Sam Sender
+
+
+
+
+De=C2=A0: relay@example.test
+=C3=80=C2=A0: Family Crew <crew@example.test>
+Objet=C2=A0: Sailmail montant 1
+Date=C2=A0: 01/03/2026 22:39:56 Europe/Paris
+
+
+
+
+
+
+
+
+
+Sam Sender
+
+
+
+
+
+------=_NextPart_001_69a4b274_1a8b_2085b181
+Content-Type: text/html;
+ charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<font face=3D"Verdana" size=3D"2"><div align=3D"justify">Voici un test avec=
+ r=C3=A9ponse</div><div align=3D"justify">et dessus des blocs</div></font><=
+br><br><div><font face=3D"Verdana,Arial,Helvetica,sans-serif"><br></font></=
+div><div><font face=3D"Verdana,Arial,Helvetica,sans-serif"><br></font></div=
+><div><font size=3D"1" face=3D"Verdana,Arial,Helvetica,sans-serif">Sam Sender</font></div><div><font face=3D"Verdana,Arial,Helvetica,sans-serif"><br=
+></font></div><br><blockquote type=3D"cite" style=3D"margin:0 0 0 0.5em;bor=
+der-left:1px #00f solid;padding-left:1em;">De=C2=A0: relay@example.test<br>
+=C3=80=C2=A0: Family Crew &lt;crew@example.test&gt;<br>
+Objet=C2=A0: Sailmail montant 1<br>
+Date=C2=A0: 01/03/2026 22:39:56 Europe/Paris<br>
+<br>
+<font face=3D"Verdana" size=3D"2"><div align=3D"justify"><br></div></font>=
+<br><br><div><font face=3D"Verdana,Arial,Helvetica,sans-serif"><br></font><=
+/div><div><font face=3D"Verdana,Arial,Helvetica,sans-serif"><br></font></di=
+v><div><font size=3D"1" face=3D"Verdana,Arial,Helvetica,sans-serif">Sam Sender</font></div><div><font face=3D"Verdana,Arial,Helvetica,sans-serif"><b=
+r></font></div></blockquote>
+
+------=_NextPart_001_69a4b274_1a8b_2085b181--
+
+

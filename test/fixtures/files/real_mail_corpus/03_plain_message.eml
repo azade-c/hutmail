@@ -1,0 +1,51 @@
+Return-Path: <sender@example.test>
+Received: from mailo.com [213.182.54.8]
+	by mx141-2.in.mailobj.net [192.168.90.192] with ESMTP
+	via ip-3.mailobj.net [213.182.54.3]
+	for <crew@example.test>; Sun,  1 Mar 2026 22:39:20 +0100 (CET)
+X-EA-Recv: time=1772401160;spf=2;dmarc=1;block(0,0,0,0)=0;adbook=0;
+	antispam=0
+Received: by www.netcourrier.com with http webmail; Sun,  1 Mar 2026
+  22:39:19 +0100 (CET)
+X-EA-Auth: 1eOGoiv8dcYhbSAx+T/657sjo3iXwNMX0+HIKvdkTL4+EacVg7MfW2pQa6nVHcK1sSuAeiqbJzHjfWTz7FKgyZo73v4I5ikU
+From: sender@example.test
+To: "Family Crew" <crew@example.test>
+Date: Sun,  1 Mar 2026 22:39:19 +0100 (CET)
+Subject: Des nouvelles du port
+X-Priority: 3
+MIME-Version: 1.0
+X-Mailer: COMS/EA24.10/r20260116
+Message-ID: <ea-mime-69a4b207-f30-1e325d0b@www.netcourrier.com>
+Content-Type: multipart/alternative;
+ boundary="----=_NextPart_001_69a4b207_f30_e09c95e"
+
+------=_NextPart_001_69a4b207_f30_e09c95e
+Content-Type: text/plain;
+ charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Voici un message de nouvelles etc.
+
+Et c'est beau, il ne pleut pas
+
+
+
+Sam Sender
+
+
+
+
+
+
+
+
+
+------=_NextPart_001_69a4b207_f30_e09c95e
+Content-Type: text/html;
+ charset="UTF-8"
+
+<font face="Verdana" size="2"><div align="justify">Voici un message de nouvelles etc.</div><div align="justify">Et c'est beau, il ne pleut pas</div></font><div><font face="Verdana,Arial,Helvetica,sans-serif"><br></font></div><div><font size="1" face="Verdana,Arial,Helvetica,sans-serif">Sam Sender</font></div><div><font face="Verdana,Arial,Helvetica,sans-serif"><br></font></div><div><font face="Verdana,Arial,Helvetica,sans-serif"><br></font></div><div><img src="https://images.mailo.com/images/mailo/fr/include/web2/style_green/smileys/kiss.gif" referrerpolicy="no-referrer" referrerpolicy="no-referrer"><img src="https://images.mailo.com/images/mailo/fr/include/web2/style_green/smileys/devil.gif" referrerpolicy="no-referrer" referrerpolicy="no-referrer"><img src="https://images.mailo.com/images/mailo/fr/include/web2/style_green/smileys/heart.gif" referrerpolicy="no-referrer" referrerpolicy="no-referrer"><font face="Verdana,Arial,Helvetica,sans-serif"><br></font></div>
+
+------=_NextPart_001_69a4b207_f30_e09c95e--
+
+
