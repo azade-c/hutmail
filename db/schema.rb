@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_170153) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -66,19 +66,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
 
   create_table "mail_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "imap_encryption", default: "ssl", null: false
     t.string "imap_password"
     t.integer "imap_port"
     t.string "imap_server"
-    t.boolean "imap_use_ssl"
     t.string "imap_username"
     t.boolean "is_default", default: false
     t.string "name"
     t.string "short_code"
     t.boolean "skip_already_read", default: true
+    t.string "smtp_encryption", default: "ssl", null: false
     t.string "smtp_password"
     t.integer "smtp_port"
     t.string "smtp_server"
-    t.boolean "smtp_use_starttls"
     t.string "smtp_username"
     t.datetime "updated_at", null: false
     t.integer "vessel_id", null: false
@@ -86,17 +86,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
     t.index ["vessel_id"], name: "index_mail_accounts_on_vessel_id"
   end
 
+  create_table "processed_relay_messages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "imap_message_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "vessel_id", null: false
+    t.index ["vessel_id", "imap_message_id"], name: "idx_processed_relay_dedup", unique: true
+    t.index ["vessel_id"], name: "index_processed_relay_messages_on_vessel_id"
+  end
+
   create_table "relay_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "imap_encryption", default: "ssl", null: false
     t.string "imap_password"
     t.integer "imap_port"
     t.string "imap_server"
-    t.boolean "imap_use_ssl"
     t.string "imap_username"
+    t.string "smtp_encryption", default: "ssl", null: false
     t.string "smtp_password"
     t.integer "smtp_port"
     t.string "smtp_server"
-    t.boolean "smtp_use_starttls"
     t.string "smtp_username"
     t.datetime "updated_at", null: false
     t.integer "vessel_id", null: false
@@ -150,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_120238) do
   add_foreign_key "crews", "users"
   add_foreign_key "crews", "vessels"
   add_foreign_key "mail_accounts", "vessels"
+  add_foreign_key "processed_relay_messages", "vessels"
   add_foreign_key "relay_accounts", "vessels"
   add_foreign_key "sessions", "users"
   add_foreign_key "vessel_replies", "mail_accounts"

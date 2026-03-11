@@ -1,0 +1,78 @@
+module Vessel::Dispatching
+  extend ActiveSupport::Concern
+
+  class_methods do
+    def dispatch_all_now
+      find_each do |vessel|
+        vessel.dispatch_now
+      rescue => e
+        Rails.logger.error "Vessel##{vessel.id} dispatch failed: #{e.message}"
+      end
+    end
+  end
+
+  def dispatch_now
+    bundle = compose_next_bundle
+    bundle&.deliver!
+    bundle
+  end
+
+  def preview_dispatch
+    pending = pending_messages
+    return nil if pending.empty?
+
+    included, remaining = split_by_budget(pending)
+    bundle = bundles.build(status: "preview")
+    bundle.compose_text(included, remaining)
+    bundle
+  end
+
+  def dispatch_get_response(messages)
+    remaining = CollectedMessage.pending
+      .joins(:mail_account)
+      .where(mail_accounts: { vessel_id: id })
+      .where.not(id: messages.pluck(:id))
+      .oldest_first
+
+    bundle = bundles.create!(status: "draft")
+    bundle.compose!(messages, remaining)
+    bundle.deliver!
+    bundle
+  end
+
+  private
+    def pending_messages
+      CollectedMessage.pending
+        .joins(:mail_account)
+        .where(mail_accounts: { vessel_id: id })
+        .includes(:mail_account)
+        .oldest_first
+    end
+
+    def split_by_budget(messages)
+      included = []
+      remaining = []
+      consumed = 0
+
+      messages.each do |msg|
+        if consumed + msg.stripped_size <= message_budget
+          included << msg
+          consumed += msg.stripped_size
+        else
+          remaining << msg
+        end
+      end
+
+      [ included, remaining ]
+    end
+
+    def compose_next_bundle
+      pending = pending_messages
+      return nil if pending.empty?
+
+      included, remaining = split_by_budget(pending)
+      bundle = bundles.create!(status: "draft")
+      bundle.compose!(included, remaining)
+      bundle
+    end
+end

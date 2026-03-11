@@ -28,65 +28,7 @@
   </div>
 
   <%= f.fields_for :relay_account do |ra| %>
-    <div class="card">
-      <h2 class="card__header">Compte relais</h2>
-      <p class="txt-small txt-subtle margin-block-end">Ce compte fait le pont entre HutMail et le bateau.</p>
-      <div class="relay-columns">
-        <div class="relay-column">
-          <h3 class="txt-small txt-subtle margin-block-end-half">IMAP (réception)</h3>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Serveur</label>
-              <%= ra.text_field :imap_server, class: "input" %>
-            </div>
-            <div class="form-group">
-              <label>Port</label>
-              <%= ra.number_field :imap_port, class: "input", value: @vessel.relay_account.imap_port || 993 %>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Identifiant</label>
-              <%= ra.text_field :imap_username, class: "input" %>
-            </div>
-            <div class="form-group">
-              <label>Mot de passe</label>
-              <%= ra.password_field :imap_password, class: "input" %>
-            </div>
-          </div>
-          <div class="form-group">
-            <label><%= ra.check_box :imap_use_ssl %> Utiliser SSL</label>
-          </div>
-        </div>
-
-        <div class="relay-column">
-          <h3 class="txt-small txt-subtle margin-block-end-half">SMTP (envoi)</h3>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Serveur</label>
-              <%= ra.text_field :smtp_server, class: "input" %>
-            </div>
-            <div class="form-group">
-              <label>Port</label>
-              <%= ra.number_field :smtp_port, class: "input", value: @vessel.relay_account.smtp_port || 587 %>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Identifiant</label>
-              <%= ra.text_field :smtp_username, class: "input" %>
-            </div>
-            <div class="form-group">
-              <label>Mot de passe</label>
-              <%= ra.password_field :smtp_password, class: "input" %>
-            </div>
-          </div>
-          <div class="form-group">
-            <label><%= ra.check_box :smtp_use_starttls %> Utiliser STARTTLS</label>
-          </div>
-        </div>
-      </div>
-    </div>
+    <%= render "shared/relay_account_fields", f: ra %>
   <% end %>
 
   <div class="form-actions">

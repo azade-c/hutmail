@@ -19,8 +19,8 @@ class SettingsController < ApplicationController
         :name, :sailmail_address,
         :bundle_ratio, :daily_budget_kb,
         relay_account_attributes: %i[
-          imap_server imap_port imap_username imap_password imap_use_ssl
-          smtp_server smtp_port smtp_username smtp_password smtp_use_starttls
+          imap_server imap_port imap_username imap_password imap_encryption
+          smtp_server smtp_port smtp_username smtp_password smtp_encryption
         ],
       )
     end

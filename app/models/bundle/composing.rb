@@ -14,6 +14,12 @@ module Bundle::Composing
   end
 
   def compose!(included_messages, remaining_messages)
+    compose_text(included_messages, remaining_messages)
+    save!
+    included_messages.each { |msg| msg.update!(bundle: self) }
+  end
+
+  def compose_text(included_messages, remaining_messages)
     screener_text = compose_screener(remaining_messages, vessel.screener_budget)
 
     timestamp = Time.current.strftime("%d%b %H:%M").downcase
@@ -33,15 +39,13 @@ module Bundle::Composing
     lines << screener_text if screener_text.present?
     lines << "=== END ==="
 
-    update!(
-      bundle_text: lines.join("\n"),
-      total_raw_size: included_messages.sum(&:raw_size),
-      total_stripped_size: included_messages.sum(&:stripped_size),
-      messages_count: included_messages.size,
-      remaining_count: remaining_messages.size
-    )
+    self.bundle_text = lines.join("\n")
+    self.total_raw_size = included_messages.sum(&:raw_size)
+    self.total_stripped_size = included_messages.sum(&:stripped_size)
+    self.messages_count = included_messages.size
+    self.remaining_count = remaining_messages.size
 
-    included_messages.each { |msg| msg.update!(bundle: self) }
+    self
   end
 
   private

@@ -88,7 +88,7 @@ module Vessel::Commanding
     def execute_get(args, results)
       messages = find_messages_by_wildcard(args)
       if messages.any?
-        build_and_deliver_get_response(messages)
+        dispatch_get_response(messages)
         results << { command: "GET #{args}", status: :ok, message: "#{messages.size} messages sent" }
       else
         results << { command: "GET #{args}", status: :error, message: "No matching pending messages" }

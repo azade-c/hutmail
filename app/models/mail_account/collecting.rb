@@ -46,16 +46,18 @@ module MailAccount::Collecting
         end
 
         uids.each do |uid|
-          envelope = imap.fetch(uid, [ "ENVELOPE", "RFC822", "RFC822.SIZE" ])&.first
+          envelope = imap.fetch(uid, [ "ENVELOPE", "BODY.PEEK[]", "RFC822.SIZE" ])&.first
           next unless envelope
 
           message_id = extract_message_id(envelope)
           next if message_id.blank?
           next if collected_messages.exists?(imap_message_id: message_id)
 
-          raw = envelope.attr["RFC822"]
+          raw = envelope.attr["BODY[]"]
           raw_size = envelope.attr["RFC822.SIZE"] || raw&.bytesize || 0
           mail = Mail.new(raw)
+
+          next if from_relay_address?(mail)
 
           stripped = CollectedMessage.strip_mail(mail)
           attachments_meta = extract_attachments_metadata(mail)
@@ -86,13 +88,11 @@ module MailAccount::Collecting
       []
     end
 
-    def with_imap_connection
-      imap = Net::IMAP.new(imap_server, port: imap_port, ssl: imap_use_ssl)
-      imap.login(imap_username, imap_password)
-      yield imap
-    ensure
-      imap&.logout rescue nil
-      imap&.disconnect rescue nil
+    def from_relay_address?(mail)
+      sailmail = vessel.sailmail_address
+      return false if sailmail.blank?
+
+      mail.from&.any? { |f| f.casecmp?(sailmail) }
     end
 
     def extract_message_id(fetch_data)
