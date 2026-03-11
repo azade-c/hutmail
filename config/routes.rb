@@ -3,7 +3,9 @@ Rails.application.routes.draw do
   resource :session
 
   resources :vessels, only: %i[index new create show] do
-    resources :mail_accounts
+    resources :mail_accounts do
+      resource :collection, only: :create
+    end
     resources :bundles, only: %i[index show]
     resource :dispatch_preview, only: :show
     resource :settings, only: %i[edit update]

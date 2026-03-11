@@ -76,6 +76,14 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     assert_equal "", CollectedMessage.strip_mail(mail)
   end
 
+  test "extracts body when content_type header is missing" do
+    raw = "From: bob@test\nSubject: hi\n\nPlain body without content-type"
+    mail = Mail.new(raw)
+
+    result = CollectedMessage.strip_mail(mail)
+    assert_equal "Plain body without content-type", result
+  end
+
   test "removes French reply block De/À/Objet/Date" do
     body = <<~TEXT
       Salut les gars !

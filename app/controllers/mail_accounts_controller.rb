@@ -8,7 +8,7 @@ class MailAccountsController < ApplicationController
   end
 
   def show
-    @messages = @mail_account.collected_messages.oldest_first.limit(50)
+    @messages = @mail_account.collected_messages.ordered.limit(50)
   end
 
   def new

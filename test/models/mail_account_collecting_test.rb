@@ -140,6 +140,56 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     Net::IMAP.define_singleton_method(:new, original_new)
   end
 
+  test "recollect! deletes pending messages and re-fetches" do
+    @account.collected_messages.create!(
+      imap_uid: 700, imap_message_id: "pending-old@test",
+      from_address: "old@test", status: "pending",
+      date: Time.current, collected_at: Time.current,
+      raw_size: 100, stripped_body: "old body", stripped_size: 8
+    )
+    @account.collected_messages.create!(
+      imap_uid: 701, imap_message_id: "sent-keep@test",
+      from_address: "keep@test", status: "sent",
+      date: Time.current, collected_at: Time.current,
+      raw_size: 100, stripped_body: "keep body", stripped_size: 9
+    )
+
+    raw_mail = <<~MAIL
+      From: Bob <bob@example.com>
+      To: test@example.com
+      Subject: Re-fetched
+      Date: Mon, 08 Mar 2026 10:00:00 +0000
+
+      Fresh stripped body
+    MAIL
+
+    fake_imap = Object.new
+    fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:select) { |_box| true }
+    fake_imap.define_singleton_method(:search) { |_query| [ 1 ] }
+    fake_imap.define_singleton_method(:fetch) do |_uid, _attrs|
+      [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("pending-old@test"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
+    end
+    fake_imap.define_singleton_method(:logout) { true }
+    fake_imap.define_singleton_method(:disconnect) { true }
+
+    original_new = Net::IMAP.method(:new)
+    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
+      fake_imap
+    end
+
+    @account.recollect!
+
+    assert @account.collected_messages.exists?(imap_message_id: "sent-keep@test"),
+      "sent messages must be preserved"
+    refetched = @account.collected_messages.find_by(imap_message_id: "pending-old@test")
+    assert refetched, "pending message should be re-collected"
+    assert_equal "pending", refetched.status
+    assert_equal "Fresh stripped body", refetched.stripped_body
+  ensure
+    Net::IMAP.define_singleton_method(:new, original_new)
+  end
+
   test "collect_now returns 0 on imap connection error" do
     original_new = Net::IMAP.method(:new)
     Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|

@@ -32,7 +32,7 @@ module Vessel::Dispatching
       .joins(:mail_account)
       .where(mail_accounts: { vessel_id: id })
       .where.not(id: messages.pluck(:id))
-      .oldest_first
+      .ordered
 
     bundle = bundles.create!(status: "draft")
     bundle.compose!(messages, remaining)
@@ -46,7 +46,7 @@ module Vessel::Dispatching
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: id })
         .includes(:mail_account)
-        .oldest_first
+        .ordered
     end
 
     def split_by_budget(messages)
