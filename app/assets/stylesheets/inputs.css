@@ -101,6 +101,11 @@
     }
   }
 
+  .input--short-code {
+    max-inline-size: 6ch;
+    text-transform: uppercase;
+  }
+
   .input--select {
     --input-border-radius: 2em;
     --input-padding: 0.5em 1.8em 0.5em 1.2em;

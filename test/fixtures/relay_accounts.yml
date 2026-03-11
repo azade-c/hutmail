@@ -2,11 +2,11 @@ one:
   vessel: one
   imap_server: imap.relay.example
   imap_port: 993
+  imap_encryption: ssl
   imap_username: relay@example.com
   imap_password: secret
-  imap_use_ssl: true
   smtp_server: smtp.relay.example
-  smtp_port: 587
+  smtp_port: 465
+  smtp_encryption: ssl
   smtp_username: relay@example.com
   smtp_password: secret
-  smtp_use_starttls: true

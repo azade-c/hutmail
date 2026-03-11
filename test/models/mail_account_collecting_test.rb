@@ -11,14 +11,14 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
       short_code: "CT",
       imap_server: "imap.example.com",
       imap_port: 993,
+      imap_encryption: "ssl",
       imap_username: "test@example.com",
       imap_password: "secret",
-      imap_use_ssl: true,
       smtp_server: "smtp.example.com",
       smtp_port: 587,
+      smtp_encryption: "starttls",
       smtp_username: "test@example.com",
       smtp_password: "secret",
-      smtp_use_starttls: true,
       skip_already_read: true
     )
   end

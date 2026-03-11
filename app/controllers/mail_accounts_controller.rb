@@ -49,8 +49,8 @@ class MailAccountsController < ApplicationController
     def mail_account_params
       params.require(:mail_account).permit(
         :name, :short_code,
-        :imap_server, :imap_port, :imap_username, :imap_password, :imap_use_ssl,
-        :smtp_server, :smtp_port, :smtp_username, :smtp_password, :smtp_use_starttls,
+        :imap_server, :imap_port, :imap_username, :imap_password, :imap_encryption,
+        :smtp_server, :smtp_port, :smtp_username, :smtp_password, :smtp_encryption,
         :is_default, :skip_already_read,
       )
     end

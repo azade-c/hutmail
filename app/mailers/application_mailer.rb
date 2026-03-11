@@ -6,9 +6,20 @@ class ApplicationMailer < ActionMailer::Base
     def smtp_options_for(account)
       options = {
         address: account.smtp_server,
-        port: account.smtp_port,
-        enable_starttls_auto: account.smtp_use_starttls
+        port: account.smtp_port
       }
+
+      case account.smtp_encryption
+      when "ssl"
+        options[:tls] = true
+        options[:enable_starttls_auto] = false
+      when "starttls"
+        options[:tls] = false
+        options[:enable_starttls_auto] = true
+      else
+        options[:tls] = false
+        options[:enable_starttls_auto] = false
+      end
 
       if account.smtp_username.present?
         options[:user_name] = account.smtp_username
