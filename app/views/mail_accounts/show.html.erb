@@ -4,8 +4,8 @@
     <%= @mail_account.name %>
   </h1>
   <div class="flex gap">
-    <a href="<%= edit_mail_account_path(@mail_account) %>" class="btn">Modifier</a>
-    <%= button_to "Supprimer", mail_account_path(@mail_account), method: :delete,
+    <a href="<%= edit_vessel_mail_account_path(@vessel, @mail_account) %>" class="btn">Modifier</a>
+    <%= button_to "Supprimer", vessel_mail_account_path(@vessel, @mail_account), method: :delete,
         class: "btn btn--negative",
         data: { turbo_confirm: "Supprimer ce compte et tous ses messages ?" } %>
   </div>
