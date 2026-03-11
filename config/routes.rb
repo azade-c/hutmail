@@ -1,7 +1,6 @@
 Rails.application.routes.draw do
   resource :user, only: %i[ new create ]
   resource :session
-  resources :passwords, param: :token
 
   resources :vessels, only: [ :new, :create ]
 

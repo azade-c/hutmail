@@ -7,6 +7,5 @@ class SmokeTest < ApplicationSystemTestCase
     assert_current_path new_session_path
     assert_field "email_address"
     assert_field "password"
-    assert_link "Forgot password?"
   end
 end
