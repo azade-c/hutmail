@@ -24,9 +24,8 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: 0.02em;
+    font-family: var(--font-sans);
+    font-weight: bold;
     line-height: 1.2;
     margin-block: 1.5em 0.5em;
   }
@@ -38,9 +37,9 @@
   h1 { font-size: var(--text-xx-large); }
   h2 { font-size: var(--text-x-large); }
   h3 { font-size: var(--text-large); }
-  h4 { font-size: var(--text-medium); font-weight: 600; }
-  h5 { font-size: var(--text-normal); font-weight: 600; }
-  h6 { font-size: var(--text-small); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  h4 { font-size: var(--text-medium); }
+  h5 { font-size: var(--text-normal); }
+  h6 { font-size: var(--text-small); text-transform: uppercase; letter-spacing: 0.06em; }
 
   p, ul, ol, dl, figure, pre, blockquote, table {
     margin-block: 0 var(--block-space);
@@ -56,6 +55,15 @@
 
   li + li {
     margin-block-start: 0.25em;
+  }
+
+  header {
+    margin-block-end: var(--block-space-double);
+  }
+
+  footer {
+    margin-block-start: var(--block-space-double);
+    color: var(--color-graphite);
   }
 
   a {
