@@ -129,6 +129,32 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     assert_includes result, CollectedMessage::Stripping::PLACEHOLDER_QUOTED
   end
 
+  test "removes indented French reply block" do
+    body = <<~TEXT
+      Voici un test avec réponse
+
+      et dessus des blocs
+
+      Boris Cousin
+
+        De : sailmailalibi@netcourrier.com
+        À : famille cousin <alibi@francemel.fr>
+        Objet : Sailmail montant 1
+        Date : 01/03/2026 22:39:56 Europe/Paris
+
+      Boris Cousin
+    TEXT
+
+    mail = Mail.new { body body }
+    mail.content_type = "text/plain"
+
+    result = CollectedMessage.strip_mail(mail)
+    assert_includes result, "Voici un test avec réponse"
+    assert_includes result, "et dessus des blocs"
+    assert_not_includes result, "sailmailalibi@netcourrier.com"
+    assert_includes result, CollectedMessage::Stripping::PLACEHOLDER_QUOTED
+  end
+
   test "adds placeholder when quoted reply is removed" do
     body = "My reply\n\nOn 2026-03-01, Bob wrote:\n> Original message"
 
@@ -152,5 +178,50 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     assert_includes result, "[image : sunset.jpg"
     assert_includes result, "2.0 KB"
     assert_includes result, "See attached photo"
+  end
+
+  test "adds inline image placeholder from nested multipart messages" do
+    raw = <<~MAIL
+      MIME-Version: 1.0
+      Content-Type: multipart/mixed; boundary="MIX"
+
+      --MIX
+      Content-Type: multipart/related; boundary="REL"
+
+      --REL
+      Content-Type: multipart/alternative; boundary="ALT"
+
+      --ALT
+      Content-Type: text/plain; charset="UTF-8"
+
+      = ci-dessous une image dans le corps :
+
+      Boris Cousin
+      --ALT
+      Content-Type: text/html; charset="UTF-8"
+
+      <p>= ci-dessous une image dans le corps :</p><p><img src="cid:image1"></p><p>Boris Cousin</p>
+      --ALT--
+      --REL
+      Content-Type: image/jpeg; name="IMG_4232_B-mini.jpg"
+      Content-Disposition: inline; filename="IMG_4232_B-mini.jpg"
+      Content-ID: <image1>
+      Content-Transfer-Encoding: base64
+
+      #{[ "x" * 2048 ].pack("m0")}
+      --REL--
+      --MIX
+      Content-Type: image/jpeg; name="Balises.jpg"
+      Content-Disposition: attachment; filename="Balises.jpg"
+      Content-Transfer-Encoding: base64
+
+      #{[ "y" * 1024 ].pack("m0")}
+      --MIX--
+    MAIL
+
+    result = CollectedMessage.strip_mail(Mail.new(raw))
+    assert_includes result, "[image : IMG_4232_B-mini.jpg (2.0 KB)]"
+    assert_includes result, "= ci-dessous une image dans le corps :"
+    assert_not_includes result, "[image : Balises.jpg"
   end
 end
