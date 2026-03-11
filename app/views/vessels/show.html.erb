@@ -64,9 +64,9 @@
   </div>
 <% end %>
 
-<%= turbo_frame_tag "bundle-preview" do %>
+<%= turbo_frame_tag "dispatch-preview" do %>
   <% if @pending_messages.any? %>
-    <a href="<%= vessel_bundle_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="bundle-preview">Simuler le prochain envoi</a>
+    <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="dispatch-preview">Simuler le prochain envoi</a>
   <% end %>
 <% end %>
 

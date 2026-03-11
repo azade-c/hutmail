@@ -1,5 +1,6 @@
 class Vessel < ApplicationRecord
-  include Vessel::Bundling
+  include Vessel::Cycling
+  include Vessel::Dispatching
   include Vessel::Commanding
   include Vessel::RelayPolling
 

@@ -1,6 +1,6 @@
 require "test_helper"
 
-class BundlePreviewsControllerTest < ActionDispatch::IntegrationTest
+class DispatchPreviewsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     @vessel = vessels(:one)
@@ -8,10 +8,10 @@ class BundlePreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show renders preview with pending messages" do
-    get vessel_bundle_preview_path(@vessel)
+    get vessel_dispatch_preview_path(@vessel)
 
     assert_response :success
-    assert_select "turbo-frame#bundle-preview"
+    assert_select "turbo-frame#dispatch-preview"
     assert_select ".bundle-preview"
   end
 
@@ -20,7 +20,7 @@ class BundlePreviewsControllerTest < ActionDispatch::IntegrationTest
       mail_account_id: @vessel.mail_accounts.select(:id)
     ).update_all(status: "sent")
 
-    get vessel_bundle_preview_path(@vessel)
+    get vessel_dispatch_preview_path(@vessel)
 
     assert_response :success
     assert_select ".empty-state"
@@ -28,13 +28,13 @@ class BundlePreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "show does not create any bundle record" do
     assert_no_difference "Bundle.count" do
-      get vessel_bundle_preview_path(@vessel)
+      get vessel_dispatch_preview_path(@vessel)
     end
   end
 
   test "show rejects access to unrelated vessel" do
     sign_in_as users(:no_vessel)
-    get vessel_bundle_preview_path(@vessel)
+    get vessel_dispatch_preview_path(@vessel)
     assert_redirected_to vessels_path
   end
 

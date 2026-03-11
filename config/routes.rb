@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   resources :vessels, only: %i[index new create show] do
     resources :mail_accounts
     resources :bundles, only: %i[index show]
-    resource :bundle_preview, only: :show
+    resource :dispatch_preview, only: :show
     resource :settings, only: %i[edit update]
   end
 
