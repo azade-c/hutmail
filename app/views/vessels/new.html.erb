@@ -1,10 +1,10 @@
-<h1>Set up your vessel</h1>
-<p>Before you can use HutMail, register your boat and its relay account.</p>
+<h1>Configurer votre bateau</h1>
+<p>Avant d'utiliser HutMail, enregistrez votre bateau et son compte relais.</p>
 
 <%= form_with(model: @vessel, url: vessels_path) do |f| %>
   <% if @vessel.errors.any? %>
     <div class="card card--error">
-      <div class="card__header txt-negative">Errors</div>
+      <div class="card__header txt-negative">Erreurs</div>
       <ul>
         <% @vessel.errors.full_messages.each do |msg| %>
           <li class="txt-small"><%= msg %></li>
@@ -14,30 +14,30 @@
   <% end %>
 
   <div class="card">
-    <h2 class="card__header">Vessel</h2>
+    <h2 class="card__header">Bateau</h2>
     <div class="form-group">
-      <label>Vessel name</label>
-      <%= f.text_field :name, class: "input", placeholder: "e.g. Alibi", autofocus: true %>
+      <label>Nom du bateau</label>
+      <%= f.text_field :name, class: "input", placeholder: "ex. Alibi", autofocus: true %>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Callsign</label>
-        <%= f.text_field :callsign, class: "input", placeholder: "e.g. FG1234" %>
+        <label>Indicatif</label>
+        <%= f.text_field :callsign, class: "input", placeholder: "ex. FG1234" %>
       </div>
       <div class="form-group">
-        <label>SailMail address</label>
-        <%= f.text_field :sailmail_address, class: "input", placeholder: "CALLSIGN@sailmail.com" %>
+        <label>Adresse SailMail</label>
+        <%= f.text_field :sailmail_address, class: "input", placeholder: "INDICATIF@sailmail.com" %>
       </div>
     </div>
   </div>
 
   <%= f.fields_for :relay_account do |ra| %>
     <div class="card">
-      <h2 class="card__header">Relay account (IMAP)</h2>
-      <p class="txt-small txt-subtle margin-block-end">This account bridges HutMail and the boat.</p>
+      <h2 class="card__header">Compte relais (IMAP)</h2>
+      <p class="txt-small txt-subtle margin-block-end">Ce compte fait le pont entre HutMail et le bateau.</p>
       <div class="form-row">
         <div class="form-group">
-          <label>IMAP server</label>
+          <label>Serveur IMAP</label>
           <%= ra.text_field :imap_server, class: "input" %>
         </div>
         <div class="form-group">
@@ -47,24 +47,24 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Username</label>
+          <label>Identifiant</label>
           <%= ra.text_field :imap_username, class: "input" %>
         </div>
         <div class="form-group">
-          <label>Password</label>
+          <label>Mot de passe</label>
           <%= ra.password_field :imap_password, class: "input" %>
         </div>
       </div>
       <div class="form-group">
-        <label><%= ra.check_box :imap_use_ssl %> Use SSL</label>
+        <label><%= ra.check_box :imap_use_ssl %> Utiliser SSL</label>
       </div>
     </div>
 
     <div class="card">
-      <h2 class="card__header">Relay account (SMTP)</h2>
+      <h2 class="card__header">Compte relais (SMTP)</h2>
       <div class="form-row">
         <div class="form-group">
-          <label>SMTP server</label>
+          <label>Serveur SMTP</label>
           <%= ra.text_field :smtp_server, class: "input" %>
         </div>
         <div class="form-group">
@@ -74,21 +74,21 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Username</label>
+          <label>Identifiant</label>
           <%= ra.text_field :smtp_username, class: "input" %>
         </div>
         <div class="form-group">
-          <label>Password</label>
+          <label>Mot de passe</label>
           <%= ra.password_field :smtp_password, class: "input" %>
         </div>
       </div>
       <div class="form-group">
-        <label><%= ra.check_box :smtp_use_starttls %> Use STARTTLS</label>
+        <label><%= ra.check_box :smtp_use_starttls %> Utiliser STARTTLS</label>
       </div>
     </div>
   <% end %>
 
   <div class="form-actions">
-    <%= f.submit "Create vessel", class: "btn btn--link" %>
+    <%= f.submit "Créer le bateau", class: "btn btn--link" %>
   </div>
 <% end %>

@@ -3,6 +3,6 @@ class HomeController < ApplicationController
 
 
   def show
-    redirect_to dashboard_path if authenticated?
+    redirect_to vessels_path if authenticated?
   end
 end

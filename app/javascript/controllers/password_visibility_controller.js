@@ -6,6 +6,6 @@ export default class extends Controller {
   toggle() {
     const hidden = this.inputTarget.type === "password"
     this.inputTarget.type = hidden ? "text" : "password"
-    this.toggleTarget.textContent = hidden ? "Hide" : "Show"
+    this.toggleTarget.textContent = hidden ? "Masquer" : "Afficher"
   }
 }

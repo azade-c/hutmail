@@ -1,22 +1,22 @@
 <div class="auth">
   <h1 class="auth__title">🦫 HutMail</h1>
-  <p class="auth__subtitle">Shore-side mail relay for sailors</p>
+  <p class="auth__subtitle">Le facteur des marins hauturiers</p>
 
   <%= form_with url: session_path, class: "auth__form" do |form| %>
     <div class="form-group">
       <label for="email_address">Email</label>
-      <%= form.email_field :email_address, class: "input", required: true, autofocus: true, autocomplete: "username", placeholder: "you@example.com", value: params[:email_address] %>
+      <%= form.email_field :email_address, class: "input", required: true, autofocus: true, autocomplete: "username", placeholder: "vous@exemple.com", value: params[:email_address] %>
     </div>
 
     <div class="form-group">
-      <label for="password">Password</label>
-      <%= form.password_field :password, class: "input", required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %>
+      <label for="password">Mot de passe</label>
+      <%= form.password_field :password, class: "input", required: true, autocomplete: "current-password", placeholder: "Votre mot de passe", maxlength: 72 %>
     </div>
 
     <div class="form-actions">
-      <%= form.submit "Sign in", class: "btn btn--link auth__submit" %>
+      <%= form.submit "Se connecter", class: "btn btn--link auth__submit" %>
     </div>
   <% end %>
 
-  <p class="auth__alt">Don't have an account? <%= link_to "Sign up", new_user_path %></p>
+  <p class="auth__alt">Pas encore de compte ? <%= link_to "Créer un compte", new_user_path %></p>
 </div>

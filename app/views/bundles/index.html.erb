@@ -1,5 +1,5 @@
 <div class="page-header">
-  <h1>Bundles</h1>
+  <h1>Envois</h1>
 </div>
 
 <% if @bundles.any? %>
@@ -15,21 +15,21 @@
         </div>
         <% if bundle.sent_at %>
           <div class="txt-x-small txt-subtle margin-block-start-half">
-            Sent <%= bundle.sent_at.strftime("%d %b %Y %H:%M") %>
+            Envoyé le <%= bundle.sent_at.strftime("%d %b %Y %H:%M") %>
           </div>
         <% else %>
           <div class="txt-x-small txt-subtle margin-block-start-half">
-            Created <%= bundle.created_at.strftime("%d %b %Y %H:%M") %>
+            Créé le <%= bundle.created_at.strftime("%d %b %Y %H:%M") %>
           </div>
         <% end %>
         <% if bundle.remaining_count.to_i > 0 %>
           <div class="txt-x-small txt-subtle">
-            + <%= bundle.remaining_count %> in screener
+            + <%= bundle.remaining_count %> dans le screener
           </div>
         <% end %>
       </a>
     </div>
   <% end %>
 <% else %>
-  <div class="empty-state">No bundles sent yet.</div>
+  <div class="empty-state">Aucun envoi pour l'instant.</div>
 <% end %>

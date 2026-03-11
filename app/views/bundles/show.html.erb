@@ -1,6 +1,6 @@
 <div class="page-header">
   <h1>
-    Bundle #<%= @bundle.id %>
+    Envoi #<%= @bundle.id %>
     <span class="badge badge--<%= @bundle.status %>"><%= @bundle.status %></span>
   </h1>
 </div>
@@ -8,25 +8,25 @@
 <div class="stat-grid">
   <div class="stat">
     <div class="stat__value"><%= @bundle.messages_count %></div>
-    <div class="stat__label">Messages included</div>
+    <div class="stat__label">Messages inclus</div>
   </div>
   <div class="stat">
     <div class="stat__value"><%= @bundle.remaining_count %></div>
-    <div class="stat__label">In screener</div>
+    <div class="stat__label">Dans le screener</div>
   </div>
   <div class="stat">
     <div class="stat__value"><%= Bundle.format_size(@bundle.total_stripped_size || 0) %></div>
-    <div class="stat__label">Stripped size</div>
+    <div class="stat__label">Taille nettoyée</div>
   </div>
   <div class="stat">
     <div class="stat__value"><%= Bundle.format_size(@bundle.total_raw_size || 0) %></div>
-    <div class="stat__label">Raw size</div>
+    <div class="stat__label">Taille brute</div>
   </div>
 </div>
 
 <% if @bundle.error_message.present? %>
   <div class="card" style="--border-color: var(--color-negative);">
-    <div class="card__header txt-negative">Error</div>
+    <div class="card__header txt-negative">Erreur</div>
     <p class="txt-small"><%= @bundle.error_message %></p>
   </div>
 <% end %>
@@ -49,7 +49,7 @@
 
 <% if @bundle.bundle_text.present? %>
   <div class="card" style="margin-block-start: var(--block-space);">
-    <div class="card__header">Bundle text (as sent)</div>
+    <div class="card__header">Texte de l'envoi (tel qu'envoyé)</div>
     <div class="bundle-preview"><%= @bundle.bundle_text %></div>
   </div>
 <% end %>
