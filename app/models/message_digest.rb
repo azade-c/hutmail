@@ -15,9 +15,10 @@ class MessageDigest < ApplicationRecord
   encrypts :stripped_body
 
   scope :bundleable, -> { where(status: BUNDLEABLE_STATUSES) }
-  scope :ordered, -> { order(id: :asc) }
+  scope :ordered, -> { joins(:mail_account).order("mail_accounts.short_code ASC", "message_digests.imap_uid ASC") }
 
-  validates :hutmail_id, presence: true, uniqueness: true
+  validates :daily_sequence, presence: true,
+    uniqueness: { scope: %i[mail_account_id date], message: "must be unique per account and day" }
   validates :imap_message_id, presence: true, uniqueness: { scope: :mail_account_id }
 
   def vessel

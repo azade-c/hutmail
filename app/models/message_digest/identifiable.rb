@@ -4,11 +4,11 @@ module MessageDigest::Identifiable
   MONTHS = %w[jan feb mar apr may jun jul aug sep oct nov dec].freeze
 
   included do
-    before_validation :assign_hutmail_id, on: :create, if: -> { hutmail_id.blank? }
+    before_validation :assign_daily_sequence, on: :create, if: -> { daily_sequence.blank? }
   end
 
   class_methods do
-    def decompose_hutmail_id(input)
+    def decompose_hutmail_reference(input)
       input = input.strip
       parts = input.split(".")
       return {} if parts.empty?
@@ -17,7 +17,7 @@ module MessageDigest::Identifiable
       short_code = parts[1]&.upcase
       sequence = parts[2]&.to_i
 
-      { date: date, short_code: short_code, sequence: sequence }.compact
+      { date:, short_code:, sequence: }.compact
     end
 
     private
@@ -36,26 +36,43 @@ module MessageDigest::Identifiable
       end
   end
 
-  def hutmail_id_parts
-    self.class.decompose_hutmail_id(hutmail_id)
+  def reference_date
+    date&.to_date || collected_at&.to_date || Date.current
+  end
+
+  def hutmail_reference(long: false)
+    prefix = reference_prefix(long:)
+    "#{prefix}.#{short_code}.#{daily_sequence}"
+  end
+
+  def hutmail_reference_parts
+    self.class.decompose_hutmail_reference(hutmail_reference(long: true))
   end
 
   private
-    def assign_hutmail_id
+    def assign_daily_sequence
       return unless mail_account.present?
 
-      date = self.date&.to_date || Date.current
-      day = date.day.to_s.rjust(2, "0")
-      month = MONTHS[date.month - 1]
-      year_suffix = date.year != Date.current.year ? date.year.to_s[-2..] : ""
-      code = mail_account.short_code
+      self.daily_sequence = next_daily_sequence
+    end
 
-      prefix = "#{day}#{month}#{year_suffix}.#{code}."
-      existing = mail_account.message_digests
-        .where("hutmail_id LIKE ?", "#{prefix}%")
-        .pluck(:hutmail_id)
+    def next_daily_sequence
+      mail_account.message_digests
+        .where(date: reference_date.all_day)
+        .maximum(:daily_sequence)
+        .to_i + 1
+    end
 
-      max_seq = existing.filter_map { |id| id.split(".").last.to_i }.max || 0
-      self.hutmail_id = "#{prefix}#{max_seq + 1}"
+    def reference_prefix(long:)
+      ref_date = reference_date
+      day = ref_date.day.to_s.rjust(2, "0")
+      month = MONTHS[ref_date.month - 1]
+      year = ref_date.year.to_s[-2..]
+
+      if long || ref_date.year != Date.current.year
+        "#{day}#{month}#{year}"
+      else
+        "#{day}#{month}"
+      end
     end
 end

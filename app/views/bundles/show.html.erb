@@ -39,7 +39,7 @@
     <ul class="message-list">
       <% @messages.each do |msg| %>
         <li class="message-item">
-          <span class="message-item__code"><%= msg.hutmail_id %></span>
+          <span class="message-item__code"><%= msg.hutmail_reference %></span>
           <span class="badge"><%= msg.mail_account.short_code %></span>
           <span class="message-item__from"><%= msg.from_name.presence || msg.from_address %></span>
           — <%= msg.subject %>

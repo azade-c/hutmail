@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_12_133506) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_12_152330) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -75,10 +75,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_133506) do
     t.json "attachments_metadata"
     t.datetime "collected_at"
     t.datetime "created_at", null: false
+    t.integer "daily_sequence", null: false
     t.datetime "date"
     t.string "from_address"
     t.string "from_name"
-    t.string "hutmail_id"
     t.string "imap_message_id"
     t.integer "imap_uid"
     t.integer "mail_account_id", null: false
@@ -89,7 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_133506) do
     t.string "subject"
     t.string "to_address"
     t.datetime "updated_at", null: false
-    t.index ["hutmail_id"], name: "index_message_digests_on_hutmail_id", unique: true
+    t.index ["mail_account_id", "date", "daily_sequence"], name: "idx_message_digests_daily_sequence", unique: true
     t.index ["mail_account_id", "imap_message_id"], name: "idx_collected_messages_dedup", unique: true
     t.index ["mail_account_id"], name: "index_message_digests_on_mail_account_id"
     t.index ["status"], name: "index_message_digests_on_status"
