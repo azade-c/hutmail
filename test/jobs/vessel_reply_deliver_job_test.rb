@@ -19,7 +19,7 @@ class VesselReplyDeliverJobTest < ActiveJob::TestCase
     outbound.define_singleton_method(:deliver_now) { delivered = true }
 
     original_send_reply = OutboundMailer.method(:send_reply)
-    OutboundMailer.define_singleton_method(:send_reply) do |_reply|
+    OutboundMailer.define_singleton_method(:send_reply) do |_reply, **_opts|
       outbound
     end
 
@@ -45,7 +45,7 @@ class VesselReplyDeliverJobTest < ActiveJob::TestCase
     outbound.define_singleton_method(:deliver_now) { raise "smtp down" }
 
     original_send_reply = OutboundMailer.method(:send_reply)
-    OutboundMailer.define_singleton_method(:send_reply) do |_reply|
+    OutboundMailer.define_singleton_method(:send_reply) do |_reply, **_opts|
       outbound
     end
 
