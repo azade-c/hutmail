@@ -232,9 +232,8 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     fake_imap.define_singleton_method(:login) { |_u, _p| true }
     fake_imap.define_singleton_method(:select) { |_box| true }
     fake_imap.define_singleton_method(:create) { |name| created_folder = name }
-    fake_imap.define_singleton_method(:store) { |uids, flag, vals| stored_flags << { uids:, flag:, vals: } }
-    fake_imap.define_singleton_method(:move) { |uids, folder| moved_to = folder }
-    fake_imap.define_singleton_method(:respond_to?) { |method_name| method_name == :move }
+    fake_imap.define_singleton_method(:uid_store) { |uids, flag, vals| stored_flags << { uids:, flag:, vals: } }
+    fake_imap.define_singleton_method(:uid_move) { |uids, folder| moved_to = folder }
     fake_imap.define_singleton_method(:logout) { true }
     fake_imap.define_singleton_method(:disconnect) { true }
 
@@ -263,8 +262,8 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
       fake_imap = Object.new
       fake_imap.define_singleton_method(:login) { |_u, _p| true }
       fake_imap.define_singleton_method(:select) { |_box| true }
-      fake_imap.define_singleton_method(:search) { |_query| search }
-      fake_imap.define_singleton_method(:fetch) do |uid, _attrs|
+      fake_imap.define_singleton_method(:uid_search) { |_query| search }
+      fake_imap.define_singleton_method(:uid_fetch) do |uid, _attrs|
         data = fetches[uid]
         data ? [ FakeFetch.new(data) ] : nil
       end

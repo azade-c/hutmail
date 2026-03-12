@@ -21,8 +21,8 @@ class MailAccount < ApplicationRecord
     with_imap_connection do |imap|
       imap.select("INBOX")
       ensure_folder(imap, IMAP_PROCESSED_FOLDER)
-      imap.store(imap_uids, "+FLAGS", [ :Seen ])
-      imap.move(imap_uids, IMAP_PROCESSED_FOLDER)
+      imap.uid_store(imap_uids, "+FLAGS", [ :Seen ])
+      imap.uid_move(imap_uids, IMAP_PROCESSED_FOLDER)
     end
   end
 
@@ -30,6 +30,5 @@ class MailAccount < ApplicationRecord
     def ensure_folder(imap, name)
       imap.create(name)
     rescue Net::IMAP::NoResponseError
-      # folder already exists
     end
 end

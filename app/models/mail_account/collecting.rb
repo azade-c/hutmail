@@ -47,7 +47,7 @@ module MailAccount::Collecting
         imap.select("INBOX")
 
         collection_uids(imap).each do |uid|
-          envelope = imap.fetch(uid, [ "ENVELOPE", "BODY.PEEK[]", "RFC822.SIZE" ])&.first
+          envelope = imap.uid_fetch(uid, [ "ENVELOPE", "BODY.PEEK[]", "RFC822.SIZE" ])&.first
           next unless envelope
 
           message_id = extract_message_id(envelope)
@@ -71,9 +71,9 @@ module MailAccount::Collecting
 
     def collection_uids(imap)
       if skip_already_read
-        imap.search([ "UNSEEN" ])
+        imap.uid_search([ "UNSEEN" ])
       else
-        imap.search([ "ALL" ])
+        imap.uid_search([ "ALL" ])
       end
     end
 
