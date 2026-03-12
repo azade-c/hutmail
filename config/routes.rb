@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     resources :mail_accounts, only: %i[index new create], module: :vessels
     resources :bundles, only: :index, module: :vessels
     resource :dispatch_preview, only: :show
+    resource :dispatch, only: :create, module: :vessels
     resource :settings, only: %i[edit update]
   end
 

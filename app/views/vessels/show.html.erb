@@ -68,7 +68,7 @@
 
 <hr class="section-divider">
 
-<h2>Tous les comptes</h2>
+<h2>Prochain bundle</h2>
 
 <% if @pending_messages.any? %>
   <div class="card">
@@ -104,7 +104,10 @@
 
 <%= turbo_frame_tag "dispatch-preview" do %>
   <% if @pending_messages.any? %>
-    <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link margin-block-start" data-turbo-frame="dispatch-preview">Collecter & simuler</a>
+    <div class="btn-group margin-block-start">
+      <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="dispatch-preview">Collecter & simuler</a>
+      <%= button_to "Envoyer maintenant", vessel_dispatch_path(@vessel), class: "btn", data: { turbo_confirm: "Collecter et envoyer le bundle maintenant ?" } %>
+    </div>
   <% end %>
 <% end %>
 
