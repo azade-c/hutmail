@@ -104,7 +104,7 @@
 
 <%= turbo_frame_tag "dispatch-preview" do %>
   <% if @pending_messages.any? %>
-    <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link margin-block-start" data-turbo-frame="dispatch-preview">Simuler le prochain envoi</a>
+    <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link margin-block-start" data-turbo-frame="dispatch-preview">Collecter & simuler</a>
   <% end %>
 <% end %>
 
