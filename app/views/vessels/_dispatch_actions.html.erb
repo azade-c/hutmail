@@ -1,0 +1,9 @@
+<div class="btn__group margin-block-start">
+  <%= button_to "Collecter & simuler", vessel_dispatch_preview_path(vessel), method: :get,
+      class: "btn btn--link", form: { data: { turbo_frame: "dispatch-preview" } } %>
+  <% if show_send %>
+    <%= button_to "Envoyer maintenant", vessel_dispatch_path(vessel), class: "btn",
+        form: { data: { turbo_frame: "_top" } },
+        data: { turbo_confirm: "Collecter et envoyer la dépêche maintenant ?" } %>
+  <% end %>
+</div>

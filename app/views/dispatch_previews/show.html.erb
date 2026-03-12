@@ -1,6 +1,8 @@
 <%= turbo_frame_tag "dispatch-preview" do %>
+  <%= render "vessels/dispatch_actions", vessel: @vessel, show_send: @preview.present? %>
+
   <% if @preview %>
-    <div class="card">
+    <div class="card margin-block-start">
       <div class="card__header">
         Simulation de la prochaine dépêche
         <span class="badge"><%= @preview.messages_count %> messages · <%= Bundle.format_size(@preview.total_stripped_size || 0) %></span>
