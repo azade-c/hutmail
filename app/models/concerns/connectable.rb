@@ -25,6 +25,7 @@ module Connectable
 
     before_validation :apply_default_ports
     before_validation :reset_smtp_auth_method, if: :smtp_config_changed?
+    before_validation :reset_imap_move_strategy, if: :imap_config_changed?
   end
 
   def with_imap_connection
@@ -72,8 +73,16 @@ module Connectable
       self.smtp_auth_method = nil
     end
 
+    def reset_imap_move_strategy
+      self.imap_move_strategy = nil if respond_to?(:imap_move_strategy=)
+    end
+
     def smtp_config_changed?
       smtp_server_changed? || smtp_port_changed? || smtp_encryption_changed?
+    end
+
+    def imap_config_changed?
+      imap_server_changed? || imap_port_changed? || imap_encryption_changed?
     end
 
     def apply_default_ports
