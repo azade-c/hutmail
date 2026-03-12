@@ -2,6 +2,7 @@ module Connectable
   extend ActiveSupport::Concern
 
   ENCRYPTION_MODES = %w[ssl starttls none].freeze
+  SENT_FOLDER_NAMES = [ "Sent", "Sent Messages", "Sent Items", "INBOX.Sent", "Envoyés", "Messages envoyés" ].freeze
 
   IMAP_DEFAULT_PORTS = { "ssl" => 993, "starttls" => 143, "none" => 143 }.freeze
   SMTP_DEFAULT_PORTS = { "ssl" => 465, "starttls" => 587, "none" => 25 }.freeze
@@ -42,7 +43,31 @@ module Connectable
     imap&.disconnect rescue nil
   end
 
+  def append_to_sent(raw_message)
+    with_imap_connection do |imap|
+      folder = sent_folder_for(imap)
+      imap.append(folder, raw_message, [ :Seen ], Time.current)
+      folder
+    end
+  end
+
   private
+    def sent_folder_for(imap)
+      mailbox_names = Array(imap.list("", "*")).filter_map(&:name)
+      special_use = mailbox_names.find { |name| name.match?(/sent/i) || name.match?(/envoy/i) }
+      return special_use if special_use.present?
+
+      SENT_FOLDER_NAMES.each do |name|
+        return name if mailbox_names.include?(name)
+      end
+
+      fallback = "Sent"
+      imap.create(fallback)
+      fallback
+    rescue Net::IMAP::NoResponseError
+      fallback
+    end
+
     def reset_smtp_auth_method
       self.smtp_auth_method = nil
     end

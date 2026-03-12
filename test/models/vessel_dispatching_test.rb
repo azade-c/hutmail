@@ -30,8 +30,16 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     delivered = false
     relay_message = Object.new
     relay_message.define_singleton_method(:deliver_now) { delivered = true }
+    relay_message.define_singleton_method(:message) { Mail.new("Subject: test\n\nhello") }
 
+    appended_messages = []
     processed_calls = []
+    original_append_to_sent = RelayAccount.instance_method(:append_to_sent)
+    RelayAccount.define_method(:append_to_sent) do |raw_message|
+      appended_messages << raw_message
+      "Sent"
+    end
+
     original_mark_as_processed = MailAccount.instance_method(:mark_as_processed)
     MailAccount.define_method(:mark_as_processed) do |imap_uids|
       processed_calls << { id: id, uids: imap_uids }
@@ -46,6 +54,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     bundle = @vessel.dispatch_now
 
     assert delivered
+    assert_equal 1, appended_messages.size
     assert_equal "sent", bundle.status
     assert_equal 1, bundle.messages_count
     assert_equal 2, bundle.remaining_count
@@ -57,6 +66,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     assert_equal 1, processed_calls.size
     assert_equal [ bundled_digests.first.imap_uid ], processed_calls.first[:uids]
   ensure
+    RelayAccount.define_method(:append_to_sent, original_append_to_sent)
     MailAccount.define_method(:mark_as_processed, original_mark_as_processed)
     RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
   end
