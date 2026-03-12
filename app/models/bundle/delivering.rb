@@ -23,6 +23,8 @@ module Bundle::Delivering
     end
 
     Rails.logger.error "Bundle##{id} failed: #{e.class} #{e.message}"
+  ensure
+    save_dispatch_log
   end
 
   def sent?
@@ -31,7 +33,6 @@ module Bundle::Delivering
 
   private
     def record_as_sent!
-      log_step "Statut → sent (#{messages_count} messages, #{Bundle.format_size(total_stripped_size || 0)})"
       update!(status: "sent", sent_at: Time.current)
       message_digests.update_all(status: "sent")
     end
@@ -44,5 +45,11 @@ module Bundle::Delivering
         log_step "⚠️ IMAP #{account.short_code}: #{e.class} #{e.message}"
         Rails.logger.warn "Failed to process IMAP for MailAccount##{account.id}: #{e.message}"
       end
+    end
+
+    def save_dispatch_log
+      update_column(:dispatch_log, dispatch_log) if persisted? && dispatch_log_changed?
+    rescue => e
+      Rails.logger.error "Bundle##{id} failed to save dispatch log: #{e.message}"
     end
 end
