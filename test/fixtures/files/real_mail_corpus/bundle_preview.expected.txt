@@ -33,11 +33,15 @@ Bien cordialement
 L'équipe Mailo
 premium@mailo.com
 
+==== %%%%%%%%%% ====
+
 [01mar.CR.2] From: SENDER Sam <SENDER.WORK@example.test> | Test 1 sur CrewInbox | 01mar 20:44
 Sam Sender
 Harbor Co
 Port City
 +00.00.00.00.00
+
+==== %%%%%%%%%% ====
 
 [01mar.CR.3] From: sender@example.test | Des nouvelles du port | 01mar 21:39
 Voici un message de nouvelles etc.
@@ -45,6 +49,8 @@ Voici un message de nouvelles etc.
 Et c'est beau, il ne pleut pas
 
 Sam Sender
+
+==== %%%%%%%%%% ====
 
 [01mar.CR.4] From: sender@example.test | Re: Sailmail montant 1 | 01mar 21:41
 Voici un test avec réponse
@@ -54,6 +60,8 @@ et dessus des blocs
 Sam Sender
 
 […message précédent…]
+
+==== %%%%%%%%%% ====
 
 [01mar.CR.5] From: sender@example.test | Message avec une image en PJ et en corps de texte | 01mar 21:50
 = ci-dessous une image dans le corps :
