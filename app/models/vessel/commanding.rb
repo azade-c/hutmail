@@ -52,7 +52,6 @@ module Vessel::Commanding
       args = tokens[1]&.strip
 
       case command
-      when "DROP"      then execute_drop(args, results)
       when "GET"       then execute_get(args, results)
       when "SEND"      then execute_send(args, results)
       when "URGENT"    then execute_send(args, results, urgent: true)
@@ -66,33 +65,14 @@ module Vessel::Commanding
       end
     end
 
-    def execute_drop(args, results)
-      if args&.upcase == "LAST"
-        if (last_bundle = bundles.sent.recent.first)
-          count = last_bundle.message_digests.update_all(status: "pending")
-          last_bundle.bundle_items.destroy_all
-          results << { command: "DROP LAST", status: :ok, message: "#{count} messages returned to pending" }
-        else
-          results << { command: "DROP LAST", status: :error, message: "No sent bundle found" }
-        end
-      else
-        messages = find_messages_by_wildcard(args)
-        if messages.any?
-          count = messages.update_all(status: "dropped")
-          results << { command: "DROP #{args}", status: :ok, message: "#{count} messages dropped" }
-        else
-          results << { command: "DROP #{args}", status: :error, message: "No matching pending messages" }
-        end
-      end
-    end
-
     def execute_get(args, results)
       messages = find_messages_by_wildcard(args)
+
       if messages.any?
         dispatch_get_response(messages)
-        results << { command: "GET #{args}", status: :ok, message: "#{messages.size} messages sent" }
+        results << { command: "GET #{args}", status: :ok, message: "#{messages.size} messages bundled" }
       else
-        results << { command: "GET #{args}", status: :error, message: "No matching pending messages" }
+        results << { command: "GET #{args}", status: :error, message: "No matching messages ready for bundling" }
       end
     end
 
@@ -124,7 +104,6 @@ module Vessel::Commanding
     end
 
     def execute_pause(args, results)
-      # TODO: fcatuhe 10mar26 implement pause duration on vessel model
       results << { command: "PAUSE #{args}", status: :ok, message: "Aggregation paused" }
     end
 
@@ -133,7 +112,7 @@ module Vessel::Commanding
     end
 
     def execute_status(results)
-      pending_count = MessageDigest.pending
+      bundleable_count = MessageDigest.bundleable
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: id })
         .count
@@ -141,12 +120,11 @@ module Vessel::Commanding
       results << {
         command: "STATUS",
         status: :ok,
-        message: "#{pending_count} pending messages, #{Bundle.format_size(budget_remaining)} budget remaining (7d)"
+        message: "#{bundleable_count} messages ready for bundling, #{Bundle.format_size(budget_remaining)} budget remaining (7d)"
       }
     end
 
     def execute_list(type, args, results)
-      # TODO: fcatuhe 10mar26 implement whitelist/blacklist on vessel model
       results << { command: "#{type.upcase} #{args}", status: :ok, message: "#{type} updated" }
     end
 
@@ -157,9 +135,9 @@ module Vessel::Commanding
       all_messages = MessageDigest.none
 
       ids.each do |id_str|
-        messages = MessageDigest.pending
+        messages = MessageDigest.bundleable
           .joins(:mail_account)
-          .where(mail_accounts: { vessel_id: self.id })
+          .where(mail_accounts: { vessel_id: id })
 
         messages = if id_str.match?(/\A\d+\z/)
           messages.where("message_digests.hutmail_id LIKE ?", "%.#{id_str}")
@@ -182,7 +160,7 @@ module Vessel::Commanding
     def resolve_outbound_account(recipient)
       previous = MessageDigest.where(from_address: recipient)
         .joins(:mail_account)
-        .where(mail_accounts: { vessel_id: self.id })
+        .where(mail_accounts: { vessel_id: id })
         .first
 
       if previous
@@ -196,11 +174,15 @@ module Vessel::Commanding
       original = MessageDigest
         .where(from_address: recipient)
         .joins(:mail_account)
-        .where(mail_accounts: { vessel_id: self.id })
+        .where(mail_accounts: { vessel_id: id })
         .order(date: :desc)
         .first
 
-      original ? "Re: #{original.subject}" : "HutMail reply"
+      if original
+        "Re: #{original.subject}"
+      else
+        "HutMail reply"
+      end
     end
 
     def flush_outbound_message(recipient, body, results)

@@ -12,15 +12,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_equal 1, results.size
     assert_equal "STATUS", results.first[:command]
     assert_equal :ok, results.first[:status]
-    assert_includes results.first[:message], "pending"
-  end
-
-  test "parses DROP with hutmail ids" do
-    text = "===CMD===\nDROP 01mar.GM.1\n===END==="
-    results = @vessel.parse_and_execute_commands(text)
-
-    result = results.first
-    assert_equal "DROP 01mar.GM.1", result[:command]
+    assert_includes results.first[:message], "ready for bundling"
   end
 
   test "parses MSG blocks" do
@@ -48,7 +40,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
   end
 
   test "handles unknown commands" do
-    text = "===CMD===\nFOOBAR\n===END==="
+    text = "===CMD===\nDROP 01mar.GM.1\n===END==="
     results = @vessel.parse_and_execute_commands(text)
 
     assert_equal :unknown, results.first[:status]

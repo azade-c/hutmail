@@ -10,7 +10,7 @@ class MessageDigestIdentifiableTest < ActiveSupport::TestCase
       imap_uid: 300,
       imap_message_id: "autoid@example.com",
       from_address: "a@b.com",
-      status: "pending",
+      status: :collected,
       date: Date.new(2026, 3, 1),
       collected_at: Time.current,
       raw_size: 100,
@@ -24,13 +24,13 @@ class MessageDigestIdentifiableTest < ActiveSupport::TestCase
     date = Date.new(2026, 3, 7)
     msg1 = @account.message_digests.create!(
       imap_uid: 301, imap_message_id: "seq1@example.com",
-      from_address: "a@b.com", status: "pending", date: date,
+      from_address: "a@b.com", status: :collected, date: date,
       collected_at: Time.current, raw_size: 100, stripped_size: 50
     )
 
     msg2 = @account.message_digests.create!(
       imap_uid: 302, imap_message_id: "seq2@example.com",
-      from_address: "a@b.com", status: "pending", date: date,
+      from_address: "a@b.com", status: :collected, date: date,
       collected_at: Time.current, raw_size: 100, stripped_size: 50
     )
 
@@ -41,7 +41,7 @@ class MessageDigestIdentifiableTest < ActiveSupport::TestCase
   test "includes year suffix when different from current year" do
     msg = @account.message_digests.create!(
       imap_uid: 303, imap_message_id: "year@example.com",
-      from_address: "a@b.com", status: "pending", date: Date.new(2025, 1, 15),
+      from_address: "a@b.com", status: :collected, date: Date.new(2025, 1, 15),
       collected_at: Time.current, raw_size: 100, stripped_size: 50
     )
 

@@ -7,8 +7,8 @@
 
 <div class="stat-grid">
   <div class="stat">
-    <div class="stat__value"><%= @pending_count %></div>
-    <div class="stat__label">Messages en attente</div>
+    <div class="stat__value"><%= @bundleable_count %></div>
+    <div class="stat__label">Messages à dépêcher</div>
   </div>
   <div class="stat">
     <div class="stat__value"><%= @mail_accounts.size %></div>
@@ -50,7 +50,7 @@
         <span class="badge"><%= account.short_code %></span>
         <span><%= account.name %></span>
         <% if account.is_default %>
-          <span class="badge badge--sent">défaut</span>
+          <span class="badge badge--default">défaut</span>
         <% end %>
       </div>
       <div class="txt-small txt-subtle">
@@ -70,19 +70,19 @@
 
 <h2>Prochaine dépêche</h2>
 
-<% if @pending_messages.any? %>
+<% if @bundleable_messages.any? %>
   <div class="card">
     <div class="card__header">
-      Messages en attente
-      <span class="badge badge--pending"><%= @pending_messages.size %></span>
+      Messages à dépêcher
+      <span class="badge badge--collected"><%= @bundleable_messages.size %></span>
     </div>
     <ul class="message-list">
-      <% @pending_messages.each do |msg| %>
+      <% @bundleable_messages.each do |msg| %>
         <li class="message-item">
           <div class="message-item__header">
             <span class="message-item__code"><%= msg.hutmail_id %></span>
             <span class="badge"><%= msg.mail_account.short_code %></span>
-            <span class="badge badge--pending">en attente</span>
+            <span class="badge badge--<%= msg.status %>"><%= msg.status_label %></span>
           </div>
           <div>
             <span class="message-item__from"><%= msg.from_name.presence || msg.from_address %></span>
@@ -99,11 +99,11 @@
     </ul>
   </div>
 <% else %>
-  <div class="empty-state">Aucun message en attente.</div>
+  <div class="empty-state">Aucun message à dépêcher.</div>
 <% end %>
 
 <%= turbo_frame_tag "dispatch-preview" do %>
-  <% if @pending_messages.any? %>
+  <% if @bundleable_messages.any? %>
     <div class="btn-group margin-block-start">
       <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="dispatch-preview">Collecter & simuler</a>
       <%= button_to "Envoyer maintenant", vessel_dispatch_path(@vessel), class: "btn", data: { turbo_confirm: "Collecter et envoyer la dépêche maintenant ?" } %>

@@ -6,7 +6,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     @account = mail_accounts(:gmail)
   end
 
-  test "dispatch_now sends included messages and keeps remaining pending" do
+  test "dispatch_now sends included messages and keeps remaining collected" do
     @vessel.update!(daily_budget_kb: 1, bundle_ratio: 50)
     @account.message_digests.delete_all
 
@@ -22,7 +22,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
         raw_size: 3000,
         stripped_body: "Body #{i}",
         stripped_size: 2000,
-        status: "pending",
+        status: :collected,
         collected_at: Time.current
       )
     end
@@ -50,12 +50,12 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     assert_equal 1, bundle.messages_count
     assert_equal 2, bundle.remaining_count
 
-    sent_digests = bundle.message_digests.where(status: "sent")
-    assert_equal 1, sent_digests.count
-    assert_equal 2, MessageDigest.where(id: created.map(&:id), status: "pending").count
+    bundled_digests = bundle.message_digests.where(status: MessageDigest.statuses.fetch("bundled"))
+    assert_equal 1, bundled_digests.count
+    assert_equal 2, MessageDigest.where(id: created.map(&:id), status: MessageDigest.statuses.fetch("collected")).count
 
     assert_equal 1, processed_calls.size
-    assert_equal [ sent_digests.first.imap_uid ], processed_calls.first[:uids]
+    assert_equal [ bundled_digests.first.imap_uid ], processed_calls.first[:uids]
   ensure
     MailAccount.define_method(:mark_as_processed, original_mark_as_processed)
     RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
@@ -95,24 +95,24 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     assert_equal 0, Bundle.where(status: "preview").count
   end
 
-  test "preview_dispatch returns nil when no pending messages" do
+  test "preview_dispatch returns nil when no messages are ready for bundling" do
     MessageDigest.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
-    ).update_all(status: "sent")
+    ).update_all(status: MessageDigest.statuses.fetch("bundled"))
 
     assert_nil @vessel.preview_dispatch
   end
 
   test "preview_dispatch does not change message statuses" do
-    pending_before = MessageDigest.bundleable.where(
+    bundleable_before = MessageDigest.bundleable.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
     ).count
 
     @vessel.preview_dispatch
 
-    pending_after = MessageDigest.bundleable.where(
+    bundleable_after = MessageDigest.bundleable.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
     ).count
-    assert_equal pending_before, pending_after
+    assert_equal bundleable_before, bundleable_after
   end
 end

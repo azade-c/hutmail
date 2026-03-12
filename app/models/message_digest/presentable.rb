@@ -1,6 +1,17 @@
 module MessageDigest::Presentable
   extend ActiveSupport::Concern
 
+  STATUS_LABELS = {
+    "collected" => "collecté",
+    "no_longer_collectable" => "hors collecte",
+    "bundled" => "dépêché",
+    "requeued" => "à regrouper"
+  }.freeze
+
+  def status_label
+    STATUS_LABELS.fetch(status, status)
+  end
+
   def format_sender
     if from_name.present?
       "#{from_name} <#{from_address}>"

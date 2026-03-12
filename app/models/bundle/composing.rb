@@ -72,7 +72,7 @@ module Bundle::Composing
         consumed += line.bytesize + 1
       end
 
-      lines << "... and #{truncated} more messages pending" if truncated > 0
+      lines << "... and #{truncated} more messages ready for bundling" if truncated > 0
       lines << "GET <id> to download a specific message"
       lines.join("\n")
     end

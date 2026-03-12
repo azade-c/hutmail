@@ -82,7 +82,7 @@ class RealMailFixtureTest < ActiveSupport::TestCase
         raw_size: raw.bytesize,
         stripped_body: stripped,
         stripped_size: stripped.bytesize,
-        status: "pending",
+        status: :collected,
         collected_at: Time.current,
         attachments_metadata: attachment_metadata(mail)
       )

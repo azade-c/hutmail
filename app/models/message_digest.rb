@@ -3,6 +3,10 @@ class MessageDigest < ApplicationRecord
   include MessageDigest::Identifiable
   include MessageDigest::Presentable
 
+  BUNDLEABLE_STATUSES = %w[collected requeued].freeze
+
+  enum :status, %w[collected no_longer_collectable bundled requeued].index_by(&:itself), validate: true
+
   belongs_to :mail_account
   has_many :bundle_items, dependent: :destroy
   has_many :bundles, through: :bundle_items
@@ -10,15 +14,11 @@ class MessageDigest < ApplicationRecord
   encrypts :subject
   encrypts :stripped_body
 
-  scope :pending, -> { where(status: "pending") }
-  scope :bundleable, -> { where(status: %w[pending resend]) }
-  scope :sent, -> { where(status: "sent") }
-  scope :dropped, -> { where(status: "dropped") }
+  scope :bundleable, -> { where(status: BUNDLEABLE_STATUSES) }
   scope :ordered, -> { order(id: :asc) }
 
   validates :hutmail_id, presence: true, uniqueness: true
   validates :imap_message_id, presence: true, uniqueness: { scope: :mail_account_id }
-  validates :status, presence: true, inclusion: { in: %w[pending sent dropped resend] }
 
   def vessel
     mail_account.vessel

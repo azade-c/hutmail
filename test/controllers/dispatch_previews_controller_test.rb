@@ -7,7 +7,7 @@ class DispatchPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user
   end
 
-  test "show renders preview with pending messages" do
+  test "show renders preview with messages ready for bundling" do
     get vessel_dispatch_preview_path(@vessel)
 
     assert_response :success
@@ -15,10 +15,10 @@ class DispatchPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".bundle-preview"
   end
 
-  test "show renders empty state without pending messages" do
+  test "show renders empty state without messages ready for bundling" do
     MessageDigest.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
-    ).update_all(status: "sent")
+    ).update_all(status: MessageDigest.statuses.fetch("bundled"))
 
     get vessel_dispatch_preview_path(@vessel)
 

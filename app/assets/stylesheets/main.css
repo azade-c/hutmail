@@ -157,8 +157,11 @@
     color: var(--color-graphite);
   }
 
-  .badge--pending { background: var(--color-wood-lighter); color: var(--color-wood-darker); }
-  .badge--sent { background: oklch(85% 0.08 147); color: oklch(35% 0.1 147); }
+  .badge--collected { background: var(--color-wood-lighter); color: var(--color-wood-darker); }
+  .badge--requeued { background: var(--color-river-lighter); color: var(--color-river-darker); }
+  .badge--no_longer_collectable { background: var(--color-dust); color: var(--color-graphite); }
+  .badge--default { background: oklch(85% 0.08 147); color: oklch(35% 0.1 147); }
+  .badge--bundled { background: oklch(85% 0.08 147); color: oklch(35% 0.1 147); }
   .badge--error { background: oklch(90% 0.06 38); color: oklch(45% 0.15 38); }
   .badge--draft { background: var(--color-river-lighter); color: var(--color-river-darker); }
 
