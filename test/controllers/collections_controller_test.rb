@@ -7,22 +7,19 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user
   end
 
-  test "create clears pending and redirects" do
-    @account.message_digests.create!(
-      imap_uid: 800, imap_message_id: "stale@test",
-      from_address: "x@test", status: "pending",
-      date: Time.current, collected_at: Time.current,
-      raw_size: 10, stripped_body: "stale", stripped_size: 5
-    )
-
+  test "create reruns collection and redirects" do
     original = MailAccount.instance_method(:collect_now)
-    MailAccount.define_method(:collect_now) { 0 }
+    collect_now_called = false
+    MailAccount.define_method(:collect_now) do
+      collect_now_called = true
+      0
+    end
 
     post mail_account_collection_path(@account)
 
     assert_redirected_to mail_account_path(@account)
     assert_equal "Collecte relancée.", flash[:notice]
-    assert_not @account.message_digests.pending.exists?(imap_message_id: "stale@test")
+    assert collect_now_called
   ensure
     MailAccount.define_method(:collect_now, original)
   end

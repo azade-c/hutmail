@@ -16,7 +16,7 @@ class MessageDigestPresentableTest < ActiveSupport::TestCase
       raw_size: 2000,
       stripped_body: "Hello!",
       stripped_size: 6,
-      status: "pending",
+      status: :collected,
       collected_at: Time.current
     )
 
@@ -37,7 +37,7 @@ class MessageDigestPresentableTest < ActiveSupport::TestCase
       raw_size: 3000,
       stripped_body: "Body first\n\n[image : inline-photo.jpg (2.0 KB)]\n\nSignature",
       stripped_size: 48,
-      status: "pending",
+      status: :collected,
       collected_at: Time.current,
       attachments_metadata: [
         { name: "inline-photo.jpg", size: 2048, content_type: "image/jpeg", inline: true },

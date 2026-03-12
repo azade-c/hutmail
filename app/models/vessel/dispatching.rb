@@ -18,10 +18,10 @@ module Vessel::Dispatching
   end
 
   def preview_dispatch
-    pending = pending_messages
-    return nil if pending.empty?
+    bundleable_messages = messages_to_bundle
+    return nil if bundleable_messages.empty?
 
-    included, remaining = split_by_budget(pending)
+    included, remaining = split_by_budget(bundleable_messages)
     bundle = bundles.build(status: "preview")
     bundle.compose_text(included, remaining)
     bundle
@@ -41,7 +41,7 @@ module Vessel::Dispatching
   end
 
   private
-    def pending_messages
+    def messages_to_bundle
       MessageDigest.bundleable
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: id })
@@ -67,10 +67,10 @@ module Vessel::Dispatching
     end
 
     def compose_next_bundle
-      pending = pending_messages
-      return nil if pending.empty?
+      bundleable_messages = messages_to_bundle
+      return nil if bundleable_messages.empty?
 
-      included, remaining = split_by_budget(pending)
+      included, remaining = split_by_budget(bundleable_messages)
       bundle = bundles.create!(status: "draft")
       bundle.compose!(included, remaining)
       bundle

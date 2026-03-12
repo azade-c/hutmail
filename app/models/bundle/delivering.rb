@@ -12,7 +12,7 @@ module Bundle::Delivering
   private
     def record_as_sent!
       update!(status: "sent", sent_at: Time.current)
-      message_digests.update_all(status: "sent")
+      message_digests.update_all(status: MessageDigest.statuses.fetch("bundled"))
       mark_sources_processed
     end
 

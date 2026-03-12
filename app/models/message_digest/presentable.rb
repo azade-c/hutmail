@@ -1,6 +1,17 @@
 module MessageDigest::Presentable
   extend ActiveSupport::Concern
 
+  STATUS_LABELS = {
+    "collected" => "collecté",
+    "no_longer_collectable" => "hors collecte",
+    "bundled" => "dépêché",
+    "requeued" => "à regrouper"
+  }.freeze
+
+  def status_label
+    STATUS_LABELS.fetch(status, status)
+  end
+
   def to_radio_header
     date_str = date&.strftime("%d%b %H:%M")&.downcase || "?"
     from = from_name.presence || from_address

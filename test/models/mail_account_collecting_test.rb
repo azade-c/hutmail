@@ -23,14 +23,14 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     )
   end
 
-  test "collect_now fetches unseen messages, dedups and stores attachments metadata" do
-    @account.message_digests.create!(
+  test "collect_now fetches unseen messages, keeps known ones, and stores attachments metadata" do
+    existing = @account.message_digests.create!(
       imap_uid: 555,
       imap_message_id: "dup@example.com",
       from_address: "dup@example.com",
-      status: "pending",
+      status: :collected,
       date: Time.current,
-      collected_at: Time.current,
+      collected_at: 1.hour.ago,
       raw_size: 10,
       stripped_size: 5
     )
@@ -57,44 +57,32 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
       --BOUND--
     MAIL
 
-    fake_imap = Object.new
-    fake_imap.define_singleton_method(:login) { |_u, _p| true }
-    fake_imap.define_singleton_method(:select) { |_box| true }
-    fake_imap.define_singleton_method(:search) { |_query| [ 1, 2 ] }
-    fake_imap.define_singleton_method(:fetch) do |uid, _attrs|
-      if uid == 1
-        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("dup@example.com"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
-      else
-        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("new@example.com"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
-      end
-    end
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
-
-    original_new = Net::IMAP.method(:new)
-    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
-      fake_imap
+    with_fake_imap(
+      search: [ 1, 2 ],
+      fetches: {
+        1 => { "ENVELOPE" => FakeEnvelope.new("dup@example.com"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize },
+        2 => { "ENVELOPE" => FakeEnvelope.new("new@example.com"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }
+      }
+    ) do
+      count = @account.collect_now
+      assert_equal 2, count
     end
 
-    count = @account.collect_now
-    assert_equal 1, count
+    existing.reload
+    assert_equal 1, existing.imap_uid
+    assert existing.collected?
 
     msg = @account.message_digests.find_by!(imap_message_id: "new@example.com")
-    assert_equal "pending", msg.status
+    assert_equal "collected", msg.status
     assert_equal "Hello crew", msg.stripped_body
     assert_equal 1, msg.attachments_metadata.size
     assert_equal "note.txt", msg.attachments_metadata.first["name"]
     assert_equal false, msg.attachments_metadata.first["inline"]
-  ensure
-    Net::IMAP.define_singleton_method(:new, original_new)
   end
 
   test "collect_now skips messages from sailmail address" do
-    vessel = @account.vessel
-    sailmail_from = vessel.sailmail_address
-
     relay_mail = <<~MAIL
-      From: #{sailmail_from}
+      From: #{@account.vessel.sailmail_address}
       To: test@example.com
       Subject: Commands from boat
       Date: Mon, 08 Mar 2026 10:00:00 +0000
@@ -113,82 +101,115 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
       How are you?
     MAIL
 
-    fake_imap = Object.new
-    fake_imap.define_singleton_method(:login) { |_u, _p| true }
-    fake_imap.define_singleton_method(:select) { |_box| true }
-    fake_imap.define_singleton_method(:search) { |_query| [ 1, 2 ] }
-    fake_imap.define_singleton_method(:fetch) do |uid, _attrs|
-      if uid == 1
-        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("relay-cmd@sailmail.com"), "BODY[]" => relay_mail, "RFC822.SIZE" => relay_mail.bytesize }) ]
-      else
-        [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("friend-msg@example.com"), "BODY[]" => normal_mail, "RFC822.SIZE" => normal_mail.bytesize }) ]
-      end
+    with_fake_imap(
+      search: [ 1, 2 ],
+      fetches: {
+        1 => { "ENVELOPE" => FakeEnvelope.new("relay-cmd@sailmail.com"), "BODY[]" => relay_mail, "RFC822.SIZE" => relay_mail.bytesize },
+        2 => { "ENVELOPE" => FakeEnvelope.new("friend-msg@example.com"), "BODY[]" => normal_mail, "RFC822.SIZE" => normal_mail.bytesize }
+      }
+    ) do
+      count = @account.collect_now
+      assert_equal 1, count
     end
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
-
-    original_new = Net::IMAP.method(:new)
-    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
-      fake_imap
-    end
-
-    count = @account.collect_now
-    assert_equal 1, count
 
     assert_not @account.message_digests.exists?(imap_message_id: "relay-cmd@sailmail.com")
     assert @account.message_digests.exists?(imap_message_id: "friend-msg@example.com")
-  ensure
-    Net::IMAP.define_singleton_method(:new, original_new)
   end
 
-  test "recollect! deletes pending messages and re-fetches" do
-    @account.message_digests.create!(
-      imap_uid: 700, imap_message_id: "pending-old@test",
-      from_address: "old@test", status: "pending",
-      date: Time.current, collected_at: Time.current,
-      raw_size: 100, stripped_body: "old body", stripped_size: 8
+  test "recollect! marks missing collected messages as no longer collectable" do
+    message = @account.message_digests.create!(
+      imap_uid: 700,
+      imap_message_id: "missing@test",
+      from_address: "old@test",
+      status: :collected,
+      date: Time.current,
+      collected_at: Time.current,
+      raw_size: 100,
+      stripped_body: "old body",
+      stripped_size: 8
     )
-    @account.message_digests.create!(
-      imap_uid: 701, imap_message_id: "sent-keep@test",
-      from_address: "keep@test", status: "sent",
-      date: Time.current, collected_at: Time.current,
-      raw_size: 100, stripped_body: "keep body", stripped_size: 9
-    )
 
-    raw_mail = <<~MAIL
-      From: Bob <bob@example.com>
-      To: test@example.com
-      Subject: Re-fetched
-      Date: Mon, 08 Mar 2026 10:00:00 +0000
-
-      Fresh stripped body
-    MAIL
-
-    fake_imap = Object.new
-    fake_imap.define_singleton_method(:login) { |_u, _p| true }
-    fake_imap.define_singleton_method(:select) { |_box| true }
-    fake_imap.define_singleton_method(:search) { |_query| [ 1 ] }
-    fake_imap.define_singleton_method(:fetch) do |_uid, _attrs|
-      [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("pending-old@test"), "BODY[]" => raw_mail, "RFC822.SIZE" => raw_mail.bytesize }) ]
-    end
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
-
-    original_new = Net::IMAP.method(:new)
-    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
-      fake_imap
+    with_fake_imap(search: [], fetches: {}) do
+      @account.recollect!
     end
 
-    @account.recollect!
+    message.reload
+    assert message.no_longer_collectable?
+  end
 
-    assert @account.message_digests.exists?(imap_message_id: "sent-keep@test"),
-      "sent messages must be preserved"
-    refetched = @account.message_digests.find_by(imap_message_id: "pending-old@test")
-    assert refetched, "pending message should be re-collected"
-    assert_equal "pending", refetched.status
-    assert_equal "Fresh stripped body", refetched.stripped_body
-  ensure
-    Net::IMAP.define_singleton_method(:new, original_new)
+  test "collect_now restores a no longer collectable message when it reappears" do
+    message = @account.message_digests.create!(
+      imap_uid: 701,
+      imap_message_id: "returns@test",
+      from_address: "back@test",
+      status: :no_longer_collectable,
+      date: Time.current,
+      collected_at: 1.day.ago,
+      raw_size: 100,
+      stripped_body: "old body",
+      stripped_size: 8
+    )
+
+    with_fake_imap(
+      search: [ 1 ],
+      fetches: {
+        1 => { "ENVELOPE" => FakeEnvelope.new("returns@test"), "BODY[]" => nil, "RFC822.SIZE" => 0 }
+      }
+    ) do
+      count = @account.collect_now
+      assert_equal 1, count
+    end
+
+    message.reload
+    assert message.collected?
+    assert_equal 1, message.imap_uid
+  end
+
+  test "collect_now marks bundled messages as requeued when they reappear" do
+    message = @account.message_digests.create!(
+      imap_uid: 900,
+      imap_message_id: "rebundle-me@example.com",
+      from_address: "sender@example.com",
+      status: :bundled,
+      date: Time.current,
+      collected_at: Time.current,
+      raw_size: 100,
+      stripped_size: 20
+    )
+
+    with_fake_imap(
+      search: [ 1 ],
+      fetches: {
+        1 => { "ENVELOPE" => FakeEnvelope.new("rebundle-me@example.com"), "BODY[]" => nil, "RFC822.SIZE" => 0 }
+      }
+    ) do
+      count = @account.collect_now
+      assert_equal 1, count
+    end
+
+    message.reload
+    assert message.requeued?
+    assert_equal 1, message.imap_uid
+  end
+
+  test "collect_now returns missing requeued messages to bundled" do
+    message = @account.message_digests.create!(
+      imap_uid: 901,
+      imap_message_id: "gone-again@example.com",
+      from_address: "sender@example.com",
+      status: :requeued,
+      date: Time.current,
+      collected_at: Time.current,
+      raw_size: 100,
+      stripped_size: 20
+    )
+
+    with_fake_imap(search: [], fetches: {}) do
+      @account.collect_now
+    end
+
+    message.reload
+    assert message.bundled?
   end
 
   test "collect_now returns 0 on imap connection error" do
@@ -198,43 +219,6 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     end
 
     assert_equal 0, @account.collect_now
-  ensure
-    Net::IMAP.define_singleton_method(:new, original_new)
-  end
-
-  test "collect_now detects resend: re-collects sent messages seen again in INBOX" do
-    already_sent = @account.message_digests.create!(
-      imap_uid: 900,
-      imap_message_id: "resend-me@example.com",
-      from_address: "sender@example.com",
-      status: "sent",
-      date: Time.current,
-      collected_at: Time.current,
-      raw_size: 100,
-      stripped_size: 20
-    )
-
-    fake_imap = Object.new
-    fake_imap.define_singleton_method(:login) { |_u, _p| true }
-    fake_imap.define_singleton_method(:select) { |_box| true }
-    fake_imap.define_singleton_method(:search) { |_query| [ 1 ] }
-    fake_imap.define_singleton_method(:fetch) do |_uid, _attrs|
-      [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("resend-me@example.com"), "BODY[]" => nil, "RFC822.SIZE" => 0 }) ]
-    end
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
-
-    original_new = Net::IMAP.method(:new)
-    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
-      fake_imap
-    end
-
-    count = @account.collect_now
-    assert_equal 1, count
-
-    already_sent.reload
-    assert_equal "resend", already_sent.status
-    assert_equal 1, already_sent.imap_uid
   ensure
     Net::IMAP.define_singleton_method(:new, original_new)
   end
@@ -250,7 +234,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     fake_imap.define_singleton_method(:create) { |name| created_folder = name }
     fake_imap.define_singleton_method(:store) { |uids, flag, vals| stored_flags << { uids:, flag:, vals: } }
     fake_imap.define_singleton_method(:move) { |uids, folder| moved_to = folder }
-    fake_imap.define_singleton_method(:respond_to?) { |m| m == :move }
+    fake_imap.define_singleton_method(:respond_to?) { |method_name| method_name == :move }
     fake_imap.define_singleton_method(:logout) { true }
     fake_imap.define_singleton_method(:disconnect) { true }
 
@@ -271,11 +255,29 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
   end
 
   test "mark_as_processed does nothing when uids list is empty" do
-    imap_called = false
-    original_with_imap = @account.method(:with_imap_connection) rescue nil
-
-    @account.mark_as_processed([])
-
-    assert_not imap_called
+    assert_nil @account.mark_as_processed([])
   end
+
+  private
+    def with_fake_imap(search:, fetches:)
+      fake_imap = Object.new
+      fake_imap.define_singleton_method(:login) { |_u, _p| true }
+      fake_imap.define_singleton_method(:select) { |_box| true }
+      fake_imap.define_singleton_method(:search) { |_query| search }
+      fake_imap.define_singleton_method(:fetch) do |uid, _attrs|
+        data = fetches[uid]
+        data ? [ FakeFetch.new(data) ] : nil
+      end
+      fake_imap.define_singleton_method(:logout) { true }
+      fake_imap.define_singleton_method(:disconnect) { true }
+
+      original_new = Net::IMAP.method(:new)
+      Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
+        fake_imap
+      end
+
+      yield
+    ensure
+      Net::IMAP.define_singleton_method(:new, original_new)
+    end
 end

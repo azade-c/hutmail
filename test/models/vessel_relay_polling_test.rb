@@ -66,11 +66,11 @@ class VesselRelayPollingTest < ActiveSupport::TestCase
   end
 
   test "poll_relay_now processes commands from new messages" do
-    pending_msg = mail_accounts(:gmail).message_digests.create!(
+    mail_accounts(:gmail).message_digests.create!(
       imap_uid: 200,
-      imap_message_id: "test-pending@example.com",
+      imap_message_id: "test-collected@example.com",
       from_address: "someone@example.com",
-      status: "pending",
+      status: :collected,
       date: Time.current,
       collected_at: Time.current,
       raw_size: 100,

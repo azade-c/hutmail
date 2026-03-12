@@ -8,7 +8,7 @@
   <div class="flex gap">
     <%= button_to "Relancer la collecte", mail_account_collection_path(@mail_account),
         method: :post, class: "btn btn--link",
-        data: { turbo_confirm: "Supprimer les messages en attente et relancer la collecte IMAP ?" } %>
+        data: { turbo_confirm: "Relancer la collecte IMAP et réconcilier les messages ?" } %>
     <a href="<%= edit_mail_account_path(@mail_account) %>" class="btn">Modifier</a>
     <%= button_to "Supprimer", mail_account_path(@mail_account), method: :delete,
         class: "btn btn--negative",
@@ -18,12 +18,12 @@
 
 <div class="stat-grid">
   <div class="stat">
-    <div class="stat__value"><%= @mail_account.message_digests.pending.count %></div>
-    <div class="stat__label">En attente</div>
+    <div class="stat__value"><%= @mail_account.message_digests.bundleable.count %></div>
+    <div class="stat__label">À dépêcher</div>
   </div>
   <div class="stat">
-    <div class="stat__value"><%= @mail_account.message_digests.sent.count %></div>
-    <div class="stat__label">Envoyés</div>
+    <div class="stat__value"><%= @mail_account.message_digests.bundled.count %></div>
+    <div class="stat__label">Dépêchés</div>
   </div>
   <div class="stat">
     <div class="stat__value"><%= @mail_account.message_digests.count %></div>
@@ -40,7 +40,7 @@
         <li class="message-item">
           <div class="message-item__header">
             <span class="message-item__code"><%= msg.hutmail_id %></span>
-            <span class="badge badge--<%= msg.status %>"><%= msg.status %></span>
+            <span class="badge badge--<%= msg.status %>"><%= msg.status_label %></span>
           </div>
           <div>
             <span class="message-item__from"><%= msg.from_name.presence || msg.from_address %></span>
