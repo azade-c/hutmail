@@ -19,7 +19,7 @@ class ApplicationMailer < ActionMailer::Base
       message.deliver_now
       account.update_column(:smtp_auth_method, auth_method.to_s) if account.smtp_auth_method.blank?
       return message
-    rescue Net::SMTPSyntaxError, Net::SMTPFatalError => e
+    rescue Net::SMTPAuthenticationError, Net::SMTPSyntaxError, Net::SMTPFatalError => e
       raise unless e.message.include?("mechanism") || e.message.include?("auth")
       raise if index == methods_to_try.size - 1
     end
