@@ -11,17 +11,16 @@ module Bundle::Delivering
 
   private
     def record_as_sent!
-      now = Time.current
-      update!(status: "sent", sent_at: now)
-      collected_messages.update_all(status: "sent", sent_at: now)
-      mark_sources_read
+      update!(status: "sent", sent_at: Time.current)
+      message_digests.update_all(status: "sent")
+      mark_sources_processed
     end
 
-    def mark_sources_read
-      collected_messages.includes(:mail_account).group_by(&:mail_account).each do |account, msgs|
-        account.mark_as_read(msgs.map(&:imap_uid))
+    def mark_sources_processed
+      message_digests.includes(:mail_account).group_by(&:mail_account).each do |account, msgs|
+        account.mark_as_processed(msgs.map(&:imap_uid))
       rescue => e
-        Rails.logger.warn "Failed to mark IMAP read for MailAccount##{account.id}: #{e.message}"
+        Rails.logger.warn "Failed to process IMAP for MailAccount##{account.id}: #{e.message}"
       end
     end
 end

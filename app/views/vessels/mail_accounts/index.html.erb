@@ -20,8 +20,8 @@
         SMTP : <%= account.smtp_server %>:<%= account.smtp_port %>
       </div>
       <div class="txt-x-small txt-subtle">
-        <%= account.collected_messages.pending.count %> en attente ·
-        <%= account.collected_messages.sent.count %> envoyés ·
+        <%= account.message_digests.pending.count %> en attente ·
+        <%= account.message_digests.sent.count %> envoyés ·
         ignorer lus : <%= account.skip_already_read ? "oui" : "non" %>
       </div>
     </a>

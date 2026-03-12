@@ -23,7 +23,7 @@ class VesselsController < ApplicationController
 
   def show
     @mail_accounts = @vessel.mail_accounts
-    @pending_messages = CollectedMessage.pending
+    @pending_messages = MessageDigest.bundleable
       .joins(:mail_account)
       .where(mail_accounts: { vessel_id: @vessel.id })
       .includes(:mail_account)

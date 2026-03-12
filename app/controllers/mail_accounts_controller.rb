@@ -2,7 +2,7 @@ class MailAccountsController < ApplicationController
   include MailAccountScoped
 
   def show
-    @messages = @mail_account.collected_messages.ordered.limit(50)
+    @messages = @mail_account.message_digests.ordered.limit(50)
   end
 
   def edit

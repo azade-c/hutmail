@@ -18,15 +18,15 @@
 
 <div class="stat-grid">
   <div class="stat">
-    <div class="stat__value"><%= @mail_account.collected_messages.pending.count %></div>
+    <div class="stat__value"><%= @mail_account.message_digests.pending.count %></div>
     <div class="stat__label">En attente</div>
   </div>
   <div class="stat">
-    <div class="stat__value"><%= @mail_account.collected_messages.sent.count %></div>
+    <div class="stat__value"><%= @mail_account.message_digests.sent.count %></div>
     <div class="stat__label">Envoyés</div>
   </div>
   <div class="stat">
-    <div class="stat__value"><%= @mail_account.collected_messages.count %></div>
+    <div class="stat__value"><%= @mail_account.message_digests.count %></div>
     <div class="stat__label">Total collectés</div>
   </div>
 </div>

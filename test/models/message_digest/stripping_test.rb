@@ -1,6 +1,6 @@
 require "test_helper"
 
-class CollectedMessage::StrippingTest < ActiveSupport::TestCase
+class MessageDigest::StrippingTest < ActiveSupport::TestCase
   test "strips HTML to plain text" do
     mail = Mail.new do
       html_part do
@@ -9,7 +9,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
       end
     end
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_includes result, "Hello"
     assert_includes result, "World"
     assert_not_includes result, "<h1>"
@@ -26,7 +26,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
       end
     end
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_equal "Plain text version", result
   end
 
@@ -36,7 +36,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_equal "Real content", result
   end
 
@@ -46,7 +46,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_equal "Contenu réel", result
   end
 
@@ -56,7 +56,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_equal "Line 1\n\nLine 2", result
   end
 
@@ -66,21 +66,21 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     end
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_not_includes result, "tracking.example.com"
     assert_includes result, "Real content"
   end
 
   test "handles empty body" do
     mail = Mail.new
-    assert_equal "", CollectedMessage.strip_mail(mail)
+    assert_equal "", MessageDigest.strip_mail(mail)
   end
 
   test "extracts body when content_type header is missing" do
     raw = "From: bob@test\nSubject: hi\n\nPlain body without content-type"
     mail = Mail.new(raw)
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_equal "Plain body without content-type", result
   end
 
@@ -99,11 +99,11 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_includes result, "Salut les gars"
     assert_not_includes result, "sailmailalibi@netcourrier.com"
     assert_not_includes result, "Boris Cousin"
-    assert_includes result, CollectedMessage::Stripping::PLACEHOLDER_QUOTED
+    assert_includes result, MessageDigest::Stripping::PLACEHOLDER_QUOTED
   end
 
   test "removes French reply block with Envoyé and Cc" do
@@ -122,11 +122,11 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_includes result, "OK merci"
     assert_not_includes result, "alice@example.com"
     assert_not_includes result, "Voici le planning"
-    assert_includes result, CollectedMessage::Stripping::PLACEHOLDER_QUOTED
+    assert_includes result, MessageDigest::Stripping::PLACEHOLDER_QUOTED
   end
 
   test "removes indented French reply block" do
@@ -148,11 +148,11 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_includes result, "Voici un test avec réponse"
     assert_includes result, "et dessus des blocs"
     assert_not_includes result, "sailmailalibi@netcourrier.com"
-    assert_includes result, CollectedMessage::Stripping::PLACEHOLDER_QUOTED
+    assert_includes result, MessageDigest::Stripping::PLACEHOLDER_QUOTED
   end
 
   test "adds placeholder when quoted reply is removed" do
@@ -161,9 +161,9 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_includes result, "My reply"
-    assert_includes result, CollectedMessage::Stripping::PLACEHOLDER_QUOTED
+    assert_includes result, MessageDigest::Stripping::PLACEHOLDER_QUOTED
   end
 
   test "adds image placeholder with filename and size" do
@@ -174,7 +174,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
     image_data = "x" * 2048
     mail.attachments.inline["sunset.jpg"] = { mime_type: "image/jpeg", content: image_data }
 
-    result = CollectedMessage.strip_mail(mail)
+    result = MessageDigest.strip_mail(mail)
     assert_includes result, "[image : sunset.jpg"
     assert_includes result, "2.0 KB"
     assert_includes result, "See attached photo"
@@ -219,7 +219,7 @@ class CollectedMessage::StrippingTest < ActiveSupport::TestCase
       --MIX--
     MAIL
 
-    result = CollectedMessage.strip_mail(Mail.new(raw))
+    result = MessageDigest.strip_mail(Mail.new(raw))
     assert_equal <<~TEXT.strip, result
       = ci-dessous une image dans le corps :
 

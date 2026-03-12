@@ -6,13 +6,13 @@ class RealMailFixtureTest < ActiveSupport::TestCase
   IMAGE_FIXTURE = "05_inline_image_message.eml"
 
   test "real reply email strips the previous French message block" do
-    result = CollectedMessage.strip_mail(mail_fixture(REPLY_FIXTURE))
+    result = MessageDigest.strip_mail(mail_fixture(REPLY_FIXTURE))
 
     assert_equal expected_fixture("reply_message.expected.txt"), result
   end
 
   test "real inline image email keeps an embedded image placeholder" do
-    result = CollectedMessage.strip_mail(mail_fixture(IMAGE_FIXTURE))
+    result = MessageDigest.strip_mail(mail_fixture(IMAGE_FIXTURE))
 
     assert_equal expected_fixture("inline_image_message.expected.txt"), result
   end
@@ -69,9 +69,9 @@ class RealMailFixtureTest < ActiveSupport::TestCase
     def create_message_from_fixture(account, path, index)
       raw = File.binread(path)
       mail = Mail.new(raw)
-      stripped = CollectedMessage.strip_mail(mail)
+      stripped = MessageDigest.strip_mail(mail)
 
-      account.collected_messages.create!(
+      account.message_digests.create!(
         imap_uid: index + 1,
         imap_message_id: mail.message_id || "msg-#{index}@example.test",
         from_address: mail.from&.first,
