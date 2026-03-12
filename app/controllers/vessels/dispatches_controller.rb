@@ -6,9 +6,9 @@ class Vessels::DispatchesController < ApplicationController
     @bundle = @vessel.dispatch_now
 
     if @bundle
-      redirect_to bundle_path(@bundle), notice: "Bundle envoyé (#{@bundle.messages_count} messages)"
+      redirect_to bundle_path(@bundle), notice: "Dépêche envoyée (#{@bundle.messages_count} messages)"
     else
-      redirect_to vessel_path(@vessel), notice: "Aucun message à envoyer"
+      redirect_to vessel_path(@vessel), notice: "Aucun message à dépêcher"
     end
   end
 end
