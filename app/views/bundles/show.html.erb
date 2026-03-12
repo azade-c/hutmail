@@ -1,8 +1,8 @@
-<% breadcrumb ["Bateaux", vessels_path], [@vessel.name, vessel_path(@vessel)], ["Envois", vessel_bundles_path(@vessel)], ["##{@bundle.id}"] %>
+<% breadcrumb ["Bateaux", vessels_path], [@vessel.name, vessel_path(@vessel)], ["Dépêches", vessel_bundles_path(@vessel)], ["##{@bundle.id}"] %>
 
 <div class="page-header">
   <h1>
-    Envoi #<%= @bundle.id %>
+    Dépêche #<%= @bundle.id %>
     <span class="badge badge--<%= @bundle.status %>"><%= @bundle.status %></span>
   </h1>
 </div>
@@ -48,6 +48,13 @@
     </ul>
   <% end %>
 </div>
+
+<% if @bundle.dispatch_log.present? %>
+  <div class="card" style="margin-block-start: var(--block-space);">
+    <div class="card__header">Journal d'envoi</div>
+    <pre class="dispatch-log"><%= @bundle.dispatch_log %></pre>
+  </div>
+<% end %>
 
 <% if @bundle.bundle_text.present? %>
   <div class="card" style="margin-block-start: var(--block-space);">

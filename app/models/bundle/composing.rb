@@ -17,6 +17,7 @@ module Bundle::Composing
     compose_text(included_messages, remaining_messages)
     save!
     included_messages.each { |msg| bundle_items.create!(message_digest: msg) }
+    log_step "Composition (#{included_messages.size} messages, #{self.class.format_size(total_stripped_size || 0)})"
   end
 
   def compose_text(included_messages, remaining_messages)

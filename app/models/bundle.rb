@@ -10,4 +10,10 @@ class Bundle < ApplicationRecord
 
   scope :sent, -> { where(status: "sent") }
   scope :recent, -> { order(created_at: :desc) }
+
+  def log_step(message)
+    timestamp = Time.current.strftime("%H:%M:%S")
+    line = "#{timestamp} — #{message}"
+    self.dispatch_log = [ dispatch_log, line ].compact.join("\n")
+  end
 end
