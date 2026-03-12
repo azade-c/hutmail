@@ -39,7 +39,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     end
 
     original_send_bundle = RelayMailer.method(:send_bundle)
-    RelayMailer.define_singleton_method(:send_bundle) do |_bundle|
+    RelayMailer.define_singleton_method(:send_bundle) do |_bundle, **_opts|
       relay_message
     end
 
@@ -68,7 +68,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     failing_relay.define_singleton_method(:deliver_now) { raise "smtp failed" }
 
     original_send_bundle = RelayMailer.method(:send_bundle)
-    RelayMailer.define_singleton_method(:send_bundle) do |_bundle|
+    RelayMailer.define_singleton_method(:send_bundle) do |_bundle, **_opts|
       failing_relay
     end
 

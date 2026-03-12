@@ -6,6 +6,9 @@ module Connectable
   IMAP_DEFAULT_PORTS = { "ssl" => 993, "starttls" => 143, "none" => 143 }.freeze
   SMTP_DEFAULT_PORTS = { "ssl" => 465, "starttls" => 587, "none" => 25 }.freeze
 
+  IMAP_OPEN_TIMEOUT = 10
+  IMAP_IDLE_TIMEOUT = 30
+
   included do
     encrypts :imap_username
     encrypts :imap_password
@@ -20,10 +23,17 @@ module Connectable
     validates :smtp_encryption, presence: true, inclusion: { in: ENCRYPTION_MODES }
 
     before_validation :apply_default_ports
+    before_validation :reset_smtp_auth_method, if: :smtp_config_changed?
   end
 
   def with_imap_connection
-    imap = Net::IMAP.new(imap_server, port: imap_port, ssl: imap_encryption == "ssl")
+    imap = Net::IMAP.new(
+      imap_server,
+      port: imap_port,
+      ssl: imap_encryption == "ssl",
+      open_timeout: IMAP_OPEN_TIMEOUT,
+      idle_response_timeout: IMAP_IDLE_TIMEOUT
+    )
     imap.starttls if imap_encryption == "starttls"
     imap.login(imap_username, imap_password)
     yield imap
@@ -33,6 +43,14 @@ module Connectable
   end
 
   private
+    def reset_smtp_auth_method
+      self.smtp_auth_method = nil
+    end
+
+    def smtp_config_changed?
+      smtp_server_changed? || smtp_port_changed? || smtp_encryption_changed?
+    end
+
     def apply_default_ports
       self.imap_port ||= IMAP_DEFAULT_PORTS[imap_encryption]
       self.smtp_port ||= SMTP_DEFAULT_PORTS[smtp_encryption]

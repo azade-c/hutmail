@@ -6,7 +6,12 @@ module VesselReply::Delivering
   end
 
   def deliver_now
-    OutboundMailer.send_reply(self).deliver_now
+    account = mail_account
+
+    OutboundMailer.new.deliver_with_auth_fallback(account) do |auth_method|
+      OutboundMailer.send_reply(self, auth_method:)
+    end
+
     update!(status: "sent", sent_at: Time.current)
   rescue => e
     update!(status: "error", error_message: e.message)

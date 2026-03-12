@@ -24,6 +24,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_133506) do
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
+    t.text "dispatch_log"
     t.string "error_message"
     t.integer "messages_count"
     t.integer "remaining_count"
@@ -58,6 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_133506) do
     t.string "name"
     t.string "short_code"
     t.boolean "skip_already_read", default: true
+    t.string "smtp_auth_method"
     t.string "smtp_encryption", default: "ssl", null: false
     t.string "smtp_password"
     t.integer "smtp_port"
@@ -109,6 +111,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_133506) do
     t.integer "imap_port"
     t.string "imap_server"
     t.string "imap_username"
+    t.string "smtp_auth_method"
     t.string "smtp_encryption", default: "ssl", null: false
     t.string "smtp_password"
     t.integer "smtp_port"
