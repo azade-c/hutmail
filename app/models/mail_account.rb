@@ -22,7 +22,7 @@ class MailAccount < ApplicationRecord
       imap.select("INBOX")
       ensure_folder(imap, IMAP_PROCESSED_FOLDER)
       imap.uid_store(imap_uids, "+FLAGS", [ :Seen ])
-      imap.uid_move(imap_uids, IMAP_PROCESSED_FOLDER)
+      uid_move_or_copy(imap, imap_uids, IMAP_PROCESSED_FOLDER)
     end
   end
 
@@ -30,5 +30,13 @@ class MailAccount < ApplicationRecord
     def ensure_folder(imap, name)
       imap.create(name)
     rescue Net::IMAP::NoResponseError
+    end
+
+    def uid_move_or_copy(imap, uids, folder)
+      imap.uid_move(uids, folder)
+    rescue Net::IMAP::BadResponseError, Net::IMAP::NoResponseError
+      imap.uid_copy(uids, folder)
+      imap.uid_store(uids, "+FLAGS", [ :Deleted ])
+      imap.expunge
     end
 end
