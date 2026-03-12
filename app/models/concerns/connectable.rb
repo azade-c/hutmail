@@ -23,6 +23,7 @@ module Connectable
     validates :smtp_encryption, presence: true, inclusion: { in: ENCRYPTION_MODES }
 
     before_validation :apply_default_ports
+    before_validation :reset_smtp_auth_method, if: :smtp_config_changed?
   end
 
   def with_imap_connection
@@ -42,6 +43,14 @@ module Connectable
   end
 
   private
+    def reset_smtp_auth_method
+      self.smtp_auth_method = nil
+    end
+
+    def smtp_config_changed?
+      smtp_server_changed? || smtp_port_changed? || smtp_encryption_changed?
+    end
+
     def apply_default_ports
       self.imap_port ||= IMAP_DEFAULT_PORTS[imap_encryption]
       self.smtp_port ||= SMTP_DEFAULT_PORTS[smtp_encryption]
