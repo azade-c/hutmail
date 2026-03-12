@@ -29,7 +29,7 @@ class ApplicationMailer < ActionMailer::Base
       if account.smtp_username.present?
         options[:user_name] = account.smtp_username
         options[:password] = account.smtp_password
-        options[:authentication] = :plain
+        options[:authentication] = :login
       end
 
       options
