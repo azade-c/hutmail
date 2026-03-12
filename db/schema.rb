@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_170153) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_12_102659) do
+  create_table "bundle_items", force: :cascade do |t|
+    t.integer "bundle_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "message_digest_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bundle_id", "message_digest_id"], name: "index_bundle_items_on_bundle_id_and_message_digest_id", unique: true
+    t.index ["bundle_id"], name: "index_bundle_items_on_bundle_id"
+    t.index ["message_digest_id"], name: "index_bundle_items_on_message_digest_id"
+  end
+
   create_table "bundles", force: :cascade do |t|
     t.text "bundle_text"
     t.datetime "created_at", null: false
@@ -24,33 +34,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_170153) do
     t.datetime "updated_at", null: false
     t.integer "vessel_id", null: false
     t.index ["vessel_id"], name: "index_bundles_on_vessel_id"
-  end
-
-  create_table "collected_messages", force: :cascade do |t|
-    t.json "attachments_metadata"
-    t.integer "bundle_id"
-    t.datetime "collected_at"
-    t.datetime "created_at", null: false
-    t.datetime "date"
-    t.string "from_address"
-    t.string "from_name"
-    t.string "hutmail_id"
-    t.string "imap_message_id"
-    t.integer "imap_uid"
-    t.integer "mail_account_id", null: false
-    t.integer "raw_size"
-    t.datetime "sent_at"
-    t.string "status"
-    t.text "stripped_body"
-    t.integer "stripped_size"
-    t.string "subject"
-    t.string "to_address"
-    t.datetime "updated_at", null: false
-    t.index ["bundle_id"], name: "index_collected_messages_on_bundle_id"
-    t.index ["hutmail_id"], name: "index_collected_messages_on_hutmail_id", unique: true
-    t.index ["mail_account_id", "imap_message_id"], name: "idx_collected_messages_dedup", unique: true
-    t.index ["mail_account_id"], name: "index_collected_messages_on_mail_account_id"
-    t.index ["status"], name: "index_collected_messages_on_status"
   end
 
   create_table "crews", force: :cascade do |t|
@@ -84,6 +67,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_170153) do
     t.integer "vessel_id", null: false
     t.index ["vessel_id", "short_code"], name: "index_mail_accounts_on_vessel_id_and_short_code", unique: true
     t.index ["vessel_id"], name: "index_mail_accounts_on_vessel_id"
+  end
+
+  create_table "message_digests", force: :cascade do |t|
+    t.json "attachments_metadata"
+    t.datetime "collected_at"
+    t.datetime "created_at", null: false
+    t.datetime "date"
+    t.string "from_address"
+    t.string "from_name"
+    t.string "hutmail_id"
+    t.string "imap_message_id"
+    t.integer "imap_uid"
+    t.integer "mail_account_id", null: false
+    t.integer "raw_size"
+    t.string "status"
+    t.text "stripped_body"
+    t.integer "stripped_size"
+    t.string "subject"
+    t.string "to_address"
+    t.datetime "updated_at", null: false
+    t.index ["hutmail_id"], name: "index_message_digests_on_hutmail_id", unique: true
+    t.index ["mail_account_id", "imap_message_id"], name: "idx_collected_messages_dedup", unique: true
+    t.index ["mail_account_id"], name: "index_message_digests_on_mail_account_id"
+    t.index ["status"], name: "index_message_digests_on_status"
   end
 
   create_table "processed_relay_messages", force: :cascade do |t|
@@ -153,12 +160,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_170153) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "bundle_items", "bundles"
+  add_foreign_key "bundle_items", "message_digests"
   add_foreign_key "bundles", "vessels"
-  add_foreign_key "collected_messages", "bundles"
-  add_foreign_key "collected_messages", "mail_accounts"
   add_foreign_key "crews", "users"
   add_foreign_key "crews", "vessels"
   add_foreign_key "mail_accounts", "vessels"
+  add_foreign_key "message_digests", "mail_accounts"
   add_foreign_key "processed_relay_messages", "vessels"
   add_foreign_key "relay_accounts", "vessels"
   add_foreign_key "sessions", "users"

@@ -16,7 +16,7 @@ class DispatchPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show renders empty state without pending messages" do
-    CollectedMessage.where(
+    MessageDigest.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
     ).update_all(status: "sent")
 

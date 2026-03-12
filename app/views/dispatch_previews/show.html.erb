@@ -2,7 +2,7 @@
   <% if @preview %>
     <div class="card">
       <div class="card__header">
-        Simulation du prochain envoi
+        Simulation de la prochaine dépêche
         <span class="badge"><%= @preview.messages_count %> messages · <%= Bundle.format_size(@preview.total_stripped_size || 0) %></span>
       </div>
       <% if @preview.remaining_count&.positive? %>

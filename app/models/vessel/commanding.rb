@@ -69,7 +69,8 @@ module Vessel::Commanding
     def execute_drop(args, results)
       if args&.upcase == "LAST"
         if (last_bundle = bundles.sent.recent.first)
-          count = last_bundle.collected_messages.update_all(status: "pending", bundle_id: nil, sent_at: nil)
+          count = last_bundle.message_digests.update_all(status: "pending")
+          last_bundle.bundle_items.destroy_all
           results << { command: "DROP LAST", status: :ok, message: "#{count} messages returned to pending" }
         else
           results << { command: "DROP LAST", status: :error, message: "No sent bundle found" }
@@ -132,7 +133,7 @@ module Vessel::Commanding
     end
 
     def execute_status(results)
-      pending_count = CollectedMessage.pending
+      pending_count = MessageDigest.pending
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: id })
         .count
@@ -150,25 +151,25 @@ module Vessel::Commanding
     end
 
     def find_messages_by_wildcard(args)
-      return CollectedMessage.none if args.blank?
+      return MessageDigest.none if args.blank?
 
       ids = args.split(/\s+/)
-      all_messages = CollectedMessage.none
+      all_messages = MessageDigest.none
 
       ids.each do |id_str|
-        messages = CollectedMessage.pending
+        messages = MessageDigest.pending
           .joins(:mail_account)
           .where(mail_accounts: { vessel_id: self.id })
 
         messages = if id_str.match?(/\A\d+\z/)
-          messages.where("collected_messages.hutmail_id LIKE ?", "%.#{id_str}")
+          messages.where("message_digests.hutmail_id LIKE ?", "%.#{id_str}")
         elsif id_str.match?(/\A[A-Z]{2}\z/)
           messages.where(mail_accounts: { short_code: id_str })
         else
-          parsed = CollectedMessage.decompose_hutmail_id(id_str)
-          messages = messages.where("DATE(collected_messages.date) = ?", parsed[:date]) if parsed[:date]
+          parsed = MessageDigest.decompose_hutmail_id(id_str)
+          messages = messages.where("DATE(message_digests.date) = ?", parsed[:date]) if parsed[:date]
           messages = messages.where(mail_accounts: { short_code: parsed[:short_code] }) if parsed[:short_code]
-          messages = messages.where("collected_messages.hutmail_id LIKE ?", "%.#{parsed[:sequence]}") if parsed[:sequence]
+          messages = messages.where("message_digests.hutmail_id LIKE ?", "%.#{parsed[:sequence]}") if parsed[:sequence]
           messages
         end
 
@@ -179,7 +180,7 @@ module Vessel::Commanding
     end
 
     def resolve_outbound_account(recipient)
-      previous = CollectedMessage.where(from_address: recipient)
+      previous = MessageDigest.where(from_address: recipient)
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: self.id })
         .first
@@ -192,7 +193,7 @@ module Vessel::Commanding
     end
 
     def resolve_subject(recipient)
-      original = CollectedMessage
+      original = MessageDigest
         .where(from_address: recipient)
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: self.id })

@@ -1,12 +1,12 @@
 require "test_helper"
 
-class CollectedMessagePresentableTest < ActiveSupport::TestCase
+class MessageDigestPresentableTest < ActiveSupport::TestCase
   setup do
     @account = mail_accounts(:gmail)
   end
 
   test "to_screener_line formats compactly" do
-    msg = @account.collected_messages.create!(
+    msg = @account.message_digests.create!(
       imap_uid: 100,
       imap_message_id: "screener-presentable@example.com",
       from_address: "bob@example.com",
@@ -27,7 +27,7 @@ class CollectedMessagePresentableTest < ActiveSupport::TestCase
   end
 
   test "to_radio_text shows remaining attachments after the body" do
-    msg = @account.collected_messages.create!(
+    msg = @account.message_digests.create!(
       imap_uid: 101,
       imap_message_id: "attachments-after-body@example.com",
       from_address: "bob@example.com",

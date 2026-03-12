@@ -3,7 +3,8 @@ class Bundle < ApplicationRecord
   include Bundle::Delivering
 
   belongs_to :vessel
-  has_many :collected_messages
+  has_many :bundle_items, dependent: :destroy
+  has_many :message_digests, through: :bundle_items
 
   validates :status, presence: true, inclusion: { in: %w[draft sent error] }
 

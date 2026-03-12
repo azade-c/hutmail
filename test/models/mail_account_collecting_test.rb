@@ -24,7 +24,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
   end
 
   test "collect_now fetches unseen messages, dedups and stores attachments metadata" do
-    @account.collected_messages.create!(
+    @account.message_digests.create!(
       imap_uid: 555,
       imap_message_id: "dup@example.com",
       from_address: "dup@example.com",
@@ -79,7 +79,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     count = @account.collect_now
     assert_equal 1, count
 
-    msg = @account.collected_messages.find_by!(imap_message_id: "new@example.com")
+    msg = @account.message_digests.find_by!(imap_message_id: "new@example.com")
     assert_equal "pending", msg.status
     assert_equal "Hello crew", msg.stripped_body
     assert_equal 1, msg.attachments_metadata.size
@@ -135,20 +135,20 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     count = @account.collect_now
     assert_equal 1, count
 
-    assert_not @account.collected_messages.exists?(imap_message_id: "relay-cmd@sailmail.com")
-    assert @account.collected_messages.exists?(imap_message_id: "friend-msg@example.com")
+    assert_not @account.message_digests.exists?(imap_message_id: "relay-cmd@sailmail.com")
+    assert @account.message_digests.exists?(imap_message_id: "friend-msg@example.com")
   ensure
     Net::IMAP.define_singleton_method(:new, original_new)
   end
 
   test "recollect! deletes pending messages and re-fetches" do
-    @account.collected_messages.create!(
+    @account.message_digests.create!(
       imap_uid: 700, imap_message_id: "pending-old@test",
       from_address: "old@test", status: "pending",
       date: Time.current, collected_at: Time.current,
       raw_size: 100, stripped_body: "old body", stripped_size: 8
     )
-    @account.collected_messages.create!(
+    @account.message_digests.create!(
       imap_uid: 701, imap_message_id: "sent-keep@test",
       from_address: "keep@test", status: "sent",
       date: Time.current, collected_at: Time.current,
@@ -181,9 +181,9 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
 
     @account.recollect!
 
-    assert @account.collected_messages.exists?(imap_message_id: "sent-keep@test"),
+    assert @account.message_digests.exists?(imap_message_id: "sent-keep@test"),
       "sent messages must be preserved"
-    refetched = @account.collected_messages.find_by(imap_message_id: "pending-old@test")
+    refetched = @account.message_digests.find_by(imap_message_id: "pending-old@test")
     assert refetched, "pending message should be re-collected"
     assert_equal "pending", refetched.status
     assert_equal "Fresh stripped body", refetched.stripped_body
@@ -200,5 +200,82 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     assert_equal 0, @account.collect_now
   ensure
     Net::IMAP.define_singleton_method(:new, original_new)
+  end
+
+  test "collect_now detects resend: re-collects sent messages seen again in INBOX" do
+    already_sent = @account.message_digests.create!(
+      imap_uid: 900,
+      imap_message_id: "resend-me@example.com",
+      from_address: "sender@example.com",
+      status: "sent",
+      date: Time.current,
+      collected_at: Time.current,
+      raw_size: 100,
+      stripped_size: 20
+    )
+
+    fake_imap = Object.new
+    fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:select) { |_box| true }
+    fake_imap.define_singleton_method(:search) { |_query| [ 1 ] }
+    fake_imap.define_singleton_method(:fetch) do |_uid, _attrs|
+      [ FakeFetch.new({ "ENVELOPE" => FakeEnvelope.new("resend-me@example.com"), "BODY[]" => nil, "RFC822.SIZE" => 0 }) ]
+    end
+    fake_imap.define_singleton_method(:logout) { true }
+    fake_imap.define_singleton_method(:disconnect) { true }
+
+    original_new = Net::IMAP.method(:new)
+    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
+      fake_imap
+    end
+
+    count = @account.collect_now
+    assert_equal 1, count
+
+    already_sent.reload
+    assert_equal "resend", already_sent.status
+    assert_equal 1, already_sent.imap_uid
+  ensure
+    Net::IMAP.define_singleton_method(:new, original_new)
+  end
+
+  test "mark_as_processed marks as Seen and moves to HutMail folder" do
+    stored_flags = []
+    moved_to = nil
+    created_folder = nil
+
+    fake_imap = Object.new
+    fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:select) { |_box| true }
+    fake_imap.define_singleton_method(:create) { |name| created_folder = name }
+    fake_imap.define_singleton_method(:store) { |uids, flag, vals| stored_flags << { uids:, flag:, vals: } }
+    fake_imap.define_singleton_method(:move) { |uids, folder| moved_to = folder }
+    fake_imap.define_singleton_method(:respond_to?) { |m| m == :move }
+    fake_imap.define_singleton_method(:logout) { true }
+    fake_imap.define_singleton_method(:disconnect) { true }
+
+    original_new = Net::IMAP.method(:new)
+    Net::IMAP.define_singleton_method(:new) do |_host, **_kwargs|
+      fake_imap
+    end
+
+    @account.mark_as_processed([ 42, 43 ])
+
+    assert_equal "HutMail", created_folder
+    assert_equal 1, stored_flags.size
+    assert_equal "+FLAGS", stored_flags.first[:flag]
+    assert_includes stored_flags.first[:vals], :Seen
+    assert_equal "HutMail", moved_to
+  ensure
+    Net::IMAP.define_singleton_method(:new, original_new)
+  end
+
+  test "mark_as_processed does nothing when uids list is empty" do
+    imap_called = false
+    original_with_imap = @account.method(:with_imap_connection) rescue nil
+
+    @account.mark_as_processed([])
+
+    assert_not imap_called
   end
 end

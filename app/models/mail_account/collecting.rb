@@ -20,7 +20,7 @@ module MailAccount::Collecting
   end
 
   def recollect!
-    collected_messages.pending.delete_all
+    message_digests.pending.delete_all
     collect_now
   end
 
@@ -56,7 +56,15 @@ module MailAccount::Collecting
 
           message_id = extract_message_id(envelope)
           next if message_id.blank?
-          next if collected_messages.exists?(imap_message_id: message_id)
+
+          existing = message_digests.find_by(imap_message_id: message_id)
+          if existing
+            if existing.status == "sent"
+              existing.update!(status: "resend", imap_uid: uid)
+              collected << existing
+            end
+            next
+          end
 
           raw = envelope.attr["BODY[]"]
           raw_size = envelope.attr["RFC822.SIZE"] || raw&.bytesize || 0
@@ -64,10 +72,10 @@ module MailAccount::Collecting
 
           next if from_relay_address?(mail)
 
-          stripped = CollectedMessage.strip_mail(mail)
+          stripped = MessageDigest.strip_mail(mail)
           attachments_meta = extract_attachments_metadata(mail)
 
-          msg = collected_messages.create!(
+          msg = message_digests.create!(
             imap_uid: uid,
             imap_message_id: message_id,
             from_address: mail.from&.first,

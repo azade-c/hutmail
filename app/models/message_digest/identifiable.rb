@@ -1,4 +1,4 @@
-module CollectedMessage::Identifiable
+module MessageDigest::Identifiable
   extend ActiveSupport::Concern
 
   MONTHS = %w[jan feb mar apr may jun jul aug sep oct nov dec].freeze
@@ -51,7 +51,7 @@ module CollectedMessage::Identifiable
       code = mail_account.short_code
 
       prefix = "#{day}#{month}#{year_suffix}.#{code}."
-      existing = mail_account.collected_messages
+      existing = mail_account.message_digests
         .where("hutmail_id LIKE ?", "#{prefix}%")
         .pluck(:hutmail_id)
 

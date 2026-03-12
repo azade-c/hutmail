@@ -20,7 +20,7 @@
   </div>
   <div class="stat">
     <div class="stat__value"><%= @vessel.bundle_ratio %>%</div>
-    <div class="stat__label">Ratio bundle</div>
+    <div class="stat__label">Ratio dépêche</div>
   </div>
 </div>
 
@@ -68,7 +68,7 @@
 
 <hr class="section-divider">
 
-<h2>Tous les comptes</h2>
+<h2>Prochaine dépêche</h2>
 
 <% if @pending_messages.any? %>
   <div class="card">
@@ -104,15 +104,18 @@
 
 <%= turbo_frame_tag "dispatch-preview" do %>
   <% if @pending_messages.any? %>
-    <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link margin-block-start" data-turbo-frame="dispatch-preview">Simuler le prochain envoi</a>
+    <div class="btn-group margin-block-start">
+      <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="dispatch-preview">Collecter & simuler</a>
+      <%= button_to "Envoyer maintenant", vessel_dispatch_path(@vessel), class: "btn", data: { turbo_confirm: "Collecter et envoyer la dépêche maintenant ?" } %>
+    </div>
   <% end %>
 <% end %>
 
 <% if @recent_bundles.any? %>
   <div class="card">
     <div class="card__header">
-      Envois récents
-      <a href="<%= vessel_bundles_path(@vessel) %>" class="btn btn--link flex-item-justify-end">Tous les envois</a>
+      Dépêches récentes
+      <a href="<%= vessel_bundles_path(@vessel) %>" class="btn btn--link flex-item-justify-end">Toutes les dépêches</a>
     </div>
     <ul class="message-list">
       <% @recent_bundles.each do |bundle| %>

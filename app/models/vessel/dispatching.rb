@@ -28,7 +28,7 @@ module Vessel::Dispatching
   end
 
   def dispatch_get_response(messages)
-    remaining = CollectedMessage.pending
+    remaining = MessageDigest.bundleable
       .joins(:mail_account)
       .where(mail_accounts: { vessel_id: id })
       .where.not(id: messages.pluck(:id))
@@ -42,7 +42,7 @@ module Vessel::Dispatching
 
   private
     def pending_messages
-      CollectedMessage.pending
+      MessageDigest.bundleable
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: id })
         .includes(:mail_account)

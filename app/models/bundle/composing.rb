@@ -16,7 +16,7 @@ module Bundle::Composing
   def compose!(included_messages, remaining_messages)
     compose_text(included_messages, remaining_messages)
     save!
-    included_messages.each { |msg| msg.update!(bundle: self) }
+    included_messages.each { |msg| bundle_items.create!(message_digest: msg) }
   end
 
   def compose_text(included_messages, remaining_messages)

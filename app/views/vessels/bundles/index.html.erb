@@ -1,7 +1,7 @@
-<% breadcrumb ["Bateaux", vessels_path], [@vessel.name, vessel_path(@vessel)], ["Envois"] %>
+<% breadcrumb ["Bateaux", vessels_path], [@vessel.name, vessel_path(@vessel)], ["Dépêches"] %>
 
 <div class="page-header">
-  <h1>Envois</h1>
+  <h1>Dépêches</h1>
 </div>
 
 <% if @bundles.any? %>
@@ -33,5 +33,5 @@
     </div>
   <% end %>
 <% else %>
-  <div class="empty-state">Aucun envoi pour l'instant.</div>
+  <div class="empty-state">Aucune dépêche pour l'instant.</div>
 <% end %>

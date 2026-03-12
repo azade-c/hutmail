@@ -1,4 +1,4 @@
-module CollectedMessage::Presentable
+module MessageDigest::Presentable
   extend ActiveSupport::Concern
 
   def to_radio_header

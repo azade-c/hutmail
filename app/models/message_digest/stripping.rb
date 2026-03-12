@@ -1,4 +1,4 @@
-module CollectedMessage::Stripping
+module MessageDigest::Stripping
   extend ActiveSupport::Concern
 
   PLACEHOLDER_QUOTED = "[…message précédent…]"
@@ -45,7 +45,7 @@ module CollectedMessage::Stripping
         mail_message.body.decoded.to_s
       end
     rescue => e
-      Rails.logger.warn "CollectedMessage::Stripping: failed to extract text: #{e.message}"
+      Rails.logger.warn "MessageDigest::Stripping: failed to extract text: #{e.message}"
       ""
     end
 

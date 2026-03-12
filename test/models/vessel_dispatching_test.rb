@@ -8,10 +8,10 @@ class VesselDispatchingTest < ActiveSupport::TestCase
 
   test "dispatch_now sends included messages and keeps remaining pending" do
     @vessel.update!(daily_budget_kb: 1, bundle_ratio: 50)
-    @account.collected_messages.delete_all
+    @account.message_digests.delete_all
 
     created = 3.times.map do |i|
-      @account.collected_messages.create!(
+      @account.message_digests.create!(
         imap_uid: 200 + i,
         imap_message_id: "bundle#{i}@example.com",
         from_address: "sender#{i}@example.com",
@@ -31,10 +31,10 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     relay_message = Object.new
     relay_message.define_singleton_method(:deliver_now) { delivered = true }
 
-    calls = []
-    original_mark_as_read = MailAccount.instance_method(:mark_as_read)
-    MailAccount.define_method(:mark_as_read) do |imap_uids|
-      calls << { id: id, uids: imap_uids }
+    processed_calls = []
+    original_mark_as_processed = MailAccount.instance_method(:mark_as_processed)
+    MailAccount.define_method(:mark_as_processed) do |imap_uids|
+      processed_calls << { id: id, uids: imap_uids }
       true
     end
 
@@ -50,14 +50,14 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     assert_equal 1, bundle.messages_count
     assert_equal 2, bundle.remaining_count
 
-    sent = CollectedMessage.where(bundle_id: bundle.id, status: "sent")
-    assert_equal 1, sent.count
-    assert_equal 2, CollectedMessage.where(id: created.map(&:id), status: "pending").count
+    sent_digests = bundle.message_digests.where(status: "sent")
+    assert_equal 1, sent_digests.count
+    assert_equal 2, MessageDigest.where(id: created.map(&:id), status: "pending").count
 
-    assert_equal 1, calls.size
-    assert_equal [ sent.first.imap_uid ], calls.first[:uids]
+    assert_equal 1, processed_calls.size
+    assert_equal [ sent_digests.first.imap_uid ], processed_calls.first[:uids]
   ensure
-    MailAccount.define_method(:mark_as_read, original_mark_as_read)
+    MailAccount.define_method(:mark_as_processed, original_mark_as_processed)
     RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
   end
 
@@ -82,7 +82,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
   end
 
   test "preview_dispatch returns non-persisted bundle with text" do
-    assert @account.collected_messages.pending.any?
+    assert @account.message_digests.bundleable.any?
 
     preview = @vessel.preview_dispatch
 
@@ -96,7 +96,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
   end
 
   test "preview_dispatch returns nil when no pending messages" do
-    CollectedMessage.where(
+    MessageDigest.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
     ).update_all(status: "sent")
 
@@ -104,13 +104,13 @@ class VesselDispatchingTest < ActiveSupport::TestCase
   end
 
   test "preview_dispatch does not change message statuses" do
-    pending_before = CollectedMessage.pending.where(
+    pending_before = MessageDigest.bundleable.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
     ).count
 
     @vessel.preview_dispatch
 
-    pending_after = CollectedMessage.pending.where(
+    pending_after = MessageDigest.bundleable.where(
       mail_account_id: @vessel.mail_accounts.select(:id)
     ).count
     assert_equal pending_before, pending_after
