@@ -1,12 +1,19 @@
 module MessageDigest::Presentable
   extend ActiveSupport::Concern
 
+  def format_sender
+    if from_name.present?
+      "#{from_name} <#{from_address}>"
+    else
+      from_address
+    end
+  end
+
   def to_radio_header
     date_str = date&.strftime("%d%b %H:%M")&.downcase || "?"
-    from = from_name.presence || from_address
     recipients = format_recipients
 
-    header = "[#{hutmail_id}] From: #{from}"
+    header = "[#{hutmail_id}] From: #{format_sender}"
     header += " #{recipients}" if recipients.present?
     header += " | #{subject}" if subject.present?
     header += " | #{date_str}"
@@ -21,8 +28,7 @@ module MessageDigest::Presentable
   end
 
   def to_screener_line
-    from = from_name.presence || from_address
-    "[#{hutmail_id}] #{from} | \"#{subject}\" | #{Bundle.format_size(stripped_size)}"
+    "[#{hutmail_id}] #{format_sender} | \"#{subject}\" | #{Bundle.format_size(stripped_size)}"
   end
 
   private

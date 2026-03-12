@@ -2,7 +2,7 @@
 
 ==[ CR — Crew (crew@example.test) ]==
 
-[01mar.CR.1] From: Mailo | Bienvenue sur Mailo | 01mar 20:44
+[01mar.CR.1] From: Mailo <premium@mailo.com> | Bienvenue sur Mailo | 01mar 20:44
 Bonjour crew@example.test
 
 Nous vous remercions pour votre confiance et vous souhaitons la bienvenue sur Mailo.
@@ -33,7 +33,7 @@ Bien cordialement
 L'équipe Mailo
 premium@mailo.com
 
-[01mar.CR.2] From: SENDER Sam | Test 1 sur CrewInbox | 01mar 20:44
+[01mar.CR.2] From: SENDER Sam <SENDER.WORK@example.test> | Test 1 sur CrewInbox | 01mar 20:44
 Sam Sender
 Harbor Co
 Port City
