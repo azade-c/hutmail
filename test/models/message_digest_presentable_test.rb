@@ -21,7 +21,7 @@ class MessageDigestPresentableTest < ActiveSupport::TestCase
     )
 
     line = msg.to_screener_line
-    assert_includes line, msg.hutmail_id
+    assert_includes line, msg.hutmail_reference
     assert_includes line, "Bob"
     assert_includes line, "Hello from land"
   end

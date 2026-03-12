@@ -140,14 +140,14 @@ module Vessel::Commanding
           .where(mail_accounts: { vessel_id: id })
 
         messages = if id_str.match?(/\A\d+\z/)
-          messages.where("message_digests.hutmail_id LIKE ?", "%.#{id_str}")
+          messages.where("message_digests.daily_sequence = ?", id_str.to_i)
         elsif id_str.match?(/\A[A-Z]{2}\z/)
           messages.where(mail_accounts: { short_code: id_str })
         else
-          parsed = MessageDigest.decompose_hutmail_id(id_str)
+          parsed = MessageDigest.decompose_hutmail_reference(id_str)
           messages = messages.where("DATE(message_digests.date) = ?", parsed[:date]) if parsed[:date]
           messages = messages.where(mail_accounts: { short_code: parsed[:short_code] }) if parsed[:short_code]
-          messages = messages.where("message_digests.hutmail_id LIKE ?", "%.#{parsed[:sequence]}") if parsed[:sequence]
+          messages = messages.where("message_digests.daily_sequence = ?", parsed[:sequence]) if parsed[:sequence]
           messages
         end
 

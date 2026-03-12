@@ -39,7 +39,7 @@
       <% @messages.each do |msg| %>
         <li class="message-item">
           <div class="message-item__header">
-            <span class="message-item__code"><%= msg.hutmail_id %></span>
+            <span class="message-item__code"><%= msg.hutmail_reference %></span>
             <span class="badge badge--<%= msg.status %>"><%= msg.status_label %></span>
           </div>
           <div>

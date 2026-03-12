@@ -24,7 +24,7 @@ module MessageDigest::Presentable
     date_str = date&.strftime("%d%b %H:%M")&.downcase || "?"
     recipients = format_recipients
 
-    header = "[#{hutmail_id}] From: #{format_sender}"
+    header = "[#{hutmail_reference}] From: #{format_sender}"
     header += " #{recipients}" if recipients.present?
     header += " | #{subject}" if subject.present?
     header += " | #{date_str}"
@@ -39,7 +39,7 @@ module MessageDigest::Presentable
   end
 
   def to_screener_line
-    "[#{hutmail_id}] #{format_sender} | \"#{subject}\" | #{Bundle.format_size(stripped_size)}"
+    %(#{"[#{hutmail_reference}]"} #{format_sender} | "#{subject}" | #{Bundle.format_size(stripped_size)})
   end
 
   private
@@ -48,20 +48,20 @@ module MessageDigest::Presentable
 
       to_list = to_address.split(",").map(&:strip)
       account_email = mail_account.imap_username
-      others = to_list.reject { |a| a.downcase == account_email&.downcase }
+      others = to_list.reject { |address| address.downcase == account_email&.downcase }
       return nil if others.empty?
 
       if others.size == 1
         local = others.first.split("@").first
         "(→ #{local})"
-      elsif others.size > 1
+      else
         "(+#{others.size})"
       end
     end
 
     def format_attachments
-      items = displayed_attachments.map do |att|
-        "#{attachment_name(att)} (#{Bundle.format_size(att['size'] || att[:size])})"
+      items = displayed_attachments.map do |attachment|
+        "#{attachment_name(attachment)} (#{Bundle.format_size(attachment['size'] || attachment[:size])})"
       end
       "📎 #{items.join(', ')}"
     end

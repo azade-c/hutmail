@@ -1,6 +1,6 @@
 first_message:
   mail_account: gmail
-  hutmail_id: 01mar.GM.1
+  daily_sequence: 1
   imap_uid: 100
   imap_message_id: abc123@gmail.com
   from_address: bob@example.com
@@ -16,7 +16,7 @@ first_message:
 
 second_message:
   mail_account: gmail
-  hutmail_id: 01mar.GM.2
+  daily_sequence: 2
   imap_uid: 101
   imap_message_id: def456@gmail.com
   from_address: mom@family.fr
