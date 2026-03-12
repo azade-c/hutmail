@@ -104,10 +104,7 @@
 
 <%= turbo_frame_tag "dispatch-preview" do %>
   <% if @bundleable_messages.any? %>
-    <div class="btn-group margin-block-start">
-      <a href="<%= vessel_dispatch_preview_path(@vessel) %>" class="btn btn--link" data-turbo-frame="dispatch-preview">Collecter & simuler</a>
-      <%= button_to "Envoyer maintenant", vessel_dispatch_path(@vessel), class: "btn", data: { turbo_confirm: "Collecter et envoyer la dépêche maintenant ?" } %>
-    </div>
+    <%= render "dispatch_actions", vessel: @vessel, show_send: true %>
   <% end %>
 <% end %>
 

@@ -25,6 +25,9 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user_with_vessel
     get vessel_path(@vessel)
     assert_response :success
+    assert_select "turbo-frame#dispatch-preview .btn__group"
+    assert_select "turbo-frame#dispatch-preview form[action='#{vessel_dispatch_preview_path(@vessel)}'][data-turbo-frame='dispatch-preview']"
+    assert_select "turbo-frame#dispatch-preview form[action='#{vessel_dispatch_path(@vessel)}'][data-turbo-frame='_top']"
   end
 
   test "show rejects access to unrelated vessel" do

@@ -261,9 +261,12 @@
   /* ------------------------------------------------------------------------ */
 
   .btn__group {
+    --radius: 0.3em;
+
+    display: flex;
+
     .btn {
       --btn-border-radius: 0;
-      --radius: 0.3em;
 
       flex: 1 0 33%;
       inline-size: 100%;

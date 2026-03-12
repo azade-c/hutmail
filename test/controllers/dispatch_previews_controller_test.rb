@@ -12,6 +12,9 @@ class DispatchPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "turbo-frame#dispatch-preview"
+    assert_select ".btn__group"
+    assert_select "form[action='#{vessel_dispatch_preview_path(@vessel)}'][data-turbo-frame='dispatch-preview']"
+    assert_select "form[action='#{vessel_dispatch_path(@vessel)}'][data-turbo-frame='_top']"
     assert_select ".bundle-preview"
   end
 
