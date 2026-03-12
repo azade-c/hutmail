@@ -39,8 +39,10 @@ class MailAccount < ApplicationRecord
 
       if strategy == "move"
         imap.uid_move(uids, folder)
+        { strategy:, detected: false }
       else
         copy_delete_expunge(imap, uids, folder)
+        { strategy:, detected: false }
       end
     end
 
