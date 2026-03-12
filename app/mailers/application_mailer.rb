@@ -2,11 +2,16 @@ class ApplicationMailer < ActionMailer::Base
   default from: "from@example.com"
   layout "mailer"
 
+  SMTP_OPEN_TIMEOUT = 10
+  SMTP_READ_TIMEOUT = 30
+
   private
     def smtp_options_for(account)
       options = {
         address: account.smtp_server,
-        port: account.smtp_port
+        port: account.smtp_port,
+        open_timeout: SMTP_OPEN_TIMEOUT,
+        read_timeout: SMTP_READ_TIMEOUT
       }
 
       case account.smtp_encryption

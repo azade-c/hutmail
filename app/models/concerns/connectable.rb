@@ -6,6 +6,9 @@ module Connectable
   IMAP_DEFAULT_PORTS = { "ssl" => 993, "starttls" => 143, "none" => 143 }.freeze
   SMTP_DEFAULT_PORTS = { "ssl" => 465, "starttls" => 587, "none" => 25 }.freeze
 
+  IMAP_OPEN_TIMEOUT = 10
+  IMAP_IDLE_TIMEOUT = 30
+
   included do
     encrypts :imap_username
     encrypts :imap_password
@@ -23,7 +26,13 @@ module Connectable
   end
 
   def with_imap_connection
-    imap = Net::IMAP.new(imap_server, port: imap_port, ssl: imap_encryption == "ssl")
+    imap = Net::IMAP.new(
+      imap_server,
+      port: imap_port,
+      ssl: imap_encryption == "ssl",
+      open_timeout: IMAP_OPEN_TIMEOUT,
+      idle_response_timeout: IMAP_IDLE_TIMEOUT
+    )
     imap.starttls if imap_encryption == "starttls"
     imap.login(imap_username, imap_password)
     yield imap
