@@ -4,7 +4,12 @@ module Bundle::Delivering
   def deliver!
     account = vessel.relay_account
     log_step "SMTP #{account.smtp_server}:#{account.smtp_port} (#{account.smtp_encryption}) → #{vessel.sailmail_address}"
-    send_with_auth_fallback(account)
+
+    RelayMailer.new.deliver_with_auth_fallback(account) do |auth_method|
+      log_step "Auth: #{auth_method}"
+      RelayMailer.send_bundle(self, auth_method:)
+    end
+
     record_as_sent!
     log_step "✅ Dépêche envoyée"
     mark_sources_processed
@@ -25,19 +30,6 @@ module Bundle::Delivering
   end
 
   private
-    def send_with_auth_fallback(account)
-      ApplicationMailer::SMTP_AUTH_METHODS.each_with_index do |auth_method, index|
-        log_step "Auth: #{auth_method}"
-        RelayMailer.send_bundle(self, auth_method:).deliver_now
-        return
-      rescue Net::SMTPSyntaxError, Net::SMTPFatalError => e
-        raise unless e.message.include?("mechanism") || e.message.include?("auth")
-        raise if index == ApplicationMailer::SMTP_AUTH_METHODS.size - 1
-
-        log_step "⚠️ #{auth_method} refusé, tentative suivante"
-      end
-    end
-
     def record_as_sent!
       log_step "Statut → sent (#{messages_count} messages, #{Bundle.format_size(total_stripped_size || 0)})"
       update!(status: "sent", sent_at: Time.current)
