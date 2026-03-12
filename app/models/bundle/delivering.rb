@@ -2,13 +2,14 @@ module Bundle::Delivering
   extend ActiveSupport::Concern
 
   def deliver!
-    log_step "Envoi SMTP vers #{vessel.sailmail_address}"
+    account = vessel.relay_account
+    log_step "SMTP #{account.smtp_server}:#{account.smtp_port} (#{account.smtp_encryption}) → #{vessel.sailmail_address}"
     RelayMailer.send_bundle(self).deliver_now
     record_as_sent!
     log_step "✅ Dépêche envoyée"
     mark_sources_processed
   rescue => e
-    log_step "❌ Erreur : #{e.message}"
+    log_step "❌ #{e.class}: #{e.message}"
 
     if sent?
       save!(validate: false)
@@ -32,10 +33,10 @@ module Bundle::Delivering
 
     def mark_sources_processed
       message_digests.includes(:mail_account).group_by(&:mail_account).each do |account, msgs|
-        log_step "Déplacement IMAP → HutMail/ (#{account.short_code}: #{msgs.size} messages)"
+        log_step "IMAP → HutMail/ (#{account.short_code}: #{msgs.size} messages)"
         account.mark_as_processed(msgs.map(&:imap_uid))
       rescue => e
-        log_step "⚠️ IMAP #{account.short_code} : #{e.message}"
+        log_step "⚠️ IMAP #{account.short_code}: #{e.class} #{e.message}"
         Rails.logger.warn "Failed to process IMAP for MailAccount##{account.id}: #{e.message}"
       end
     end
