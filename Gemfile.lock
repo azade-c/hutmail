@@ -123,9 +123,9 @@ GEM
       raabro (~> 1.4)
     globalid (1.3.0)
       activesupport (>= 6.1)
-    herb (0.8.10-aarch64-linux-gnu)
-    herb (0.8.10-arm64-darwin)
-    herb (0.8.10-x86_64-linux-gnu)
+    herb (0.9.0-aarch64-linux-gnu)
+    herb (0.9.0-arm64-darwin)
+    herb (0.9.0-x86_64-linux-gnu)
     html2text (0.4.0)
       nokogiri (>= 1.0, < 2.0)
     i18n (1.14.8)
@@ -445,9 +445,9 @@ CHECKSUMS
   ffi (1.17.3-x86_64-linux-gnu) sha256=3746b01f677aae7b16dc1acb7cb3cc17b3e35bdae7676a3f568153fb0e2c887f
   fugit (1.12.1) sha256=5898f478ede9b415f0804e42b8f3fd53f814bd85eebffceebdbc34e1107aaf68
   globalid (1.3.0) sha256=05c639ad6eb4594522a0b07983022f04aa7254626ab69445a0e493aa3786ff11
-  herb (0.8.10-aarch64-linux-gnu) sha256=da47ed456350077e73c6d94336dda8a3ac141922c867cf552bf17cb0840388de
-  herb (0.8.10-arm64-darwin) sha256=bba77f7f64ffd144f36af5d4573ca5ee863f7258acd71c8536384d63d60e3d72
-  herb (0.8.10-x86_64-linux-gnu) sha256=268b059f66a1f3191c8d7c15cfcb293a91be5c3811704856acd49b6f2e5dc1b1
+  herb (0.9.0-aarch64-linux-gnu) sha256=d9130f8f1549e75874ee2528a3fdf44c44290b90a7caf597e356a03f9318acae
+  herb (0.9.0-arm64-darwin) sha256=20b16c3f57ec7f985737659c19f0786eab658014c0247881df07f041452ccd5c
+  herb (0.9.0-x86_64-linux-gnu) sha256=04b67ed7de5f98acd534ceb85163609716518089152cf9e73e90e7cace58b66a
   html2text (0.4.0) sha256=b1becfa0b9150739633f7dc6d8637a49d7e38c3223bcb3afa3cebf59960afdc5
   i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
   image_processing (1.14.0) sha256=754cc169c9c262980889bec6bfd325ed1dafad34f85242b5a07b60af004742fb
