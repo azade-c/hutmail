@@ -65,17 +65,19 @@ module Connectable
       end
     rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
       raise unless imap_auth_method.present?
+      failed_method = imap_auth_method
       update_column(:imap_auth_method, nil)
-      authenticate_imap_with_fallback(imap)
+      authenticate_imap_with_fallback(imap, skip: failed_method)
     end
 
-    def authenticate_imap_with_fallback(imap)
-      IMAP_AUTH_METHODS.each_with_index do |method, index|
+    def authenticate_imap_with_fallback(imap, skip: nil)
+      methods = skip ? IMAP_AUTH_METHODS.reject { |m| m == skip } : IMAP_AUTH_METHODS
+      methods.each_with_index do |method, index|
         perform_imap_auth(imap, method)
         update_column(:imap_auth_method, method)
         return
       rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
-        raise if index == IMAP_AUTH_METHODS.size - 1
+        raise if index == methods.size - 1
       end
     end
 

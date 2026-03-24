@@ -219,7 +219,7 @@ class ConnectableTest < ActiveSupport::TestCase
     assert_nil account.imap_auth_method
   end
 
-  test "memorized auth fails, fallback to cascade, memorizes new method" do
+  test "memorized auth fails, skips failed method, memorizes new method" do
     account = mail_accounts(:gmail)
     account.update_column(:imap_auth_method, "login")
     authenticate_called = false
@@ -240,7 +240,7 @@ class ConnectableTest < ActiveSupport::TestCase
     end
 
     assert authenticate_called
-    assert_equal 2, login_attempts
+    assert_equal 1, login_attempts
     account.reload
     assert_equal "plain", account.imap_auth_method
   end
