@@ -219,6 +219,52 @@ class ConnectableTest < ActiveSupport::TestCase
     assert_nil account.imap_auth_method
   end
 
+  test "memorized auth fails, fallback to cascade, memorizes new method" do
+    account = mail_accounts(:gmail)
+    account.update_column(:imap_auth_method, "login")
+    authenticate_called = false
+
+    no_response = Net::IMAP::NoResponseError.new(
+      Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "login disabled"), "A001 NO login disabled\r\n")
+    )
+
+    login_attempts = 0
+    fake_imap = Object.new
+    fake_imap.define_singleton_method(:login) { |_u, _p| login_attempts += 1; raise no_response }
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_called = true }
+    fake_imap.define_singleton_method(:logout) { true }
+    fake_imap.define_singleton_method(:disconnect) { true }
+
+    with_fake_imap(fake_imap) do
+      account.with_imap_connection { |_imap| }
+    end
+
+    assert authenticate_called
+    assert_equal 2, login_attempts
+    account.reload
+    assert_equal "plain", account.imap_auth_method
+  end
+
+  test "memorized auth reconnection uses memorized method directly" do
+    account = mail_accounts(:gmail)
+    account.update_column(:imap_auth_method, "plain")
+    login_called = false
+    authenticate_called = false
+
+    fake_imap = Object.new
+    fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_called = true }
+    fake_imap.define_singleton_method(:logout) { true }
+    fake_imap.define_singleton_method(:disconnect) { true }
+
+    with_fake_imap(fake_imap) do
+      account.with_imap_connection { |_imap| }
+    end
+
+    assert_not login_called
+    assert authenticate_called
+  end
+
   test "cascade raises when both LOGIN and PLAIN fail" do
     account = mail_accounts(:gmail)
     account.imap_auth_method = nil

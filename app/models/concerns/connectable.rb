@@ -63,6 +63,10 @@ module Connectable
       else
         authenticate_imap_with_fallback(imap)
       end
+    rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
+      raise unless imap_auth_method.present?
+      update_column(:imap_auth_method, nil)
+      authenticate_imap_with_fallback(imap)
     end
 
     def authenticate_imap_with_fallback(imap)
