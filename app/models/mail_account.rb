@@ -25,6 +25,7 @@ class MailAccount < ApplicationRecord
       ensure_folder(imap, IMAP_PROCESSED_FOLDER)
       imap.uid_store(imap_uids, "+FLAGS", [ :Seen ])
       apply_imap_move_strategy(imap, imap_uids, IMAP_PROCESSED_FOLDER)
+      reload.imap_move_strategy
     end
   end
 
@@ -41,6 +42,13 @@ class MailAccount < ApplicationRecord
         imap.uid_move(uids, folder)
       else
         copy_delete_expunge(imap, uids, folder)
+      end
+    rescue Net::IMAP::BadResponseError, Net::IMAP::NoResponseError
+      if strategy == "move"
+        update_column(:imap_move_strategy, "copy_delete_expunge")
+        copy_delete_expunge(imap, uids, folder)
+      else
+        raise
       end
     end
 

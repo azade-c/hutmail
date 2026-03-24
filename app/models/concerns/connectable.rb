@@ -70,7 +70,7 @@ module Connectable
         perform_imap_auth(imap, method)
         update_column(:imap_auth_method, method)
         return
-      rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError => e
+      rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
         raise if index == IMAP_AUTH_METHODS.size - 1
       end
     end
@@ -116,7 +116,8 @@ module Connectable
     end
 
     def imap_config_changed?
-      imap_server_changed? || imap_port_changed? || imap_encryption_changed?
+      imap_server_changed? || imap_port_changed? || imap_encryption_changed? ||
+        imap_username_changed? || imap_password_changed?
     end
 
     def apply_default_ports

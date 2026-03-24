@@ -49,10 +49,10 @@ module Bundle::Delivering
 
     def mark_sources_processed
       message_digests.includes(:mail_account).group_by(&:mail_account).each do |account, msgs|
-        log_step "IMAP MOVE → HutMail/ (#{account.short_code}: #{msgs.size} messages)"
-        account.mark_as_processed(msgs.map(&:imap_uid))
+        strategy = account.mark_as_processed(msgs.map(&:imap_uid))
+        log_step "IMAP #{strategy&.upcase || 'MOVE'} → HutMail/ (#{account.short_code}: #{msgs.size} messages)"
       rescue => e
-        log_step "⚠️ IMAP MOVE #{account.short_code}: #{e.class} #{e.message}"
+        log_step "⚠️ IMAP #{account.short_code}: #{e.class} #{e.message}"
         Rails.logger.warn "Failed to process IMAP for MailAccount##{account.id}: #{e.message}"
       end
     end

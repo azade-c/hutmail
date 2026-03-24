@@ -210,6 +210,68 @@ class ConnectableTest < ActiveSupport::TestCase
     assert_nil account.imap_auth_method
   end
 
+  test "reset imap_auth_method when IMAP credentials change" do
+    account = mail_accounts(:gmail)
+    account.update_column(:imap_auth_method, "login")
+    assert_equal "login", account.imap_auth_method
+
+    account.update!(imap_username: "newuser@example.com")
+    assert_nil account.imap_auth_method
+  end
+
+  test "cascade raises when both LOGIN and PLAIN fail" do
+    account = mail_accounts(:gmail)
+    account.imap_auth_method = nil
+
+    no_response = Net::IMAP::NoResponseError.new(
+      Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "auth failed"), "A001 NO auth failed\r\n")
+    )
+
+    fake_imap = Object.new
+    fake_imap.define_singleton_method(:login) { |_u, _p| raise no_response }
+    fake_imap.define_singleton_method(:authenticate) { |*_args| raise no_response }
+    fake_imap.define_singleton_method(:logout) { true }
+    fake_imap.define_singleton_method(:disconnect) { true }
+
+    with_fake_imap(fake_imap) do
+      assert_raises(Net::IMAP::NoResponseError) do
+        account.with_imap_connection { |_imap| }
+      end
+    end
+
+    account.reload
+    assert_nil account.imap_auth_method
+  end
+
+  test "MOVE falls back to copy_delete_expunge when uid_move fails despite MOVE capability" do
+    account = mail_accounts(:gmail)
+    account.update_column(:imap_move_strategy, "move")
+    copy_called = false
+    expunge_called = false
+
+    no_response = Net::IMAP::NoResponseError.new(
+      Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "move failed"), "A001 NO move failed\r\n")
+    )
+
+    fake_imap = build_fake_imap
+    fake_imap.define_singleton_method(:capability) { [ "IMAP4rev1", "MOVE", "UIDPLUS" ] }
+    fake_imap.define_singleton_method(:select) { |_folder| true }
+    fake_imap.define_singleton_method(:uid_store) { |*_args| true }
+    fake_imap.define_singleton_method(:uid_move) { |_uids, _folder| raise no_response }
+    fake_imap.define_singleton_method(:uid_copy) { |_uids, _folder| copy_called = true }
+    fake_imap.define_singleton_method(:uid_expunge) { |_uids| expunge_called = true }
+    fake_imap.define_singleton_method(:create) { |_name| raise Net::IMAP::NoResponseError.new(Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "exists"), "A001 NO exists\r\n")) }
+
+    with_fake_imap(fake_imap) do
+      account.mark_as_processed([ 1 ])
+    end
+
+    assert copy_called
+    assert expunge_called
+    account.reload
+    assert_equal "copy_delete_expunge", account.imap_move_strategy
+  end
+
   test "MOVE via capability check when MOVE capability present" do
     account = mail_accounts(:gmail)
     uid_move_called = false
