@@ -35,30 +35,45 @@ class MailAccount < ApplicationRecord
     end
 
     def apply_imap_move_strategy(imap, uids, folder)
-      strategy = imap_move_strategy.presence || detect_imap_move_strategy(imap, uids, folder)
+      capabilities = imap.capability
+      strategy = imap_move_strategy.presence || resolve_move_strategy(capabilities)
 
       if strategy == "move"
         imap.uid_move(uids, folder)
-        { strategy:, detected: false }
+        strategy
       else
-        copy_delete_expunge(imap, uids, folder)
-        { strategy:, detected: false }
+        copy_delete_expunge(imap, uids, folder, capabilities:)
+        strategy
+      end
+    rescue Net::IMAP::BadResponseError, Net::IMAP::NoResponseError
+      if strategy == "move"
+        update_column(:imap_move_strategy, "copy_delete_expunge")
+        copy_delete_expunge(imap, uids, folder, capabilities:)
+        "copy_delete_expunge"
+      else
+        raise
       end
     end
 
-    def detect_imap_move_strategy(imap, uids, folder)
-      imap.uid_move(uids, folder)
-      update_column(:imap_move_strategy, "move")
-      "move"
-    rescue Net::IMAP::BadResponseError, Net::IMAP::NoResponseError
-      copy_delete_expunge(imap, uids, folder)
-      update_column(:imap_move_strategy, "copy_delete_expunge")
-      "copy_delete_expunge"
+    def resolve_move_strategy(capabilities)
+      if capabilities.include?("MOVE")
+        update_column(:imap_move_strategy, "move")
+        "move"
+      else
+        update_column(:imap_move_strategy, "copy_delete_expunge")
+        "copy_delete_expunge"
+      end
     end
 
-    def copy_delete_expunge(imap, uids, folder)
+    def copy_delete_expunge(imap, uids, folder, capabilities: nil)
       imap.uid_copy(uids, folder)
       imap.uid_store(uids, "+FLAGS", [ :Deleted ])
-      imap.expunge
+
+      caps = capabilities || imap.capability
+      if caps.include?("UIDPLUS")
+        imap.uid_expunge(uids)
+      else
+        imap.expunge
+      end
     end
 end

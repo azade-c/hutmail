@@ -7,6 +7,8 @@ module Connectable
   IMAP_DEFAULT_PORTS = { "ssl" => 993, "starttls" => 143, "none" => 143 }.freeze
   SMTP_DEFAULT_PORTS = { "ssl" => 465, "starttls" => 587, "none" => 25 }.freeze
 
+  IMAP_AUTH_METHODS = %w[login plain].freeze
+
   IMAP_OPEN_TIMEOUT = 10
   IMAP_IDLE_TIMEOUT = 30
 
@@ -22,9 +24,11 @@ module Connectable
     validates :smtp_server, presence: true
     validates :smtp_port, presence: true
     validates :smtp_encryption, presence: true, inclusion: { in: ENCRYPTION_MODES }
+    validates :imap_auth_method, inclusion: { in: IMAP_AUTH_METHODS }, allow_nil: true
 
     before_validation :apply_default_ports
     before_validation :reset_smtp_auth_method, if: :smtp_config_changed?
+    before_validation :reset_imap_auth_method, if: :imap_config_changed?
     before_validation :reset_imap_move_strategy, if: :imap_config_changed?
   end
 
@@ -37,7 +41,7 @@ module Connectable
       idle_response_timeout: IMAP_IDLE_TIMEOUT
     )
     imap.starttls if imap_encryption == "starttls"
-    imap.login(imap_username, imap_password)
+    authenticate_imap(imap)
     yield imap
   ensure
     imap&.logout rescue nil
@@ -53,6 +57,41 @@ module Connectable
   end
 
   private
+    # NOTE: retries auth on the same TCP connection after failure.
+    # RFC 3501 §6.2 allows this, but some servers (old Dovecot, Exchange)
+    # may reject. If that happens, we'd need to reconnect before retrying.
+    def authenticate_imap(imap)
+      if imap_auth_method.present?
+        perform_imap_auth(imap, imap_auth_method)
+      else
+        authenticate_imap_with_fallback(imap)
+      end
+    rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
+      raise unless imap_auth_method.present?
+      failed_method = imap_auth_method
+      update_column(:imap_auth_method, nil) # bypass validations/callbacks intentionally
+      authenticate_imap_with_fallback(imap, skip: failed_method)
+    end
+
+    def authenticate_imap_with_fallback(imap, skip: nil)
+      methods = skip ? IMAP_AUTH_METHODS.reject { |m| m == skip } : IMAP_AUTH_METHODS
+      methods.each_with_index do |method, index|
+        perform_imap_auth(imap, method)
+        update_column(:imap_auth_method, method) # bypass callbacks to avoid reset loop
+        return
+      rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
+        raise if index == methods.size - 1
+      end
+    end
+
+    def perform_imap_auth(imap, method)
+      if method == "login"
+        imap.login(imap_username, imap_password)
+      else
+        imap.authenticate("PLAIN", imap_username, imap_password)
+      end
+    end
+
     def sent_folder_for(imap)
       mailbox_names = Array(imap.list("", "*")).filter_map(&:name)
       special_use = mailbox_names.find { |name| name.match?(/sent/i) || name.match?(/envoy/i) }
@@ -73,6 +112,10 @@ module Connectable
       self.smtp_auth_method = nil
     end
 
+    def reset_imap_auth_method
+      self.imap_auth_method = nil
+    end
+
     def reset_imap_move_strategy
       self.imap_move_strategy = nil if respond_to?(:imap_move_strategy=)
     end
@@ -82,7 +125,8 @@ module Connectable
     end
 
     def imap_config_changed?
-      imap_server_changed? || imap_port_changed? || imap_encryption_changed?
+      imap_server_changed? || imap_port_changed? || imap_encryption_changed? ||
+        imap_username_changed? || imap_password_changed?
     end
 
     def apply_default_ports
