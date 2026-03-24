@@ -232,6 +232,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     fake_imap.define_singleton_method(:login) { |_u, _p| true }
     fake_imap.define_singleton_method(:select) { |_box| true }
     fake_imap.define_singleton_method(:create) { |name| created_folder = name }
+    fake_imap.define_singleton_method(:capability) { [ "IMAP4rev1", "MOVE" ] }
     fake_imap.define_singleton_method(:uid_store) { |uids, flag, vals| stored_flags << { uids:, flag:, vals: } }
     fake_imap.define_singleton_method(:uid_move) { |uids, folder| moved_to = folder }
     fake_imap.define_singleton_method(:logout) { true }
