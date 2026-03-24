@@ -7,6 +7,8 @@ module Connectable
   IMAP_DEFAULT_PORTS = { "ssl" => 993, "starttls" => 143, "none" => 143 }.freeze
   SMTP_DEFAULT_PORTS = { "ssl" => 465, "starttls" => 587, "none" => 25 }.freeze
 
+  IMAP_AUTH_METHODS = %w[login plain].freeze
+
   IMAP_OPEN_TIMEOUT = 10
   IMAP_IDLE_TIMEOUT = 30
 
@@ -22,9 +24,11 @@ module Connectable
     validates :smtp_server, presence: true
     validates :smtp_port, presence: true
     validates :smtp_encryption, presence: true, inclusion: { in: ENCRYPTION_MODES }
+    validates :imap_auth_method, inclusion: { in: IMAP_AUTH_METHODS }, allow_nil: true
 
     before_validation :apply_default_ports
     before_validation :reset_smtp_auth_method, if: :smtp_config_changed?
+    before_validation :reset_imap_auth_method, if: :imap_config_changed?
     before_validation :reset_imap_move_strategy, if: :imap_config_changed?
   end
 
@@ -37,7 +41,7 @@ module Connectable
       idle_response_timeout: IMAP_IDLE_TIMEOUT
     )
     imap.starttls if imap_encryption == "starttls"
-    imap.login(imap_username, imap_password)
+    authenticate_imap(imap)
     yield imap
   ensure
     imap&.logout rescue nil
@@ -53,6 +57,32 @@ module Connectable
   end
 
   private
+    def authenticate_imap(imap)
+      if imap_auth_method.present?
+        perform_imap_auth(imap, imap_auth_method)
+      else
+        authenticate_imap_with_fallback(imap)
+      end
+    end
+
+    def authenticate_imap_with_fallback(imap)
+      IMAP_AUTH_METHODS.each_with_index do |method, index|
+        perform_imap_auth(imap, method)
+        update_column(:imap_auth_method, method)
+        return
+      rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError => e
+        raise if index == IMAP_AUTH_METHODS.size - 1
+      end
+    end
+
+    def perform_imap_auth(imap, method)
+      if method == "login"
+        imap.login(imap_username, imap_password)
+      else
+        imap.authenticate("PLAIN", imap_username, imap_password)
+      end
+    end
+
     def sent_folder_for(imap)
       mailbox_names = Array(imap.list("", "*")).filter_map(&:name)
       special_use = mailbox_names.find { |name| name.match?(/sent/i) || name.match?(/envoy/i) }
@@ -71,6 +101,10 @@ module Connectable
 
     def reset_smtp_auth_method
       self.smtp_auth_method = nil
+    end
+
+    def reset_imap_auth_method
+      self.imap_auth_method = nil
     end
 
     def reset_imap_move_strategy
