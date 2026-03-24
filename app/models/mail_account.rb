@@ -36,7 +36,7 @@ class MailAccount < ApplicationRecord
 
     def apply_imap_move_strategy(imap, uids, folder)
       capabilities = imap.capability
-      strategy = imap_move_strategy.presence || detect_and_memorize_imap_move_strategy(capabilities)
+      strategy = imap_move_strategy.presence || resolve_move_strategy(capabilities)
 
       if strategy == "move"
         imap.uid_move(uids, folder)
@@ -55,7 +55,7 @@ class MailAccount < ApplicationRecord
       end
     end
 
-    def detect_and_memorize_imap_move_strategy(capabilities)
+    def resolve_move_strategy(capabilities)
       if capabilities.include?("MOVE")
         update_column(:imap_move_strategy, "move")
         "move"

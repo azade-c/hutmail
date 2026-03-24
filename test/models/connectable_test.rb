@@ -126,11 +126,9 @@ class ConnectableTest < ActiveSupport::TestCase
     login_called = false
     authenticate_called = false
 
-    fake_imap = Object.new
+    fake_imap = build_fake_imap
     fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
     fake_imap.define_singleton_method(:authenticate) { |*_args| authenticate_called = true }
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
 
     with_fake_imap(fake_imap) do
       account.with_imap_connection { |_imap| }
@@ -147,11 +145,9 @@ class ConnectableTest < ActiveSupport::TestCase
     authenticate_called = false
     auth_mechanism = nil
 
-    fake_imap = Object.new
+    fake_imap = build_fake_imap
     fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
     fake_imap.define_singleton_method(:authenticate) { |mech, _u, _p| authenticate_called = true; auth_mechanism = mech }
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
 
     with_fake_imap(fake_imap) do
       account.with_imap_connection { |_imap| }
@@ -167,10 +163,8 @@ class ConnectableTest < ActiveSupport::TestCase
     account.imap_auth_method = nil
     login_called = false
 
-    fake_imap = Object.new
+    fake_imap = build_fake_imap
     fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
 
     with_fake_imap(fake_imap) do
       account.with_imap_connection { |_imap| }
@@ -186,11 +180,9 @@ class ConnectableTest < ActiveSupport::TestCase
     account.imap_auth_method = nil
     authenticate_called = false
 
-    fake_imap = Object.new
+    fake_imap = build_fake_imap
     fake_imap.define_singleton_method(:login) { |_u, _p| raise Net::IMAP::NoResponseError.new(Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "auth failed"), "A001 NO auth failed\r\n")) }
     fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_called = true }
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
 
     with_fake_imap(fake_imap) do
       account.with_imap_connection { |_imap| }
@@ -210,12 +202,21 @@ class ConnectableTest < ActiveSupport::TestCase
     assert_nil account.imap_auth_method
   end
 
-  test "reset imap_auth_method when IMAP credentials change" do
+  test "reset imap_auth_method when IMAP username changes" do
     account = mail_accounts(:gmail)
     account.update_column(:imap_auth_method, "login")
     assert_equal "login", account.imap_auth_method
 
     account.update!(imap_username: "newuser@example.com")
+    assert_nil account.imap_auth_method
+  end
+
+  test "reset imap_auth_method when IMAP password changes" do
+    account = mail_accounts(:gmail)
+    account.update_column(:imap_auth_method, "plain")
+    assert_equal "plain", account.imap_auth_method
+
+    account.update!(imap_password: "newpassword123")
     assert_nil account.imap_auth_method
   end
 
@@ -229,11 +230,9 @@ class ConnectableTest < ActiveSupport::TestCase
     )
 
     login_attempts = 0
-    fake_imap = Object.new
+    fake_imap = build_fake_imap
     fake_imap.define_singleton_method(:login) { |_u, _p| login_attempts += 1; raise no_response }
     fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_called = true }
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
 
     with_fake_imap(fake_imap) do
       account.with_imap_connection { |_imap| }
@@ -251,11 +250,9 @@ class ConnectableTest < ActiveSupport::TestCase
     login_called = false
     authenticate_called = false
 
-    fake_imap = Object.new
+    fake_imap = build_fake_imap
     fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
     fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_called = true }
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
 
     with_fake_imap(fake_imap) do
       account.with_imap_connection { |_imap| }
@@ -273,11 +270,9 @@ class ConnectableTest < ActiveSupport::TestCase
       Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "auth failed"), "A001 NO auth failed\r\n")
     )
 
-    fake_imap = Object.new
+    fake_imap = build_fake_imap
     fake_imap.define_singleton_method(:login) { |_u, _p| raise no_response }
     fake_imap.define_singleton_method(:authenticate) { |*_args| raise no_response }
-    fake_imap.define_singleton_method(:logout) { true }
-    fake_imap.define_singleton_method(:disconnect) { true }
 
     with_fake_imap(fake_imap) do
       assert_raises(Net::IMAP::NoResponseError) do
@@ -410,6 +405,7 @@ class ConnectableTest < ActiveSupport::TestCase
     def build_fake_imap
       fake = Object.new
       fake.define_singleton_method(:login) { |_u, _p| true }
+      fake.define_singleton_method(:authenticate) { |_mech, _u, _p| true }
       fake.define_singleton_method(:logout) { true }
       fake.define_singleton_method(:disconnect) { true }
       fake

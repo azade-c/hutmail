@@ -57,6 +57,9 @@ module Connectable
   end
 
   private
+    # NOTE: retries auth on the same TCP connection after failure.
+    # RFC 3501 §6.2 allows this, but some servers (old Dovecot, Exchange)
+    # may reject. If that happens, we'd need to reconnect before retrying.
     def authenticate_imap(imap)
       if imap_auth_method.present?
         perform_imap_auth(imap, imap_auth_method)
@@ -66,7 +69,7 @@ module Connectable
     rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
       raise unless imap_auth_method.present?
       failed_method = imap_auth_method
-      update_column(:imap_auth_method, nil)
+      update_column(:imap_auth_method, nil) # bypass validations/callbacks intentionally
       authenticate_imap_with_fallback(imap, skip: failed_method)
     end
 
@@ -74,7 +77,7 @@ module Connectable
       methods = skip ? IMAP_AUTH_METHODS.reject { |m| m == skip } : IMAP_AUTH_METHODS
       methods.each_with_index do |method, index|
         perform_imap_auth(imap, method)
-        update_column(:imap_auth_method, method)
+        update_column(:imap_auth_method, method) # bypass callbacks to avoid reset loop
         return
       rescue Net::IMAP::NoResponseError, Net::IMAP::BadResponseError
         raise if index == methods.size - 1
