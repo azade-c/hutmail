@@ -15,15 +15,13 @@
             <%= Bundle.format_size(bundle.total_stripped_size || 0) %>
           </span>
         </div>
-        <% if bundle.sent_at %>
-          <div class="txt-x-small txt-subtle margin-block-start-half">
+        <div class="txt-x-small txt-subtle margin-block-start-half">
+          <% if bundle.sent_at %>
             Envoyé le <%= bundle.sent_at.strftime("%d %b %Y %H:%M") %>
-          </div>
-        <% else %>
-          <div class="txt-x-small txt-subtle margin-block-start-half">
+          <% else %>
             Créé le <%= bundle.created_at.strftime("%d %b %Y %H:%M") %>
-          </div>
-        <% end %>
+          <% end %>
+        </div>
         <% if bundle.remaining_count.to_i > 0 %>
           <div class="txt-x-small txt-subtle">
             + <%= bundle.remaining_count %> dans le screener
