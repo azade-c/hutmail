@@ -83,3 +83,17 @@ Avoid "AI slop" UI. Be opinionated + distinctive.
 
 - Architecture: `.specs/2026-03-02_initial-architecture.md` (source of truth)
 - Original spec: `.specs/SPEC.md`
+
+## Browser
+
+Use `agent-browser` (skill installed). Vault entries (run `agent-browser auth list`):
+
+- `hutmail-boris` - `boris@castors.ovh` on https://hutmail.azade.dev
+- `netcourrier-sailmail` - `sailmailalibi@netcourrier.com`
+- `francemel-alibi` - `alibi@francemel.fr` (same Mailo backend as netcourrier - use distinct `--session` for parallel)
+- `hey-azade` - `azade@hey.com`
+
+Gmail (`azade.craba@gmail.com`): blocked by Google anti-bot. Use real Chrome with the "Azade" profile clone:
+```bash
+agent-browser --executable-path "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --profile "Profile 2" open https://mail.google.com
+```
