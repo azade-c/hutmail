@@ -165,6 +165,9 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-24.04-arm
+    environment:
+      name: production
+      url: https://hutmail.azade.dev
     needs: [scan_ruby, scan_js, lint_ruby, lint_herb, lint_smart_quotes, test, system-test]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     concurrency:
