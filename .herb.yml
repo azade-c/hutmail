@@ -43,7 +43,7 @@ linter:
 
   # # Exit with error code when diagnostics of this severity or higher are present
   # # Valid values: error (default), warning, info, hint
-  # failLevel: warning
+  failLevel: warning
 
   rules:
     # INFO: FC 15may26 allow side-effect helpers like `<% breadcrumbs ["Home", root_path], ["Page"] %>`
