@@ -1,4 +1,4 @@
-<% breadcrumb ["Bateaux", vessels_path], [@vessel.name] %>
+<% breadcrumbs ["Bateaux", vessels_path], [@vessel.name] %>
 
 <div class="page-header">
   <h1><%= @vessel.name %></h1>
@@ -33,7 +33,7 @@
       <%= Bundle.format_size(@budget_consumed) %> utilisés sur <%= Bundle.format_size(total) %>
     </div>
     <div class="budget-bar">
-      <div class="budget-bar__fill budget-bar__fill--<%= pct > 90 ? "danger" : "ok" %>" data-width="<%= pct %>%"></div>
+      <div class="<%= class_names("budget-bar__fill", "budget-bar__fill--#{pct > 90 ? "danger" : "ok"}") %>" data-width="<%= pct %>%"></div>
     </div>
   </div>
 <% end %>
@@ -82,7 +82,7 @@
           <div class="message-item__header">
             <span class="message-item__code"><%= msg.hutmail_reference %></span>
             <span class="badge"><%= msg.mail_account.short_code %></span>
-            <span class="badge badge--<%= msg.status %>"><%= msg.status_label %></span>
+            <span class="<%= class_names("badge", "badge--#{msg.status}") %>"><%= msg.status_label %></span>
           </div>
           <div>
             <span class="message-item__from"><%= msg.from_name.presence || msg.from_address %></span>
@@ -118,7 +118,7 @@
       <% @recent_bundles.each do |bundle| %>
         <li class="message-item">
           <a href="<%= bundle_path(bundle) %>">
-            <span class="badge badge--<%= bundle.status %>"><%= bundle.status %></span>
+            <span class="<%= class_names("badge", "badge--#{bundle.status}") %>"><%= bundle.status %></span>
             <%= bundle.messages_count %> messages
             · <%= Bundle.format_size(bundle.total_stripped_size || 0) %>
             <% if bundle.sent_at %>
