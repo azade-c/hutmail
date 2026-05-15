@@ -3,7 +3,7 @@
 <div class="page-header">
   <h1>
     Dépêche #<%= @bundle.id %>
-    <span class="badge badge--<%= @bundle.status %>"><%= @bundle.status %></span>
+    <span class="<%= class_names("badge", "badge--#{@bundle.status}") %>"><%= @bundle.status %></span>
   </h1>
 </div>
 

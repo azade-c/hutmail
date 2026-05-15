@@ -9,7 +9,7 @@
     <div class="card">
       <a href="<%= bundle_path(bundle) %>">
         <div class="flex align-center justify-space-between">
-          <span class="badge badge--<%= bundle.status %>"><%= bundle.status %></span>
+          <span class="<%= class_names("badge", "badge--#{bundle.status}") %>"><%= bundle.status %></span>
           <span class="txt-small">
             <%= bundle.messages_count %> messages ·
             <%= Bundle.format_size(bundle.total_stripped_size || 0) %>
