@@ -1,3 +1,9 @@
+require "net/imap"
+
+# Apply the Net::IMAP::ResponseParser compatibility shim before any IMAP
+# operation. See NetImapResponseCompat for the rationale.
+Net::IMAP::ResponseParser.prepend(NetImapResponseCompat)
+
 module Connectable
   extend ActiveSupport::Concern
 
