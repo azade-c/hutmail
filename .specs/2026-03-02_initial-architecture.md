@@ -427,19 +427,40 @@ HutMail keeps a complete record of all exchanges via the database:
 ### Outbound flow (boat → world)
 
 1. HutMail polls the **relay account via IMAP** for boat messages
-2. Parsing of the structured format:
+2. Parsing of the structured format. Two block kinds are supported, distinguished by their first token:
+
+   **`===REPLY <hutmail_id>===` — reply to a known message**
    ```
-   ===MSG bob@example.com===
+   ===REPLY 22may.GM.3===
+   Bien reçu, on est aux Açores
+   ===REPLY 22may.OR.1===
+   À l'arrivée on appelle
+   ```
+   The skipper sees the `[22may.GM.3]` identifier in the bundle and references it directly. HutMail:
+   - Resolves the original `MessageDigest` from the identifier
+   - Routes `to:` = `original.from_address`
+   - Sets `subject:` = `Re: <original.subject>` (no double Re:)
+   - Uses `original.mail_account` as the SMTP sender (no ambiguity, no fallback)
+   - Sets `In-Reply-To:` and `References:` headers to `original.imap_message_id` for proper mail-client threading
+   - Links the `vessel_reply.message_digest_id` to the original
+   - Unknown id → structured `:error` result, no reply created
+
+   **`===MSG.<ACCOUNT> <email>===` — fresh outbound message (no original)**
+   ```
+   ===MSG.GM bob@example.com===
    We're arriving Tuesday in Horta
-   ===MSG family@beavers.fr===
+   ===MSG.OR family@beavers.fr===
    All is well, 15 knots of wind
    ```
-3. **SMTP account resolution**: for each recipient, HutMail determines which account to send from:
-   - Search `collected_messages` for whether this recipient has previously written → use the same `mail_account`
-   - Otherwise → use the account marked `is_default`
-4. **Send via SMTP** from the appropriate account, with correct headers (`From:`, `Reply-To:`)
-5. **Record** in `boat_replies`: link to original message, account used, status
-6. Log what was sent
+   The block kind suffix is the 2-letter account `short_code` (same code that appears in `[22may.GM.3]` identifiers — visually consistent: `MSG.GM` reads as "of kind MSG, account GM" just like `22may.GM.3` reads as "date 22may, account GM, seq 3"). HutMail:
+   - Resolves the `mail_account` by `short_code` scoped to the vessel — unknown code returns an error, no silent fallback
+   - Subject is `HutMail message` (no original to reference)
+   - No threading headers (this is a new conversation)
+   - `vessel_reply.message_digest_id` is `nil`
+
+3. **Send via SMTP** from the resolved account, with correct headers (`From:`, and `In-Reply-To`/`References` for REPLY blocks)
+4. **Record** in `vessel_replies` with `message_digest_id` (nullable, set for REPLY only)
+5. Log what was sent
 
 ### Email CLI (commands from the boat)
 
@@ -450,11 +471,12 @@ The Beavers can send commands to the server to react:
 # Message management
 DROP LAST             — cancel the last send (too big to download)
 DROP 01mar.GM.2 28feb.OR.1   — exclude specific messages from the next send
+# To reply to a specific message, use ===REPLY <id>=== blocks outside CMD (see Outbound flow)
 GET 28feb.OR.2        — request a message from the screener (boat manages its budget)
 
-# Direct sending
-SEND bob@example.com "We're arriving Tuesday"
-URGENT family@beavers.fr "All is well"  — immediate send
+# Direct sending (account short_code is required — same 2-letter code as in hutmail_ids)
+SEND.GM bob@example.com "We're arriving Tuesday"
+URGENT.OR family@beavers.fr "All is well"  — immediate send
 
 # Aggregation control
 PAUSE 3d              — stop aggregation (port of call, wifi available)
