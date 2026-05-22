@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_24_220206) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_22_213904) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -147,6 +147,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_24_220206) do
     t.datetime "created_at", null: false
     t.string "error_message"
     t.integer "mail_account_id", null: false
+    t.integer "message_digest_id"
     t.datetime "sent_at"
     t.string "status"
     t.string "subject"
@@ -154,6 +155,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_24_220206) do
     t.datetime "updated_at", null: false
     t.integer "vessel_id", null: false
     t.index ["mail_account_id"], name: "index_vessel_replies_on_mail_account_id"
+    t.index ["message_digest_id"], name: "index_vessel_replies_on_message_digest_id"
     t.index ["vessel_id"], name: "index_vessel_replies_on_vessel_id"
   end
 
@@ -177,5 +179,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_24_220206) do
   add_foreign_key "relay_accounts", "vessels"
   add_foreign_key "sessions", "users"
   add_foreign_key "vessel_replies", "mail_accounts"
+  add_foreign_key "vessel_replies", "message_digests"
   add_foreign_key "vessel_replies", "vessels"
 end
