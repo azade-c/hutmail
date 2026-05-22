@@ -230,6 +230,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
 
     fake_imap = Object.new
     fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| true }
     fake_imap.define_singleton_method(:select) { |_box| true }
     fake_imap.define_singleton_method(:create) { |name| created_folder = name }
     fake_imap.define_singleton_method(:capability) { [ "IMAP4rev1", "MOVE" ] }
@@ -262,6 +263,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     def with_fake_imap(search:, fetches:)
       fake_imap = Object.new
       fake_imap.define_singleton_method(:login) { |_u, _p| true }
+      fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| true }
       fake_imap.define_singleton_method(:select) { |_box| true }
       fake_imap.define_singleton_method(:uid_search) { |_query| search }
       fake_imap.define_singleton_method(:uid_fetch) do |uid, _attrs|

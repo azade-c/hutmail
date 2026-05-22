@@ -46,6 +46,7 @@ class VesselCyclingTest < ActiveSupport::TestCase
 
     fake_imap = Object.new
     fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| true }
     fake_imap.define_singleton_method(:select) { |_box| true }
     fake_imap.define_singleton_method(:search) { |_query| [] }
     fake_imap.define_singleton_method(:logout) { true }

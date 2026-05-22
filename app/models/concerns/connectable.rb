@@ -7,7 +7,7 @@ module Connectable
   IMAP_DEFAULT_PORTS = { "ssl" => 993, "starttls" => 143, "none" => 143 }.freeze
   SMTP_DEFAULT_PORTS = { "ssl" => 465, "starttls" => 587, "none" => 25 }.freeze
 
-  IMAP_AUTH_METHODS = %w[login plain].freeze
+  IMAP_AUTH_METHODS = %w[plain login].freeze
 
   IMAP_OPEN_TIMEOUT = 10
   IMAP_IDLE_TIMEOUT = 30
