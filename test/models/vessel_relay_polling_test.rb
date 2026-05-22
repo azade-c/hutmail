@@ -38,6 +38,7 @@ class VesselRelayPollingTest < ActiveSupport::TestCase
 
     fake_imap = Object.new
     fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| true }
     fake_imap.define_singleton_method(:select) { |_box| true }
     fake_imap.define_singleton_method(:search) { |_query| [ 1, 2 ] }
     fake_imap.define_singleton_method(:fetch) do |uid, _attrs|
@@ -90,6 +91,7 @@ class VesselRelayPollingTest < ActiveSupport::TestCase
 
     fake_imap = Object.new
     fake_imap.define_singleton_method(:login) { |_u, _p| true }
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| true }
     fake_imap.define_singleton_method(:select) { |_box| true }
     fake_imap.define_singleton_method(:search) { |_query| [ 1 ] }
     fake_imap.define_singleton_method(:fetch) do |_uid, _attrs|

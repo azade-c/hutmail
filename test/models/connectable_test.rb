@@ -158,12 +158,39 @@ class ConnectableTest < ActiveSupport::TestCase
     assert_equal "PLAIN", auth_mechanism
   end
 
-  test "cascade: LOGIN succeeds, memorizes login" do
+  test "cascade: PLAIN tried first when imap_auth_method is nil (RFC 9051)" do
+    account = mail_accounts(:gmail)
+    account.imap_auth_method = nil
+    login_called = false
+    authenticate_called = false
+    auth_mechanism = nil
+
+    fake_imap = build_fake_imap
+    fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
+    fake_imap.define_singleton_method(:authenticate) { |mech, _u, _p| authenticate_called = true; auth_mechanism = mech }
+
+    with_fake_imap(fake_imap) do
+      account.with_imap_connection { |_imap| }
+    end
+
+    assert authenticate_called
+    assert_not login_called
+    assert_equal "PLAIN", auth_mechanism
+    account.reload
+    assert_equal "plain", account.imap_auth_method
+  end
+
+  test "cascade: PLAIN fails, fallback LOGIN, memorizes login" do
     account = mail_accounts(:gmail)
     account.imap_auth_method = nil
     login_called = false
 
+    no_response = Net::IMAP::NoResponseError.new(
+      Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "plain disabled"), "A001 NO plain disabled\r\n")
+    )
+
     fake_imap = build_fake_imap
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| raise no_response }
     fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
 
     with_fake_imap(fake_imap) do
@@ -173,24 +200,6 @@ class ConnectableTest < ActiveSupport::TestCase
     assert login_called
     account.reload
     assert_equal "login", account.imap_auth_method
-  end
-
-  test "cascade: LOGIN fails, fallback PLAIN, memorizes plain" do
-    account = mail_accounts(:gmail)
-    account.imap_auth_method = nil
-    authenticate_called = false
-
-    fake_imap = build_fake_imap
-    fake_imap.define_singleton_method(:login) { |_u, _p| raise Net::IMAP::NoResponseError.new(Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "auth failed"), "A001 NO auth failed\r\n")) }
-    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_called = true }
-
-    with_fake_imap(fake_imap) do
-      account.with_imap_connection { |_imap| }
-    end
-
-    assert authenticate_called
-    account.reload
-    assert_equal "plain", account.imap_auth_method
   end
 
   test "reset imap_auth_method when IMAP config changes" do
@@ -222,26 +231,26 @@ class ConnectableTest < ActiveSupport::TestCase
 
   test "memorized auth fails, skips failed method, memorizes new method" do
     account = mail_accounts(:gmail)
-    account.update_column(:imap_auth_method, "login")
-    authenticate_called = false
+    account.update_column(:imap_auth_method, "plain")
+    login_called = false
 
     no_response = Net::IMAP::NoResponseError.new(
-      Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "login disabled"), "A001 NO login disabled\r\n")
+      Net::IMAP::TaggedResponse.new("A001", "NO", Net::IMAP::ResponseText.new(nil, "plain disabled"), "A001 NO plain disabled\r\n")
     )
 
-    login_attempts = 0
+    authenticate_attempts = 0
     fake_imap = build_fake_imap
-    fake_imap.define_singleton_method(:login) { |_u, _p| login_attempts += 1; raise no_response }
-    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_called = true }
+    fake_imap.define_singleton_method(:authenticate) { |_mech, _u, _p| authenticate_attempts += 1; raise no_response }
+    fake_imap.define_singleton_method(:login) { |_u, _p| login_called = true }
 
     with_fake_imap(fake_imap) do
       account.with_imap_connection { |_imap| }
     end
 
-    assert authenticate_called
-    assert_equal 1, login_attempts
+    assert login_called
+    assert_equal 1, authenticate_attempts
     account.reload
-    assert_equal "plain", account.imap_auth_method
+    assert_equal "login", account.imap_auth_method
   end
 
   test "memorized auth reconnection uses memorized method directly" do

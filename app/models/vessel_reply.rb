@@ -5,6 +5,7 @@ class VesselReply < ApplicationRecord
 
   belongs_to :vessel
   belongs_to :mail_account
+  belongs_to :message_digest, optional: true
 
   encrypts :body
 

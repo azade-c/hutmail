@@ -80,12 +80,14 @@ module Vessel::Commanding
       if (match = args&.match(/\A(\S+)\s+"?(.+?)"?\z/))
         recipient = match[1]
         body = match[2]
-        account = resolve_outbound_account(recipient)
+        original = resolve_original_message(recipient)
+        account = original&.mail_account || default_outbound_account
 
         reply = vessel_replies.create!(
           mail_account: account,
+          message_digest: original,
           to_address: recipient,
-          subject: resolve_subject(recipient),
+          subject: subject_for_reply(original),
           body: body,
           status: "pending"
         )
@@ -157,42 +159,37 @@ module Vessel::Commanding
       all_messages
     end
 
-    def resolve_outbound_account(recipient)
-      previous = MessageDigest.where(from_address: recipient)
-        .joins(:mail_account)
-        .where(mail_accounts: { vessel_id: id })
-        .first
-
-      if previous
-        previous.mail_account
-      else
-        mail_accounts.find_by(is_default: true) || mail_accounts.first
-      end
-    end
-
-    def resolve_subject(recipient)
-      original = MessageDigest
+    def resolve_original_message(recipient)
+      MessageDigest
         .where(from_address: recipient)
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: id })
         .order(date: :desc)
         .first
+    end
 
-      if original
-        "Re: #{original.subject}"
-      else
-        "HutMail reply"
-      end
+    def default_outbound_account
+      mail_accounts.find_by(is_default: true) || mail_accounts.first
+    end
+
+    def subject_for_reply(original)
+      return "HutMail reply" unless original
+
+      subject = original.subject.to_s
+      subject.match?(/\ARe:\s/i) ? subject : "Re: #{subject}"
     end
 
     def flush_outbound_message(recipient, body, results)
       return if recipient.blank? || body.blank?
 
-      account = resolve_outbound_account(recipient)
+      original = resolve_original_message(recipient)
+      account = original&.mail_account || default_outbound_account
+
       reply = vessel_replies.create!(
         mail_account: account,
+        message_digest: original,
         to_address: recipient,
-        subject: resolve_subject(recipient),
+        subject: subject_for_reply(original),
         body: body.join.strip,
         status: "pending"
       )
