@@ -54,7 +54,7 @@ class OutboundMailerTest < ActionMailer::TestCase
     assert_equal "<already-wrapped@example.com>", mail["In-Reply-To"].value
   end
 
-  test "sets X-Hutmail-* identifying headers on every reply" do
+  test "does not set X-Hutmail-* identifying headers" do
     reply = VesselReply.create!(
       vessel: @vessel, mail_account: @account, message_digest: nil,
       to_address: "someone@example.com", subject: "Test",
@@ -63,10 +63,10 @@ class OutboundMailerTest < ActionMailer::TestCase
 
     mail = OutboundMailer.new.send_reply(reply)
 
-    assert_equal "1", mail["X-Hutmail-Version"].value
-    assert_equal "vessel_reply", mail["X-Hutmail-Kind"].value
-    assert_equal @vessel.id.to_s, mail["X-Hutmail-Vessel-Id"].value
-    assert_equal reply.id.to_s, mail["X-Hutmail-Reply-Id"].value
+    assert_nil mail["X-Hutmail-Version"]
+    assert_nil mail["X-Hutmail-Kind"]
+    assert_nil mail["X-Hutmail-Vessel-Id"]
+    assert_nil mail["X-Hutmail-Reply-Id"]
   end
 
   test "omits threading headers when no MessageDigest is linked" do

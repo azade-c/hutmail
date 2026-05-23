@@ -82,6 +82,7 @@ module MailAccount::Collecting
       raw_size = envelope.attr["RFC822.SIZE"] || raw&.bytesize || 0
       mail = Mail.new(raw)
       return if from_relay_address?(mail)
+      return if hutmail_originated?(extract_message_id(envelope))
 
       stripped = MessageDigest.strip_mail(mail)
       attachments_metadata = extract_attachments_metadata(mail)
@@ -121,6 +122,13 @@ module MailAccount::Collecting
       missing_messages = message_digests.where.not(imap_message_id: visible_message_ids)
       missing_messages.collected.update_all(status: MessageDigest.statuses.fetch("no_longer_collectable"))
       missing_messages.requeued.update_all(status: MessageDigest.statuses.fetch("bundled"))
+    end
+
+    def hutmail_originated?(message_id)
+      return false if message_id.blank?
+
+      vessel.bundles.where(outbound_message_id: message_id).exists? ||
+        vessel.vessel_replies.where(outbound_message_id: message_id).exists?
     end
 
     def from_relay_address?(mail)

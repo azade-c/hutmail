@@ -10,6 +10,7 @@ module Bundle::Delivering
       RelayMailer.send_bundle(self, auth_method:)
     end
 
+    capture_outbound_message_id(message)
     append_to_sent(account, message)
     record_as_sent!
     log_step "✅ Dépêche acceptée par le SMTP"
@@ -33,6 +34,11 @@ module Bundle::Delivering
   end
 
   private
+    def capture_outbound_message_id(message)
+      mid = message&.message_id
+      update_column(:outbound_message_id, Mail::Utilities.bracket(mid)) if mid.present?
+    end
+
     def append_to_sent(account, message)
       folder = account.append_to_sent(message.message.to_s)
       log_step "IMAP APPEND → #{folder}"

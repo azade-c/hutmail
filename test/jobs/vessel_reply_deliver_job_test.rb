@@ -17,6 +17,7 @@ class VesselReplyDeliverJobTest < ActiveJob::TestCase
     delivered = false
     outbound = Object.new
     outbound.define_singleton_method(:deliver_now) { delivered = true }
+    outbound.define_singleton_method(:message_id) { nil }
 
     original_send_reply = OutboundMailer.method(:send_reply)
     OutboundMailer.define_singleton_method(:send_reply) do |_reply, **_opts|

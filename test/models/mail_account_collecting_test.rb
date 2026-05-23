@@ -116,6 +116,49 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     assert @account.message_digests.exists?(imap_message_id: "friend-msg@example.com")
   end
 
+  test "collect_now skips messages whose Message-ID matches a hutmail-originated bundle or reply" do
+    bundle = @account.vessel.bundles.create!(status: "sent", sent_at: Time.current,
+      outbound_message_id: "<bundle-loop@hutmail.example>")
+    @account.vessel.vessel_replies.create!(
+      mail_account: @account, to_address: "x@example.com", subject: "Re: x", body: "hi",
+      status: "sent", sent_at: Time.current, outbound_message_id: "<reply-loop@hutmail.example>"
+    )
+
+    loopback_bundle = <<~MAIL
+      From: postmaster@example.com
+      To: test@example.com
+      Subject: bounce or echo
+      Date: Mon, 08 Mar 2026 10:00:00 +0000
+
+      anything
+    MAIL
+
+    normal_mail = <<~MAIL
+      From: friend@example.com
+      To: test@example.com
+      Subject: Hello
+      Date: Mon, 08 Mar 2026 11:00:00 +0000
+
+      How are you?
+    MAIL
+
+    with_fake_imap(
+      search: [ 1, 2, 3 ],
+      fetches: {
+        1 => { "ENVELOPE" => FakeEnvelope.new("<bundle-loop@hutmail.example>"), "BODY[]" => loopback_bundle, "RFC822.SIZE" => loopback_bundle.bytesize },
+        2 => { "ENVELOPE" => FakeEnvelope.new("<reply-loop@hutmail.example>"), "BODY[]" => loopback_bundle, "RFC822.SIZE" => loopback_bundle.bytesize },
+        3 => { "ENVELOPE" => FakeEnvelope.new("<clean-friend@example.com>"), "BODY[]" => normal_mail, "RFC822.SIZE" => normal_mail.bytesize }
+      }
+    ) do
+      @account.collect_now
+    end
+
+    assert_not @account.message_digests.exists?(imap_message_id: "<bundle-loop@hutmail.example>")
+    assert_not @account.message_digests.exists?(imap_message_id: "<reply-loop@hutmail.example>")
+    assert @account.message_digests.exists?(imap_message_id: "<clean-friend@example.com>")
+    assert bundle.persisted?
+  end
+
   test "recollect! marks missing collected messages as no longer collectable" do
     message = @account.message_digests.create!(
       imap_uid: 700,

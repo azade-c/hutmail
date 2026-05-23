@@ -20,12 +20,12 @@ class RelayMailerTest < ActionMailer::TestCase
     assert_includes mail.body.to_s, "HUTMAIL test"
   end
 
-  test "sets X-Hutmail-* identifying headers on every bundle" do
+  test "does not set X-Hutmail-* identifying headers" do
     mail = RelayMailer.new.send_bundle(@bundle)
 
-    assert_equal "1", mail["X-Hutmail-Version"].value
-    assert_equal "bundle", mail["X-Hutmail-Kind"].value
-    assert_equal @vessel.id.to_s, mail["X-Hutmail-Vessel-Id"].value
-    assert_equal @bundle.id.to_s, mail["X-Hutmail-Bundle-Id"].value
+    assert_nil mail["X-Hutmail-Version"]
+    assert_nil mail["X-Hutmail-Kind"]
+    assert_nil mail["X-Hutmail-Vessel-Id"]
+    assert_nil mail["X-Hutmail-Bundle-Id"]
   end
 end
