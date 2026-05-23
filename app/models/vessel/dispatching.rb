@@ -13,7 +13,7 @@ module Vessel::Dispatching
 
   def dispatch_now
     bundle = compose_next_bundle
-    bundle&.deliver!
+    bundle&.deliver_now
     bundle
   end
 
@@ -36,7 +36,7 @@ module Vessel::Dispatching
 
     bundle = bundles.create!(status: "draft")
     bundle.compose!(messages, remaining)
-    bundle.deliver!
+    bundle.deliver_now
     bundle
   end
 

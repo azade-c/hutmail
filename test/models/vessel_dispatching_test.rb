@@ -72,7 +72,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
   end
 
-  test "deliver! captures the outbound Message-ID on the bundle" do
+  test "deliver_now captures the outbound Message-ID on the bundle" do
     bundle = @vessel.bundles.create!(status: "draft")
 
     relay_message = Object.new
@@ -88,7 +88,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     original_append_to_sent = RelayAccount.instance_method(:append_to_sent)
     RelayAccount.define_method(:append_to_sent) { |_raw| "Sent" }
 
-    bundle.deliver!
+    bundle.deliver_now
 
     bundle.reload
     assert_equal "<captured-bundle-id@hutmail.example>", bundle.outbound_message_id,
@@ -109,7 +109,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
       failing_relay
     end
 
-    bundle.deliver!
+    bundle.deliver_now
 
     bundle.reload
     assert_equal "error", bundle.status
