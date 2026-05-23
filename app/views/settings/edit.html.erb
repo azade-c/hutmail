@@ -51,6 +51,38 @@
     </div>
   </div>
 
+  <div class="card" data-controller="dispatch-schedule">
+    <h2 class="card__header">Programmation des dépêches</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cadence</label>
+        <%= f.select :dispatch_cadence,
+            [["Manuel (bouton uniquement)", "manual"],
+             ["Toutes les N heures", "every_hours"],
+             ["Une fois par jour", "daily"]],
+            {}, class: "input",
+            data: { dispatch_schedule_target: "cadence", action: "change->dispatch-schedule#toggle" } %>
+      </div>
+      <div class="form-group" data-dispatch-schedule-target="everyHours">
+        <label>Intervalle (heures)</label>
+        <%= f.number_field :dispatch_every_hours, class: "input", min: 1, max: 24 %>
+      </div>
+      <div class="form-group" data-dispatch-schedule-target="daily">
+        <label>Heure quotidienne (HH:MM)</label>
+        <%= f.time_field :dispatch_daily_at, class: "input" %>
+      </div>
+      <div class="form-group">
+        <label>Fuseau horaire</label>
+        <%= f.select :dispatch_timezone, Vessel::Scheduling::COMMON_TIMEZONES, {}, class: "input" %>
+      </div>
+    </div>
+    <% if @vessel.next_dispatch_at %>
+      <div class="txt-x-small txt-subtle">
+        Prochaine dépêche prévue : <%= l(@vessel.next_dispatch_at.in_time_zone(@vessel.dispatch_timezone), format: :short) %>
+      </div>
+    <% end %>
+  </div>
+
   <div class="form-actions">
     <%= f.submit "Enregistrer", class: "btn btn--link" %>
   </div>

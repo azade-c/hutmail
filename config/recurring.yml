@@ -1,4 +1,10 @@
-production:
+default: &default
   relay_poll:
     class: RelayPollJob
     schedule: every 5 minutes
+  dispatch_due:
+    class: DispatchDueVesselsJob
+    schedule: every 5 minutes
+
+production:
+  <<: *default

@@ -18,6 +18,7 @@ class SettingsController < ApplicationController
       params.require(:vessel).permit(
         :name, :sailmail_address,
         :bundle_ratio, :daily_budget_kb,
+        :dispatch_cadence, :dispatch_every_hours, :dispatch_daily_at, :dispatch_timezone,
         relay_account_attributes: %i[
           imap_server imap_port imap_username imap_password imap_encryption
           smtp_server smtp_port smtp_username smtp_password smtp_encryption

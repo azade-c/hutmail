@@ -3,6 +3,7 @@ class Vessel < ApplicationRecord
   include Vessel::Dispatching
   include Vessel::Commanding
   include Vessel::RelayPolling
+  include Vessel::Scheduling
 
   has_many :crews, dependent: :destroy
   has_many :users, through: :crews
