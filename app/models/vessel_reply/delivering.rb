@@ -13,8 +13,8 @@ module VesselReply::Delivering
     end
 
     attrs = { status: "sent", sent_at: Time.current }
-    if (mid = MessageDigest.normalize_message_id(message&.message_id))
-      attrs[:outbound_message_id] = mid
+    if (mid = message&.message_id).present?
+      attrs[:outbound_message_id] = Mail::Utilities.bracket(mid)
     end
     update!(attrs)
   rescue => e

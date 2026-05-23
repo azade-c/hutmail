@@ -7,12 +7,6 @@ class MessageDigest < ApplicationRecord
 
   enum :status, %w[collected no_longer_collectable bundled requeued].index_by(&:itself), validate: true
 
-  def self.normalize_message_id(raw)
-    str = raw.to_s.strip
-    return nil if str.empty?
-    str.start_with?("<") ? str : "<#{str}>"
-  end
-
   belongs_to :mail_account
   has_many :bundle_items, dependent: :destroy
   has_many :bundles, through: :bundle_items

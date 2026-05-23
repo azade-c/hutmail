@@ -20,7 +20,7 @@ class OutboundMailer < ApplicationMailer
       original = vessel_reply.message_digest
       return {} unless original&.imap_message_id.present?
 
-      reference = MessageDigest.normalize_message_id(original.imap_message_id)
+      reference = Mail::Utilities.bracket(original.imap_message_id)
       { "In-Reply-To" => reference, "References" => reference }
     end
 end
