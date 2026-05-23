@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_23_152456) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_23_172659) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -37,6 +37,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_152456) do
     t.integer "vessel_id", null: false
     t.index ["outbound_message_id"], name: "index_bundles_on_outbound_message_id"
     t.index ["vessel_id"], name: "index_bundles_on_vessel_id"
+  end
+
+  create_table "command_responses", force: :cascade do |t|
+    t.integer "bundle_id"
+    t.string "command", null: false
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.text "response_text", null: false
+    t.datetime "sent_at"
+    t.string "source", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.integer "vessel_id", null: false
+    t.index ["bundle_id"], name: "index_command_responses_on_bundle_id"
+    t.index ["vessel_id", "status"], name: "index_command_responses_on_vessel_id_and_status"
+    t.index ["vessel_id"], name: "index_command_responses_on_vessel_id"
   end
 
   create_table "crews", force: :cascade do |t|
@@ -183,6 +199,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_152456) do
   add_foreign_key "bundle_items", "bundles"
   add_foreign_key "bundle_items", "message_digests"
   add_foreign_key "bundles", "vessels"
+  add_foreign_key "command_responses", "bundles"
+  add_foreign_key "command_responses", "vessels"
   add_foreign_key "crews", "users"
   add_foreign_key "crews", "vessels"
   add_foreign_key "mail_accounts", "vessels"
