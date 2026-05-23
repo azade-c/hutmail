@@ -24,6 +24,23 @@ class Vessel::DispatchJobTest < ActiveJob::TestCase
     assert_in_delta Time.utc(2026, 5, 23, 14, 0, 0).to_i, @vessel.next_dispatch_at.to_i, 5
   end
 
+  test "computes next_dispatch_at from the freshly-set last_dispatched_at (not the stale one)" do
+    # Regression: previously the next_dispatch_at was computed against the
+    # persisted last_dispatched_at *before* update_columns assigned the new
+    # one, causing perpetual re-fires every 5-min tick for every_hours cadence.
+    @vessel.update!(last_dispatched_at: Time.utc(2026, 5, 23, 9, 0, 0))
+    @vessel.define_singleton_method(:collect_all_accounts) { }
+    @vessel.define_singleton_method(:dispatch_now) { nil }
+
+    travel_to Time.utc(2026, 5, 23, 12, 0, 0) do
+      Vessel::DispatchJob.perform_now(@vessel)
+    end
+
+    @vessel.reload
+    assert_equal Time.utc(2026, 5, 23, 14, 0, 0), @vessel.next_dispatch_at,
+      "next_dispatch_at must be derived from the new last_dispatched_at (12:00 + 2h)"
+  end
+
   test "reschedules even when dispatch raises" do
     @vessel.define_singleton_method(:collect_all_accounts) { }
     @vessel.define_singleton_method(:dispatch_now) { raise "boom" }
