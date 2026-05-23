@@ -349,7 +349,7 @@ The stripped body and its size are stored in the database (`stripped_body`, `str
 **The budget is a soft limit.** Hutmail respects it for automatic bundles, but the skipper can exceed it deliberately via `GET` commands — the boat manages its own airtime.
 
 ```
-=== Hutmail 01mar 09:30 ===
+=== HUTMAIL 01mar 09:30 ===
 
 ==[ GM — Personal Gmail (beavers@gmail.com) ]==
 
@@ -393,7 +393,7 @@ When there are remaining `pending` messages after filling the message budget, th
 - If the screener exceeds the screener budget, it is truncated: "and X more messages pending"
 - Messages not included and not requested via `GET` will be **automatically included in the next bundle** (oldest first priority). Nothing is lost — they stay `pending` until sent.
 
-A `GET` response follows the same format: `=== Hutmail ===` with the requested messages, then `=== SCREENER ===` with whatever is still pending. The skipper always has an up-to-date view.
+A `GET` response follows the same format: `=== HUTMAIL ===` with the requested messages, then `=== SCREENER ===` with whatever is still pending. The skipper always has an up-to-date view.
 
 ### Tracking
 
@@ -494,7 +494,7 @@ BLACKLIST remove bob@example.com
 Comments (`#`) are ignored. Commands are case-insensitive.
 
 **`DROP`** sets the `collected_message` status to `dropped`. It will not be re-proposed. Supports the same implicit wildcards as `GET` (e.g.: `DROP 01mar` drops all pending from March 1st, `DROP GM` drops all pending from mailbox GM).
-**`GET`** sends the requested `pending` message(s) in a response that uses the same format as a regular bundle: `=== Hutmail ===` with the full messages, followed by `=== SCREENER ===` with any remaining `pending` messages. The budget is not checked — the skipper manages their own airtime.
+**`GET`** sends the requested `pending` message(s) in a response that uses the same format as a regular bundle: `=== HUTMAIL ===` with the full messages, followed by `=== SCREENER ===` with any remaining `pending` messages. The budget is not checked — the skipper manages their own airtime.
 
 `GET` supports **implicit wildcards** — each omitted segment broadens the filter to all matching `pending` messages:
 
@@ -543,7 +543,7 @@ The `bundle_ratio` setting (default: 80%) controls how much of the budget goes t
 - **Higher ratio (90%)**: more messages delivered, smaller screener
 - **Lower ratio (70%)**: fewer messages, but a guaranteed comprehensive screener
 
-Every response to the boat uses the same format — whether it's an automatic bundle or a `GET` response: `=== Hutmail ===` section with full messages, then `=== SCREENER ===` with remaining messages. The skipper always knows what's pending.
+Every response to the boat uses the same format — whether it's an automatic bundle or a `GET` response: `=== HUTMAIL ===` section with full messages, then `=== SCREENER ===` with remaining messages. The skipper always knows what's pending.
 
 ### Radio budget (7 rolling days, soft limit)
 

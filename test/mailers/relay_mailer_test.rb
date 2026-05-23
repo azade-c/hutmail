@@ -9,15 +9,15 @@ class RelayMailerTest < ActionMailer::TestCase
       sent_at: Time.current,
       messages_count: 0,
       total_stripped_size: 0,
-      bundle_text: "=== Hutmail test ===\n"
+      bundle_text: "=== HUTMAIL test ===\n"
     )
   end
 
-  test "sets Hutmail subject and bundle body" do
+  test "sets HUTMAIL subject and bundle body" do
     mail = RelayMailer.new.send_bundle(@bundle)
-    assert_match(/\AHutmail/, mail.subject)
+    assert_match(/\AHUTMAIL/, mail.subject)
     assert_equal @vessel.sailmail_address, mail.to.first
-    assert_includes mail.body.to_s, "Hutmail test"
+    assert_includes mail.body.to_s, "HUTMAIL test"
   end
 
   test "sets X-Hutmail-* identifying headers on every bundle" do

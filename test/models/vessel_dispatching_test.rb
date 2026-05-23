@@ -99,7 +99,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     assert preview.present?
     assert preview.new_record?
     assert_equal "preview", preview.status
-    assert preview.bundle_text.include?("=== Hutmail")
+    assert preview.bundle_text.include?("=== HUTMAIL")
     assert preview.bundle_text.include?("=== END ===")
     assert preview.messages_count.positive?
     assert_equal 0, Bundle.where(status: "preview").count
