@@ -30,6 +30,7 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     delivered = false
     relay_message = Object.new
     relay_message.define_singleton_method(:deliver_now) { delivered = true }
+    relay_message.define_singleton_method(:message_id) { nil }
     relay_message.define_singleton_method(:message) { Mail.new("Subject: test\n\nhello") }
 
     appended_messages = []
@@ -69,6 +70,31 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     RelayAccount.define_method(:append_to_sent, original_append_to_sent)
     MailAccount.define_method(:mark_as_processed, original_mark_as_processed)
     RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
+  end
+
+  test "deliver! captures the outbound Message-ID on the bundle" do
+    bundle = @vessel.bundles.create!(status: "draft")
+
+    relay_message = Object.new
+    relay_message.define_singleton_method(:deliver_now) { true }
+    relay_message.define_singleton_method(:message_id) { "captured-bundle-id@hutmail.example" }
+    relay_message.define_singleton_method(:message) { Mail.new("Subject: test\n\nhi") }
+
+    original_send_bundle = RelayMailer.method(:send_bundle)
+    RelayMailer.define_singleton_method(:send_bundle) do |_bundle, **_opts|
+      relay_message
+    end
+
+    original_append_to_sent = RelayAccount.instance_method(:append_to_sent)
+    RelayAccount.define_method(:append_to_sent) { |_raw| "Sent" }
+
+    bundle.deliver!
+
+    bundle.reload
+    assert_equal "captured-bundle-id@hutmail.example", bundle.outbound_message_id
+  ensure
+    RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
+    RelayAccount.define_method(:append_to_sent, original_append_to_sent)
   end
 
   test "bundle deliver records error when mailer raises" do

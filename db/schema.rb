@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_23_105507) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_23_124212) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -27,6 +27,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_105507) do
     t.text "dispatch_log"
     t.string "error_message"
     t.integer "messages_count"
+    t.string "outbound_message_id"
     t.integer "remaining_count"
     t.datetime "sent_at"
     t.string "status"
@@ -34,6 +35,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_105507) do
     t.integer "total_stripped_size"
     t.datetime "updated_at", null: false
     t.integer "vessel_id", null: false
+    t.index ["outbound_message_id"], name: "index_bundles_on_outbound_message_id"
     t.index ["vessel_id"], name: "index_bundles_on_vessel_id"
   end
 
@@ -149,6 +151,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_105507) do
     t.string "error_message"
     t.integer "mail_account_id", null: false
     t.integer "message_digest_id"
+    t.string "outbound_message_id"
     t.datetime "sent_at"
     t.string "status"
     t.string "subject"
@@ -157,6 +160,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_105507) do
     t.integer "vessel_id", null: false
     t.index ["mail_account_id"], name: "index_vessel_replies_on_mail_account_id"
     t.index ["message_digest_id"], name: "index_vessel_replies_on_message_digest_id"
+    t.index ["outbound_message_id"], name: "index_vessel_replies_on_outbound_message_id"
     t.index ["vessel_id"], name: "index_vessel_replies_on_vessel_id"
   end
 
