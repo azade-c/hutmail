@@ -32,8 +32,8 @@ class VesselRelayPollingTest < ActiveSupport::TestCase
     assert_equal [ 22 ], archived_uids, "only the newly-processed uid should be archived"
   end
 
-  test "RelayAccount::PROCESSED_FOLDER points at HutMail/vessel" do
-    assert_equal "HutMail/vessel", RelayAccount::PROCESSED_FOLDER
+  test "RelayAccount::PROCESSED_FOLDER points at Hutmail/vessel" do
+    assert_equal "Hutmail/vessel", RelayAccount::PROCESSED_FOLDER
   end
 
   test "poll_relay_now still records processed_relay_messages when archive step fails" do

@@ -1,4 +1,4 @@
-=== HUTMAIL <timestamp> ===
+=== Hutmail <timestamp> ===
 
 ==[ CR — Crew (crew@example.test) ]==
 

@@ -25,7 +25,7 @@ module Bundle::Composing
 
     timestamp = Time.current.strftime("%d%b %H:%M").downcase
     lines = []
-    lines << "=== HUTMAIL #{timestamp} ==="
+    lines << "=== Hutmail #{timestamp} ==="
     lines << ""
 
     included_messages.group_by(&:mail_account).each do |account, messages|

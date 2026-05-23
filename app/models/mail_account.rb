@@ -2,7 +2,7 @@ class MailAccount < ApplicationRecord
   include Connectable
   include MailAccount::Collecting
 
-  PROCESSED_FOLDER = "HutMail"
+  PROCESSED_FOLDER = "Hutmail"
 
   belongs_to :vessel
   has_many :message_digests, dependent: :destroy

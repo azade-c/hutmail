@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HutMail 🦫</title>
+  <title>Hutmail 🦫</title>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
@@ -13,7 +13,7 @@
   <% if authenticated? %>
     <nav class="nav">
       <div class="nav__inner">
-        <a href="<%= vessels_path %>" class="nav__logo">🦫 HutMail</a>
+        <a href="<%= vessels_path %>" class="nav__logo">🦫 Hutmail</a>
         <div class="nav__links">
           <a href="<%= vessels_path %>">Bateaux</a>
           <%= button_to "Déconnexion", session_path, method: :delete, class: "btn btn--plain" %>

@@ -112,6 +112,6 @@ class RealMailFixtureTest < ActiveSupport::TestCase
     end
 
     def normalize_preview_timestamp(text)
-      text.sub(/\A=== HUTMAIL .+ ===/, "=== HUTMAIL <timestamp> ===").strip
+      text.sub(/\A=== Hutmail .+ ===/, "=== Hutmail <timestamp> ===").strip
     end
 end

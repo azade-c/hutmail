@@ -26,17 +26,17 @@ class ApplicationMailer < ActionMailer::Base
   end
 
   private
-    # Stable identifying headers for any mail HutMail sends. Lets the server
-    # owner (and HutMail itself) tell apart its own traffic from anything the
+    # Stable identifying headers for any mail Hutmail sends. Lets the server
+    # owner (and Hutmail itself) tell apart its own traffic from anything the
     # skipper sends manually from the same account. Defense in depth against
     # loop-back collection, and makes audit / debug greppable.
     def hutmail_headers(kind:, vessel:, **extras)
       headers = {
-        "X-HutMail-Version" => "1",
-        "X-HutMail-Kind" => kind.to_s,
-        "X-HutMail-Vessel-Id" => vessel.id.to_s
+        "X-Hutmail-Version" => "1",
+        "X-Hutmail-Kind" => kind.to_s,
+        "X-Hutmail-Vessel-Id" => vessel.id.to_s
       }
-      extras.each { |k, v| headers["X-HutMail-#{k.to_s.tr("_", "-").split("-").map(&:capitalize).join("-")}"] = v.to_s }
+      extras.each { |k, v| headers["X-Hutmail-#{k.to_s.tr("_", "-").split("-").map(&:capitalize).join("-")}"] = v.to_s }
       headers
     end
 

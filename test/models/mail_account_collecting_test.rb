@@ -223,7 +223,7 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
     Net::IMAP.define_singleton_method(:new, original_new)
   end
 
-  test "mark_as_processed marks as Seen and moves to HutMail folder" do
+  test "mark_as_processed marks as Seen and moves to Hutmail folder" do
     stored_flags = []
     moved_to = nil
     created_folder = nil
@@ -246,11 +246,11 @@ class MailAccountCollectingTest < ActiveSupport::TestCase
 
     @account.mark_as_processed([ 42, 43 ])
 
-    assert_equal "HutMail", created_folder
+    assert_equal "Hutmail", created_folder
     assert_equal 1, stored_flags.size
     assert_equal "+FLAGS", stored_flags.first[:flag]
     assert_includes stored_flags.first[:vals], :Seen
-    assert_equal "HutMail", moved_to
+    assert_equal "Hutmail", moved_to
   ensure
     Net::IMAP.define_singleton_method(:new, original_new)
   end

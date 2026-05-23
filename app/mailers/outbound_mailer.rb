@@ -7,7 +7,7 @@ class OutboundMailer < ApplicationMailer
       {
         from: account.smtp_username,
         to: vessel_reply.to_address,
-        subject: vessel_reply.subject || "HutMail reply",
+        subject: vessel_reply.subject || "Hutmail reply",
         body: vessel_reply.body,
         content_type: "text/plain",
         delivery_method_options: smtp_options_for(account, auth_method:)

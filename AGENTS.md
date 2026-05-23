@@ -1,7 +1,7 @@
 READ ../garde-rails/RAILS.md BEFORE ANYTHING.
 If missing: git clone https://github.com/fcatuhe/garde-rails.git ../garde-rails
 
-# HutMail 🦫
+# Hutmail 🦫
 
 Automated shore-side mail relay for sailors communicating via SSB radio (SailMail/Winlink).
 
