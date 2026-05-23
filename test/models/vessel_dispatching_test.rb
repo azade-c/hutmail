@@ -91,7 +91,8 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     bundle.deliver!
 
     bundle.reload
-    assert_equal "captured-bundle-id@hutmail.example", bundle.outbound_message_id
+    assert_equal "<captured-bundle-id@hutmail.example>", bundle.outbound_message_id,
+      "outbound_message_id must be stored in bracketed canonical form to match IMAP envelopes"
   ensure
     RelayMailer.define_singleton_method(:send_bundle, original_send_bundle)
     RelayAccount.define_method(:append_to_sent, original_append_to_sent)

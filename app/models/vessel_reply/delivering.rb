@@ -13,7 +13,9 @@ module VesselReply::Delivering
     end
 
     attrs = { status: "sent", sent_at: Time.current }
-    attrs[:outbound_message_id] = message.message_id if message&.message_id.present?
+    if (mid = MessageDigest.normalize_message_id(message&.message_id))
+      attrs[:outbound_message_id] = mid
+    end
     update!(attrs)
   rescue => e
     update!(status: "error", error_message: e.message)

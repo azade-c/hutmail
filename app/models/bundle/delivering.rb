@@ -35,8 +35,8 @@ module Bundle::Delivering
 
   private
     def capture_outbound_message_id(message)
-      mid = message&.message_id
-      update_column(:outbound_message_id, mid) if mid.present?
+      mid = MessageDigest.normalize_message_id(message&.message_id)
+      update_column(:outbound_message_id, mid) if mid
     end
 
     def append_to_sent(account, message)

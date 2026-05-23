@@ -20,12 +20,7 @@ class OutboundMailer < ApplicationMailer
       original = vessel_reply.message_digest
       return {} unless original&.imap_message_id.present?
 
-      reference = formatted_message_id(original.imap_message_id)
+      reference = MessageDigest.normalize_message_id(original.imap_message_id)
       { "In-Reply-To" => reference, "References" => reference }
-    end
-
-    def formatted_message_id(raw)
-      raw = raw.to_s.strip
-      raw.start_with?("<") ? raw : "<#{raw}>"
     end
 end
