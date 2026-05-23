@@ -605,6 +605,20 @@ All personal data is encrypted at rest using Active Record Encryption:
 - Message content: `from_address`, `to_address`, `subject`, `stripped_body` on `collected_messages`
 - Boat replies: `to_address`, `body` on `boat_replies`
 
+### Identifying HutMail-originated mail
+
+Every message HutMail sends carries identifying `X-HutMail-*` SMTP headers so the server owner (and HutMail itself) can tell apart its own traffic from anything the skipper sends manually from the same account. Defense in depth against loop-back collection, and makes audit / debug greppable.
+
+```
+X-HutMail-Version: 1
+X-HutMail-Kind: bundle | vessel_reply
+X-HutMail-Vessel-Id: <vessel.id>
+X-HutMail-Bundle-Id: <bundle.id>      (bundles only)
+X-HutMail-Reply-Id: <vessel_reply.id> (vessel_replies only)
+```
+
+Applied at the `ApplicationMailer` layer via the `hutmail_headers(kind:, vessel:, **extras)` helper so all mailers stay consistent.
+
 ### Compression
 
 - **V1: plain text** — no application-level compression. PACTOR already compresses on the radio link (~50-60%). The gain from pre-compression (zlib ~35%) doesn't justify the complexity on the boat side.

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_22_213904) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_23_105507) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -110,6 +110,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_22_213904) do
     t.datetime "created_at", null: false
     t.string "imap_auth_method"
     t.string "imap_encryption", default: "ssl", null: false
+    t.string "imap_move_strategy"
     t.string "imap_password"
     t.integer "imap_port"
     t.string "imap_server"

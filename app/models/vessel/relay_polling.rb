@@ -12,14 +12,16 @@ module Vessel::RelayPolling
   end
 
   def poll_relay_now
+    processed_uids = []
+
     relay_account.with_imap_connection do |imap|
       imap.select("INBOX")
 
-      uids = imap.search([ "FROM", sailmail_address ])
-      return if uids.empty?
+      uids = imap.uid_search([ "FROM", sailmail_address ])
+      next if uids.empty?
 
       uids.each do |uid|
-        data = imap.fetch(uid, [ "ENVELOPE", "BODY.PEEK[]" ])&.first
+        data = imap.uid_fetch(uid, [ "ENVELOPE", "BODY.PEEK[]" ])&.first
         next unless data
 
         message_id = data.attr["ENVELOPE"]&.message_id
@@ -32,11 +34,18 @@ module Vessel::RelayPolling
 
         results = parse_and_execute_commands(body)
         processed_relay_messages.create!(imap_message_id: message_id)
-
-        imap.store(uid, "+FLAGS", [ :Seen ])
+        processed_uids << uid
 
         Rails.logger.info "Vessel##{id} relay poll: processed #{results.size} commands/messages"
       end
+    end
+
+    return if processed_uids.empty?
+
+    begin
+      relay_account.mark_as_processed(processed_uids)
+    rescue => e
+      Rails.logger.warn "Vessel##{id} failed to archive relay messages: #{e.class}: #{e.message}"
     end
   end
 end

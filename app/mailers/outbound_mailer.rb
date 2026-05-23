@@ -11,7 +11,9 @@ class OutboundMailer < ApplicationMailer
         body: vessel_reply.body,
         content_type: "text/plain",
         delivery_method_options: smtp_options_for(account, auth_method:)
-      }.merge(threading_headers_for(vessel_reply))
+      }
+        .merge(hutmail_headers(kind: :vessel_reply, vessel: vessel_reply.vessel, reply_id: vessel_reply.id))
+        .merge(threading_headers_for(vessel_reply))
     )
   end
 
