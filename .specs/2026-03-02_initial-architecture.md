@@ -1,4 +1,4 @@
-# HutMail 🦫
+# Hutmail 🦫
 
 > The beaver lodge — where mail is sorted and stored.
 
@@ -20,13 +20,13 @@ The budget is not a hard quota but a calculation based on airtime:
 - **90 minutes per 7 rolling days** (imposed by SailMail)
 - At 0.1–0.6 KB/s, that yields **~540 KB to ~3.2 MB per week** depending on conditions
 - In practice, we budget **100 KB/day for email** (conservative estimate)
-- HutMail tracks consumed budget over **7 rolling days** and adapts its sends
+- Hutmail tracks consumed budget over **7 rolling days** and adapts its sends
 
 ### The problem
 
 No filtering on the boat side: a single spam or large email can exhaust the radio credit. We need a "shore-side postman" who filters, aggregates, and transmits intelligently.
 
-## Solution: HutMail
+## Solution: Hutmail
 
 A **Ruby on Rails** application that acts as an automated shore-side postman.
 
@@ -40,7 +40,7 @@ A **Ruby on Rails** application that acts as an automated shore-side postman.
         |          |                      |          |
         v          |                      v          |
   +------------------------------------------------------+
-  |                  HutMail (Rails)                      |
+  |                  Hutmail (Rails)                      |
   |                                                       |
   |  - Multi-account aggregation (IMAP+SMTP)             |
   |  - Aggressive stripping                               |
@@ -53,7 +53,7 @@ A **Ruby on Rails** application that acts as an automated shore-side postman.
      SMTP (relay)      IMAP (relay)
         |                    |
         v                    |
-  [HutMail relay account: hutmail-relay@example.com]
+  [Hutmail relay account: hutmail-relay@example.com]
         |                    ^
         v                    |
      SMTP                  SMTP
@@ -68,10 +68,10 @@ A **Ruby on Rails** application that acts as an automated shore-side postman.
 
 ### Relay account (SailMail bridge)
 
-HutMail communicates with the boat via a **relay account** — a regular email address that serves as a bridge to SailMail:
+Hutmail communicates with the boat via a **relay account** — a regular email address that serves as a bridge to SailMail:
 
-- **Boat's SailMail address**: `CALLSIGN@sailmail.com` — the address HutMail sends bundles to
-- **HutMail relay account**: a standard email account (e.g. `hutmail-relay@gmail.com`) configured with IMAP+SMTP, which:
+- **Boat's SailMail address**: `CALLSIGN@sailmail.com` — the address Hutmail sends bundles to
+- **Hutmail relay account**: a standard email account (e.g. `hutmail-relay@gmail.com`) configured with IMAP+SMTP, which:
   - **Sends** bundles to the SailMail address
   - **Receives** replies and commands from the boat (the boat replies to this address)
 
@@ -93,15 +93,15 @@ The relay account is configured at the user level (not per monitored mail accoun
 | relay_smtp_use_starttls | STARTTLS yes/no |
 
 **Flow:**
-1. HutMail sends a bundle via relay SMTP → `CALLSIGN@sailmail.com`
+1. Hutmail sends a bundle via relay SMTP → `CALLSIGN@sailmail.com`
 2. The boat receives the bundle via radio in Airmail
 3. The boat replies to the relay address (`hutmail-relay@gmail.com`)
-4. HutMail polls the relay via IMAP to receive replies and commands
-5. HutMail processes commands / dispatches replies
+4. Hutmail polls the relay via IMAP to receive replies and commands
+5. Hutmail processes commands / dispatches replies
 
 ### Mail accounts (IMAP + SMTP)
 
-Each **monitored** mail account in HutMail has **two sides**:
+Each **monitored** mail account in Hutmail has **two sides**:
 
 - **Receiving (IMAP)**: server, port, credentials, SSL — to collect incoming messages
 - **Sending (SMTP)**: server, port, credentials, SSL/STARTTLS — to send boat replies from the correct account
@@ -114,7 +114,7 @@ The account is only saved if both tests pass.
 
 ### Handling already-read emails
 
-When the crew has internet access (port of call, marina wifi), they can read their emails directly on their phone or laptop. HutMail handles this situation:
+When the crew has internet access (port of call, marina wifi), they can read their emails directly on their phone or laptop. Hutmail handles this situation:
 
 - **Per-account option**: `skip_already_read` (boolean, default: `true`)
   - If `true`: during collection, messages already marked as read in IMAP are skipped (the crew already read them with an internet connection — no need to resend via radio)
@@ -127,7 +127,7 @@ When the crew has internet access (port of call, marina wifi), they can read the
 |-----------|--------------------------|---------------------------|
 | Email arrives, nobody reads it | Collected ✅ | Collected ✅ |
 | Email read on phone at marina | Skipped (already read) | Collected anyway ✅ |
-| Email sent via HutMail, then read at marina | Already in DB, skipped | Already in DB, skipped |
+| Email sent via Hutmail, then read at marina | Already in DB, skipped | Already in DB, skipped |
 | PAUSE command active | No collection | No collection |
 
 ### Message identifiers
@@ -152,7 +152,7 @@ Rules:
 
 ## Data model
 
-The HutMail database is the **single source of truth**. We never rely on IMAP read/unread status to determine what has been collected or sent. The IMAP `\Seen` flag is used only:
+The Hutmail database is the **single source of truth**. We never rely on IMAP read/unread status to determine what has been collected or sent. The IMAP `\Seen` flag is used only:
 1. As an **input signal** during collection (`skip_already_read` option)
 2. As a **courtesy marking** after sending
 
@@ -162,7 +162,7 @@ The HutMail database is the **single source of truth**. We never rely on IMAP re
 | Field | Type | Description |
 |-------|------|-------------|
 | id | integer | PK |
-| email_address | string | HutMail login |
+| email_address | string | Hutmail login |
 | password_digest | string | bcrypt |
 | sailmail_address | string | Boat's SailMail address (`CALLSIGN@sailmail.com`) |
 | relay_imap_server | string | Relay IMAP server |
@@ -199,7 +199,7 @@ The HutMail database is the **single source of truth**. We never rely on IMAP re
 | skip_already_read | boolean | Skip messages already read in IMAP (default: true) |
 
 #### `collected_messages`
-Source of truth for all messages known to HutMail. A message is added here at collection and is never re-collected as long as it exists.
+Source of truth for all messages known to Hutmail. A message is added here at collection and is never re-collected as long as it exists.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -217,7 +217,7 @@ Source of truth for all messages known to HutMail. A message is added here at co
 | stripped_body | text | Body after stripping |
 | stripped_size | integer | Size after stripping (bytes) |
 | status | string | `pending` → `sent` / `dropped` |
-| collected_at | datetime | Date collected by HutMail |
+| collected_at | datetime | Date collected by Hutmail |
 | sent_at | datetime | Date sent to boat (null if not yet sent) |
 | bundle_id | integer | FK → bundles (null if not yet bundled) |
 
@@ -226,7 +226,7 @@ Source of truth for all messages known to HutMail. A message is added here at co
 - `sent`: successfully sent to the boat
 - `dropped`: excluded by the boat (via `DROP` command) or by a rule
 
-**Deduplication:** during collection, HutMail checks if the `imap_message_id` already exists for this `mail_account_id`. If so, the message is skipped. This prevents re-collecting a message even if the IMAP state changes (read/unread manipulated by another client).
+**Deduplication:** during collection, Hutmail checks if the `imap_message_id` already exists for this `mail_account_id`. If so, the message is skipped. This prevents re-collecting a message even if the IMAP state changes (read/unread manipulated by another client).
 
 #### `bundles`
 | Field | Type | Description |
@@ -282,7 +282,7 @@ For each mail_account of the user:
 
 The database determines whether a message is already known (deduplication by `Message-ID`). The IMAP read/unread flag is used only as a pre-selection filter when `skip_already_read` is enabled.
 
-**After sending a bundle**, HutMail marks messages as read in IMAP **as a courtesy** (so the mailbox looks clean in regular mail clients), but this is not used as a source of truth.
+**After sending a bundle**, Hutmail marks messages as read in IMAP **as a courtesy** (so the mailbox looks clean in regular mail clients), but this is not used as a source of truth.
 
 ### Boat reception flow (detailed)
 
@@ -306,12 +306,12 @@ Cron or regular polling:
 
 #### Principle: send within the budget, stripped to the max
 
-All messages from all configured IMAP accounts are collected and stripped. HutMail sends as much as the radio budget allows. If everything doesn't fit, the rest is queued with a summary sent to the boat.
+All messages from all configured IMAP accounts are collected and stripped. Hutmail sends as much as the radio budget allows. If everything doesn't fit, the rest is queued with a summary sent to the boat.
 
 #### Step 1: Collection
 
 1. Cron fetches the Beavers' IMAP mailboxes at regular intervals
-2. Multiple IMAP accounts per HutMail user (e.g.: personal Gmail, work Orange)
+2. Multiple IMAP accounts per Hutmail user (e.g.: personal Gmail, work Orange)
 3. Deduplication by `Message-ID` in the database (not by IMAP flag)
 4. Optionally skips messages already read in IMAP (`skip_already_read`)
 5. Each new message receives its stable identifier (`01mar.GM.1`, `01mar.GM.2`, etc.)
@@ -337,7 +337,7 @@ The stripped body and its size are stored in the database (`stripped_body`, `str
 
 `pending` messages are aggregated into a bundle, grouped by source account. **The bundle uses a configurable share of the radio budget for full messages, and always appends a screener of remaining messages**:
 
-1. HutMail calculates the remaining budget (`daily_budget_kb` KB/day over 7 rolling days via `budget_entries`)
+1. Hutmail calculates the remaining budget (`daily_budget_kb` KB/day over 7 rolling days via `budget_entries`)
 2. The **message budget** = remaining budget × `bundle_ratio` / 100 (default: 80%)
 3. The **screener budget** = remaining budget − message budget
 4. `pending` messages are sorted by date (oldest first)
@@ -346,7 +346,7 @@ The stripped body and its size are stored in the database (`stripped_body`, `str
 7. If the screener itself exceeds the screener budget, it is truncated with a count: "and X more messages pending"
 8. If all pending messages fit within the message budget, no screener is appended
 
-**The budget is a soft limit.** HutMail respects it for automatic bundles, but the skipper can exceed it deliberately via `GET` commands — the boat manages its own airtime.
+**The budget is a soft limit.** Hutmail respects it for automatic bundles, but the skipper can exceed it deliberately via `GET` commands — the boat manages its own airtime.
 
 ```
 === HUTMAIL 01mar 09:30 ===
@@ -397,7 +397,7 @@ A `GET` response follows the same format: `=== HUTMAIL ===` with the requested m
 
 ### Tracking
 
-HutMail keeps a complete record of all exchanges via the database:
+Hutmail keeps a complete record of all exchanges via the database:
 
 #### Radio budget
 - Calculated from `bundles`: `SUM(total_stripped_size) WHERE sent_at >= 7.days.ago`
@@ -426,7 +426,7 @@ HutMail keeps a complete record of all exchanges via the database:
 
 ### Outbound flow (boat → world)
 
-1. HutMail polls the **relay account via IMAP** for boat messages
+1. Hutmail polls the **relay account via IMAP** for boat messages
 2. Parsing of the structured format. Two block kinds are supported, distinguished by their first token:
 
    **`===REPLY <hutmail_id>===` — reply to a known message**
@@ -436,7 +436,7 @@ HutMail keeps a complete record of all exchanges via the database:
    ===REPLY 22may.OR.1===
    À l'arrivée on appelle
    ```
-   The skipper sees the `[22may.GM.3]` identifier in the bundle and references it directly. HutMail:
+   The skipper sees the `[22may.GM.3]` identifier in the bundle and references it directly. Hutmail:
    - Resolves the original `MessageDigest` from the identifier
    - Routes `to:` = `original.from_address`
    - Sets `subject:` = `Re: <original.subject>` (no double Re:)
@@ -452,9 +452,9 @@ HutMail keeps a complete record of all exchanges via the database:
    ===MSG.OR family@beavers.fr===
    All is well, 15 knots of wind
    ```
-   The block kind suffix is the 2-letter account `short_code` (same code that appears in `[22may.GM.3]` identifiers — visually consistent: `MSG.GM` reads as "of kind MSG, account GM" just like `22may.GM.3` reads as "date 22may, account GM, seq 3"). HutMail:
+   The block kind suffix is the 2-letter account `short_code` (same code that appears in `[22may.GM.3]` identifiers — visually consistent: `MSG.GM` reads as "of kind MSG, account GM" just like `22may.GM.3` reads as "date 22may, account GM, seq 3"). Hutmail:
    - Resolves the `mail_account` by `short_code` scoped to the vessel — unknown code returns an error, no silent fallback
-   - Subject is `HutMail message` (no original to reference)
+   - Subject is `Hutmail message` (no original to reference)
    - No threading headers (this is a new conversation)
    - `vessel_reply.message_digest_id` is `nil`
 
@@ -522,18 +522,18 @@ Parsing rule: if the argument contains no `.`, it's either a mailbox code (2 upp
 
 ### Database = source of truth
 
-The IMAP status (read/unread) is **never** used to determine whether a message has been collected, sent, or should be ignored. The HutMail database is the sole source of truth:
+The IMAP status (read/unread) is **never** used to determine whether a message has been collected, sent, or should be ignored. The Hutmail database is the sole source of truth:
 - **Collection**: deduplication by `Message-ID` in the database, not by IMAP flag
 - **Sending**: the `status` field of `collected_messages` determines the lifecycle
 - **IMAP marking**: done as a courtesy after sending, so regular mail clients show a clean mailbox
 
-The IMAP `\Seen` flag is used only as an **optional input signal** during collection (`skip_already_read`): if the user has already read a message via wifi/internet, HutMail can skip it.
+The IMAP `\Seen` flag is used only as an **optional input signal** during collection (`skip_already_read`): if the user has already read a message via wifi/internet, Hutmail can skip it.
 
 Reasons:
-- The user can read an email on their phone → the `\Seen` flag changes without HutMail having sent it
+- The user can read an email on their phone → the `\Seen` flag changes without Hutmail having sent it
 - An IMAP client can crash → inconsistent flags
 - Some IMAP servers don't reliably preserve flags
-- The database is local, fast, and fully under HutMail's control
+- The database is local, fast, and fully under Hutmail's control
 
 ### Integrated screener (not a separate round-trip)
 
@@ -549,7 +549,7 @@ Every response to the boat uses the same format — whether it's an automatic bu
 
 - Email budget configurable via `daily_budget_kb` (default: **100 KB/day**, out of ~200 KB/day total bandwidth)
 - Tracked over **7 rolling days** via `budget_entries` in the database
-- **Soft limit**: HutMail respects the budget for automatic bundles (using `bundle_ratio` to split between messages and screener), but the skipper can exceed it via `GET` — the boat manages its own airtime
+- **Soft limit**: Hutmail respects the budget for automatic bundles (using `bundle_ratio` to split between messages and screener), but the skipper can exceed it via `GET` — the boat manages its own airtime
 - The bundle is cut on **whole message boundaries** (never mid-message)
 - `bundle_ratio` (default: **80%**) determines the split: 80% of remaining budget for full messages, 20% for screener
 
@@ -605,6 +605,20 @@ All personal data is encrypted at rest using Active Record Encryption:
 - Message content: `from_address`, `to_address`, `subject`, `stripped_body` on `collected_messages`
 - Boat replies: `to_address`, `body` on `boat_replies`
 
+### Identifying Hutmail-originated mail
+
+Every message Hutmail sends carries identifying `X-Hutmail-*` SMTP headers so the server owner (and Hutmail itself) can tell apart its own traffic from anything the skipper sends manually from the same account. Defense in depth against loop-back collection, and makes audit / debug greppable.
+
+```
+X-Hutmail-Version: 1
+X-Hutmail-Kind: bundle | vessel_reply
+X-Hutmail-Vessel-Id: <vessel.id>
+X-Hutmail-Bundle-Id: <bundle.id>      (bundles only)
+X-Hutmail-Reply-Id: <vessel_reply.id> (vessel_replies only)
+```
+
+Applied at the `ApplicationMailer` layer via the `hutmail_headers(kind:, vessel:, **extras)` helper so all mailers stay consistent.
+
 ### Compression
 
 - **V1: plain text** — no application-level compression. PACTOR already compresses on the radio link (~50-60%). The gain from pre-compression (zlib ~35%) doesn't justify the complexity on the boat side.
@@ -642,7 +656,7 @@ Examples:
 
 ### Multi-account (IMAP + SMTP)
 
-A HutMail user can configure multiple mailboxes (e.g.: personal Gmail + work Orange). Each account has its IMAP (receiving) and SMTP (sending) config. Both are verified on add. All mailboxes are collected and bundled into a single SailMail send, grouped by account in the message. Boat replies are sent from the correct SMTP account.
+A Hutmail user can configure multiple mailboxes (e.g.: personal Gmail + work Orange). Each account has its IMAP (receiving) and SMTP (sending) config. Both are verified on add. All mailboxes are collected and bundled into a single SailMail send, grouped by account in the message. Boat replies are sent from the correct SMTP account.
 
 ### Stack
 
@@ -662,7 +676,7 @@ A HutMail user can configure multiple mailboxes (e.g.: personal Gmail + work Ora
 
 ## Name
 
-**HutMail** — the beaver lodge. Where mail arrives, is filtered, and stored safely. Protected entrance (underwater), dry interior. A nod to Hotmail.
+**Hutmail** — the beaver lodge. Where mail arrives, is filtered, and stored safely. Protected entrance (underwater), dry interior. A nod to Hotmail.
 
 ## Market status
 
@@ -684,6 +698,6 @@ Open source potential: thousands of boats circumnavigating each year have this p
 - When cutting, send a summary of remaining messages. The boat can request a specific message with GET. The boat manages if it exceeds its quota.
 - Numbering: include the date + mailbox code for a stable ID. Format `DDmon.BB.N` (e.g.: `01mar.GM.1`). Zero-padded day. Year omitted if current year, otherwise `15jan26.GM.3`. BB = 2-letter mailbox code defined by user.
 - Messages not included in the current bundle (and not requested via GET) are automatically carried over to the next bundle. Nothing is lost.
-- Don't rely on IMAP read/unread status. The HutMail DB is the source of truth. Deduplication by Message-ID. IMAP marking as courtesy only.
+- Don't rely on IMAP read/unread status. The Hutmail DB is the source of truth. Deduplication by Message-ID. IMAP marking as courtesy only.
 - Already-read emails: `skip_already_read` option per account. Default true (if read at marina, not resent via radio). Configurable to false if the crew wants everything.
-- Configure the boat's SailMail address + the HutMail relay account (IMAP+SMTP) for communication with the boat. The relay is separate from monitored mail accounts.
+- Configure the boat's SailMail address + the Hutmail relay account (IMAP+SMTP) for communication with the boat. The relay is separate from monitored mail accounts.

@@ -112,7 +112,7 @@ module Vessel::Commanding
         mail_account: account,
         message_digest: nil,
         to_address: recipient,
-        subject: "HutMail message",
+        subject: "Hutmail message",
         body: body,
         status: "pending"
       )
@@ -235,7 +235,7 @@ module Vessel::Commanding
         mail_account: account,
         message_digest: nil,
         to_address: recipient,
-        subject: "HutMail message",
+        subject: "Hutmail message",
         body: body.join.strip,
         status: "pending"
       ).deliver_later

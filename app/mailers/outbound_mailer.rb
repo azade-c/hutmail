@@ -7,11 +7,13 @@ class OutboundMailer < ApplicationMailer
       {
         from: account.smtp_username,
         to: vessel_reply.to_address,
-        subject: vessel_reply.subject || "HutMail reply",
+        subject: vessel_reply.subject || "Hutmail reply",
         body: vessel_reply.body,
         content_type: "text/plain",
         delivery_method_options: smtp_options_for(account, auth_method:)
-      }.merge(threading_headers_for(vessel_reply))
+      }
+        .merge(hutmail_headers(kind: :vessel_reply, vessel: vessel_reply.vessel, reply_id: vessel_reply.id))
+        .merge(threading_headers_for(vessel_reply))
     )
   end
 

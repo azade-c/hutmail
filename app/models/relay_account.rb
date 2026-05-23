@@ -1,6 +1,8 @@
 class RelayAccount < ApplicationRecord
   include Connectable
 
+  PROCESSED_FOLDER = "Hutmail/vessel"
+
   belongs_to :vessel
   has_many :processed_relay_messages, through: :vessel
 

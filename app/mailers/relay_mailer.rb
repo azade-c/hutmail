@@ -5,12 +5,14 @@ class RelayMailer < ApplicationMailer
     account = vessel.relay_account
 
     mail(
-      from: account.smtp_username,
-      to: vessel.sailmail_address,
-      subject: "HUTMAIL #{Time.current.strftime('%d%b %H:%M').downcase}",
-      body: bundle.bundle_text,
-      content_type: "text/plain",
-      delivery_method_options: smtp_options_for(account, auth_method:),
+      {
+        from: account.smtp_username,
+        to: vessel.sailmail_address,
+        subject: "HUTMAIL #{Time.current.strftime('%d%b %H:%M').downcase}",
+        body: bundle.bundle_text,
+        content_type: "text/plain",
+        delivery_method_options: smtp_options_for(account, auth_method:)
+      }.merge(hutmail_headers(kind: :bundle, vessel:, bundle_id: bundle.id))
     )
   end
 end

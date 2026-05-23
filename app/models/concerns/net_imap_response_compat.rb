@@ -14,7 +14,7 @@ require "net/imap"
 # closing "]" have already been consumed, so swallowing the error and
 # returning nil keeps the parser in sync. Callers see
 # ResponseCode.new("COPYUID", nil) and the connection stays alive.
-# HutMail doesn't depend on the COPYUID source/dest UID mapping (we already
+# Hutmail doesn't depend on the COPYUID source/dest UID mapping (we already
 # know which UIDs we asked to copy/move), so we lose nothing functional.
 #
 # Same treatment for APPENDUID — same RFC, same potential server bug.

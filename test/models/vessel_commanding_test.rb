@@ -27,7 +27,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_equal "bob@example.com", reply.to_address
     assert_equal mail_accounts(:gmail), reply.mail_account
     assert_nil reply.message_digest
-    assert_equal "HutMail message", reply.subject
+    assert_equal "Hutmail message", reply.subject
   end
 
   test "MSG without account short_code returns an error" do
@@ -140,7 +140,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_equal mail_accounts(:gmail), reply.mail_account
 
     assert_nil msg.message_digest
-    assert_equal "HutMail message", msg.subject
+    assert_equal "Hutmail message", msg.subject
     assert_equal mail_accounts(:orange), msg.mail_account
   end
 
