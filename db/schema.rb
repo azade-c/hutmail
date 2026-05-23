@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_23_124212) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_23_152456) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -168,9 +168,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_124212) do
     t.integer "bundle_ratio", default: 80
     t.datetime "created_at", null: false
     t.integer "daily_budget_kb", default: 100
+    t.string "dispatch_cadence", default: "manual", null: false
+    t.string "dispatch_daily_at"
+    t.integer "dispatch_every_hours"
+    t.string "dispatch_timezone", default: "UTC", null: false
+    t.datetime "last_dispatched_at"
     t.string "name", null: false
+    t.datetime "next_dispatch_at"
     t.string "sailmail_address"
     t.datetime "updated_at", null: false
+    t.index ["next_dispatch_at"], name: "index_vessels_on_next_dispatch_at"
   end
 
   add_foreign_key "bundle_items", "bundles"
