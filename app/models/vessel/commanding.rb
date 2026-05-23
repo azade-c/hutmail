@@ -1,6 +1,26 @@
 module Vessel::Commanding
   extend ActiveSupport::Concern
 
+  SUBJECT_REPLY_PREFIX = /\A(?:re|fw|fwd|tr)\s*:\s*/i
+  SUBJECT_ALLOWED_COMMANDS = %w[STATUS PING HELP GET URGENT].freeze
+  RESPONDING_COMMANDS = %w[STATUS PING HELP].freeze
+
+  def parse_and_execute_subject(subject)
+    return [] if subject.blank?
+
+    cleaned = subject.to_s.dup
+    cleaned.sub!(SUBJECT_REPLY_PREFIX, "") while cleaned.match?(SUBJECT_REPLY_PREFIX)
+    cleaned.strip!
+    return [] if cleaned.empty?
+
+    verb = cleaned.split(/[\s.]/, 2).first.to_s.upcase
+    return [] unless SUBJECT_ALLOWED_COMMANDS.include?(verb)
+
+    results = []
+    execute_command(cleaned, results, source: "subject")
+    results
+  end
+
   def parse_and_execute_commands(text)
     results = []
     in_commands = false
@@ -43,7 +63,7 @@ module Vessel::Commanding
       end
 
       if in_commands
-        execute_command(stripped, results) unless stripped.start_with?("#") || stripped.blank?
+        execute_command(stripped, results, source: "body") unless stripped.start_with?("#") || stripped.blank?
       elsif in_messages && current_block
         current_block[:body] << line
       end
@@ -54,7 +74,7 @@ module Vessel::Commanding
   end
 
   private
-    def execute_command(line, results)
+    def execute_command(line, results, source: "body")
       tokens = line.split(/\s+/, 2)
       command = tokens[0].upcase
       args = tokens[1]&.strip
@@ -67,11 +87,14 @@ module Vessel::Commanding
       when "URGENT"    then execute_send(scope, args, results, urgent: true)
       when "PAUSE"     then execute_pause(args, results)
       when "RESUME"    then execute_resume(results)
-      when "STATUS"    then execute_status(results)
+      when "STATUS"    then execute_status(results, source: source)
+      when "PING"      then execute_ping(results, source: source)
+      when "HELP"      then execute_help(results, source: source)
       when "WHITELIST" then execute_list(:whitelist, args, results)
       when "BLACKLIST" then execute_list(:blacklist, args, results)
       else
         results << { command: command, status: :unknown, message: "Unknown command: #{command}" }
+        enqueue_response(source: source, command: command, text: "ERR: unknown command \"#{command}\"")
       end
     end
 
@@ -134,7 +157,7 @@ module Vessel::Commanding
       results << { command: "RESUME", status: :ok, message: "Aggregation resumed" }
     end
 
-    def execute_status(results)
+    def execute_status(results, source: "body")
       bundleable_count = MessageDigest.bundleable
         .joins(:mail_account)
         .where(mail_accounts: { vessel_id: id })
@@ -145,6 +168,50 @@ module Vessel::Commanding
         status: :ok,
         message: "#{bundleable_count} messages ready for bundling, #{Bundle.format_size(budget_remaining)} budget remaining (7d)"
       }
+      enqueue_response(source: source, command: "STATUS", text: status_response_text(bundleable_count))
+    end
+
+    def execute_ping(results, source: "body")
+      text = "PONG #{Time.current.utc.strftime('%Y-%m-%dT%H:%MZ')} hutmail"
+      results << { command: "PING", status: :ok, message: text }
+      enqueue_response(source: source, command: "PING", text: text)
+    end
+
+    def execute_help(results, source: "body")
+      results << { command: "HELP", status: :ok, message: "Command list returned" }
+      enqueue_response(source: source, command: "HELP", text: help_response_text)
+    end
+
+    def status_response_text(bundleable_count)
+      next_at = next_dispatch_at&.utc&.strftime("%d%b %H:%MZ")&.downcase
+      last_at = last_dispatched_at&.utc&.strftime("%d%b %H:%MZ")&.downcase
+      lines = []
+      lines << "STATUS hutmail"
+      lines << "ready: #{bundleable_count} messages"
+      lines << "budget: #{Bundle.format_size(budget_remaining)} remaining (7d)"
+      lines << "last dispatch: #{last_at || '-'}"
+      lines << "next dispatch: #{next_at || 'manual'} (#{dispatch_cadence})"
+      lines.join("\n")
+    end
+
+    def help_response_text
+      <<~TXT.strip
+        HUTMAIL commands
+        Subject (answered immediately): STATUS | PING | HELP | GET <ref> | URGENT.<ACCT> <email> "msg"
+        Body (in ===CMD===...===END===): all of the above + SEND.<ACCT> <email> "msg" | PAUSE | RESUME
+        Messages: ===MSG.<ACCT> <email>=== body ===END===  or  ===REPLY <ref>=== body ===END===
+      TXT
+    end
+
+    def enqueue_response(source:, command:, text:)
+      response = command_responses.create!(
+        source: source,
+        command: command,
+        response_text: text,
+        status: "pending"
+      )
+      response.deliver_later if source == "subject"
+      response
     end
 
     def execute_list(type, args, results)

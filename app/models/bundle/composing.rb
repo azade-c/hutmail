@@ -17,16 +17,26 @@ module Bundle::Composing
     compose_text(included_messages, remaining_messages)
     save!
     included_messages.each { |msg| bundle_items.create!(message_digest: msg) }
+    attach_pending_command_responses
     log_step "Composition (#{included_messages.size} messages, #{self.class.format_size(total_stripped_size || 0)})"
   end
 
   def compose_text(included_messages, remaining_messages)
     screener_text = compose_screener(remaining_messages, vessel.screener_budget)
+    pending_responses = vessel.command_responses.pending_for_bundle.to_a
 
     timestamp = Time.current.strftime("%d%b %H:%M").downcase
     lines = []
     lines << "=== HUTMAIL #{timestamp} ==="
     lines << ""
+
+    pending_responses.each do |cr|
+      lines << "==[ \u2709 #{cr.command} response ]=="
+      lines << cr.response_text
+      lines << ""
+    end
+
+    @pending_command_responses = pending_responses
 
     included_messages.group_by(&:mail_account).each do |account, messages|
       lines << "==[ #{account.short_code} — #{account.name} (#{account.imap_username}) ]=="
@@ -52,6 +62,12 @@ module Bundle::Composing
   end
 
   private
+    def attach_pending_command_responses
+      Array(@pending_command_responses).each do |cr|
+        cr.update!(bundle: self, status: "included")
+      end
+    end
+
     def compose_screener(remaining, budget)
       return nil if remaining.empty?
 

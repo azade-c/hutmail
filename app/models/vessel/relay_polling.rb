@@ -31,12 +31,14 @@ module Vessel::RelayPolling
         raw = data.attr["BODY[]"]
         mail = Mail.new(raw)
         body = mail.text_part&.decoded || mail.body.decoded.to_s
+        subject = mail.subject.to_s
 
-        results = parse_and_execute_commands(body)
+        subject_results = parse_and_execute_subject(subject)
+        body_results = parse_and_execute_commands(body)
         processed_relay_messages.create!(imap_message_id: message_id)
         processed_uids << uid
 
-        Rails.logger.info "Vessel##{id} relay poll: processed #{results.size} commands/messages"
+        Rails.logger.info "Vessel##{id} relay poll: processed #{subject_results.size + body_results.size} commands/messages"
       end
     end
 
