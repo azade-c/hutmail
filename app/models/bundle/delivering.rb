@@ -1,7 +1,7 @@
 module Bundle::Delivering
   extend ActiveSupport::Concern
 
-  def deliver!
+  def deliver_now
     account = vessel.relay_account
     log_step "SMTP #{account.smtp_server}:#{account.smtp_port} (#{account.smtp_encryption}) → #{vessel.sailmail_address}"
 
