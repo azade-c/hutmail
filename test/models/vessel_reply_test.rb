@@ -31,6 +31,67 @@ class VesselReplyTest < ActiveSupport::TestCase
     OutboundMailer.define_singleton_method(:send_reply, original_send_reply)
   end
 
+  test "deliver_now appends the sent copy to the account's Sent folder" do
+    reply = VesselReply.create!(
+      vessel: @vessel, mail_account: @account, message_digest: nil,
+      to_address: "alice@example.com", subject: "Hi", body: "hello", status: "pending"
+    )
+
+    outbound = Object.new
+    outbound.define_singleton_method(:deliver_now) { true }
+    outbound.define_singleton_method(:message_id) { "reply-mid@hutmail.example" }
+    outbound.define_singleton_method(:message) { Mail.new("Subject: Hi\n\nhello") }
+
+    appended = []
+    original_append = MailAccount.instance_method(:append_to_sent)
+    MailAccount.define_method(:append_to_sent) do |raw|
+      appended << raw
+      "Sent"
+    end
+
+    original_send_reply = OutboundMailer.method(:send_reply)
+    OutboundMailer.define_singleton_method(:send_reply) do |_reply, **_opts|
+      outbound
+    end
+
+    reply.deliver_now
+
+    assert_equal "sent", reply.reload.status
+    assert_equal 1, appended.size, "Expected exactly one IMAP APPEND to Sent"
+    assert_includes appended.first, "Subject: Hi"
+  ensure
+    OutboundMailer.define_singleton_method(:send_reply, original_send_reply)
+    MailAccount.define_method(:append_to_sent, original_append)
+  end
+
+  test "deliver_now keeps status=sent even if appending to Sent folder fails" do
+    reply = VesselReply.create!(
+      vessel: @vessel, mail_account: @account, message_digest: nil,
+      to_address: "alice@example.com", subject: "Hi", body: "hello", status: "pending"
+    )
+
+    outbound = Object.new
+    outbound.define_singleton_method(:deliver_now) { true }
+    outbound.define_singleton_method(:message_id) { nil }
+    outbound.define_singleton_method(:message) { Mail.new("Subject: Hi\n\nhello") }
+
+    original_append = MailAccount.instance_method(:append_to_sent)
+    MailAccount.define_method(:append_to_sent) { |_raw| raise "no Sent folder writable" }
+
+    original_send_reply = OutboundMailer.method(:send_reply)
+    OutboundMailer.define_singleton_method(:send_reply) do |_reply, **_opts|
+      outbound
+    end
+
+    reply.deliver_now
+
+    assert_equal "sent", reply.reload.status, "APPEND failure must not roll back the SMTP success"
+    assert_nil reply.error_message
+  ensure
+    OutboundMailer.define_singleton_method(:send_reply, original_send_reply)
+    MailAccount.define_method(:append_to_sent, original_append)
+  end
+
   test "deliver_now wraps an already-bracketed Message-ID without doubling brackets" do
     reply = VesselReply.create!(
       vessel: @vessel, mail_account: @account, message_digest: nil,
