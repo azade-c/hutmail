@@ -17,13 +17,6 @@ class SettingsTest < ApplicationSystemTestCase
     fill_in "vessel[dispatch_every_hours]", with: "3"
     select "UTC", from: "vessel[dispatch_timezone]"
 
-    # The relay-account password fields render blank for security and the
-    # current settings controller does not guard blank passwords from
-    # overwriting the stored secrets, so re-supply them to let the form save.
-    # (Separate concern, tracked outside this PR.)
-    fill_in "vessel[relay_account_attributes][imap_password]", with: "secret"
-    fill_in "vessel[relay_account_attributes][smtp_password]", with: "secret"
-
     click_button "Enregistrer"
 
     assert_text "Prochaine dépêche prévue"

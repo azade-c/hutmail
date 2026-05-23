@@ -410,6 +410,63 @@ class ConnectableTest < ActiveSupport::TestCase
     assert expunge_called
   end
 
+  test "blank password on update is ignored so unrelated edits do not wipe stored credentials" do
+    account = mail_accounts(:gmail)
+    account.update!(imap_password: "original-imap", smtp_password: "original-smtp")
+
+    account.update!(imap_password: "", smtp_password: "", imap_server: "imap.changed.example")
+
+    account.reload
+    assert_equal "original-imap", account.imap_password
+    assert_equal "original-smtp", account.smtp_password
+    assert_equal "imap.changed.example", account.imap_server
+  end
+
+  test "non-blank password on update overwrites normally" do
+    account = mail_accounts(:gmail)
+    account.update!(imap_password: "original", smtp_password: "original")
+    account.update!(imap_password: "fresh-imap", smtp_password: "fresh-smtp")
+
+    account.reload
+    assert_equal "fresh-imap", account.imap_password
+    assert_equal "fresh-smtp", account.smtp_password
+  end
+
+  test "blank password on create still triggers presence validation" do
+    account = RelayAccount.new(
+      vessel: vessels(:one),
+      imap_server: "imap.example.com", imap_port: 993, imap_encryption: "ssl",
+      smtp_server: "smtp.example.com", smtp_port: 465, smtp_encryption: "ssl",
+      imap_username: "u", smtp_username: "u",
+      imap_password: "", smtp_password: ""
+    )
+    assert_not account.valid?
+    assert_includes account.errors[:imap_password], "can't be blank"
+    assert_includes account.errors[:smtp_password], "can't be blank"
+  end
+
+  test "nested-attributes update with blank passwords preserves stored relay credentials" do
+    vessel = vessels(:one)
+    relay = vessel.relay_account
+    relay.update!(imap_password: "keepme-imap", smtp_password: "keepme-smtp")
+
+    vessel.update!(
+      name: "Renamed",
+      relay_account_attributes: {
+        id: relay.id,
+        imap_server: relay.imap_server, imap_port: relay.imap_port, imap_encryption: relay.imap_encryption,
+        smtp_server: relay.smtp_server, smtp_port: relay.smtp_port, smtp_encryption: relay.smtp_encryption,
+        imap_username: relay.imap_username, smtp_username: relay.smtp_username,
+        imap_password: "", smtp_password: ""
+      }
+    )
+
+    relay.reload
+    assert_equal "keepme-imap", relay.imap_password
+    assert_equal "keepme-smtp", relay.smtp_password
+    assert_equal "Renamed", vessel.reload.name
+  end
+
   private
     def build_fake_imap
       fake = Object.new
