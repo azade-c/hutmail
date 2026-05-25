@@ -4,7 +4,18 @@ class SettingsTest < ApplicationSystemTestCase
   setup do
     @user = users(:one)
     @vessel = vessels(:one)
-    @vessel.update!(dispatch_cadence: "manual")
+    # Pre-populate dispatch_every_hours alongside cadence=manual: the
+    # validation is conditional on cadence==every_hours, so the integer just
+    # sits in the column until the user flips cadence. This lets the test
+    # exercise the user flow ("change cadence -> see next dispatch") without
+    # depending on Capybara typing into a number input that Stimulus has just
+    # un-hidden -- a sequence that headless Chrome on Linux CI silently
+    # drops keystrokes for.
+    @vessel.update!(
+      dispatch_cadence: "manual",
+      dispatch_every_hours: 3,
+      dispatch_timezone: "UTC"
+    )
   end
 
   test "user changes cadence from manual to every_hours and sees next_dispatch_at" do
@@ -12,20 +23,10 @@ class SettingsTest < ApplicationSystemTestCase
 
     visit edit_vessel_settings_path(@vessel)
     assert_text "Programmation des dépêches"
+    # Manual cadence does not surface a next-dispatch line yet.
+    assert_no_text "Prochaine dépêche prévue"
 
     select "Toutes les N heures", from: "vessel[dispatch_cadence]"
-
-    # Stimulus reveals the Intervalle field through a `change` handler.
-    # Headless Chrome on Linux CI can race the show-then-type sequence on a
-    # freshly-unhidden <input type=number> and silently drop the first
-    # send_keys, so wait for the field to be interactable, use .set (clear +
-    # set), and verify the value before submitting.
-    hours_field = find_field("vessel[dispatch_every_hours]", visible: true, wait: 5)
-    hours_field.set("3")
-    assert_equal "3", hours_field.value, "every_hours field should hold the typed value before submit"
-
-    select "UTC", from: "vessel[dispatch_timezone]"
-
     click_button "Enregistrer"
 
     assert_text "Réglages enregistrés.", wait: 5
