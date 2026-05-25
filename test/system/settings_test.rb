@@ -14,11 +14,21 @@ class SettingsTest < ApplicationSystemTestCase
     assert_text "Programmation des dépêches"
 
     select "Toutes les N heures", from: "vessel[dispatch_cadence]"
-    fill_in "vessel[dispatch_every_hours]", with: "3"
+
+    # Stimulus reveals the Intervalle field through a `change` handler.
+    # Headless Chrome on Linux CI can race the show-then-type sequence on a
+    # freshly-unhidden <input type=number> and silently drop the first
+    # send_keys, so wait for the field to be interactable, use .set (clear +
+    # set), and verify the value before submitting.
+    hours_field = find_field("vessel[dispatch_every_hours]", visible: true, wait: 5)
+    hours_field.set("3")
+    assert_equal "3", hours_field.value, "every_hours field should hold the typed value before submit"
+
     select "UTC", from: "vessel[dispatch_timezone]"
 
     click_button "Enregistrer"
 
+    assert_text "Réglages enregistrés.", wait: 5
     assert_text "Prochaine dépêche prévue"
 
     @vessel.reload
