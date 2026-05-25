@@ -28,12 +28,15 @@ class SettingsTest < ApplicationSystemTestCase
 
     select "Toutes les N heures", from: "vessel[dispatch_cadence]"
 
-    # Headless Chrome on Linux CI occasionally fails to dispatch a click on
-    # a submit button that lives in the bottom slice of a tall form unless
-    # we scroll it into view first.
-    submit = find_button("Enregistrer")
-    page.scroll_to(submit, align: :center)
-    submit.click
+    # Submit via the form's requestSubmit() instead of clicking the button.
+    # Clicking the Enregistrer button is silently dropped on Linux CI's
+    # headless Chrome despite the button being in view (verified via failure
+    # screenshot: form populated, no submission, no flash, no errors).
+    # requestSubmit() fires the submit event Turbo listens for and goes
+    # through normal validation + delivery.
+    page.execute_script(<<~JS)
+      document.querySelector('form[action="#{vessel_settings_path(@vessel)}"]').requestSubmit()
+    JS
 
     assert_text "Réglages enregistrés.", wait: 5
     assert_text "Prochaine dépêche prévue"
