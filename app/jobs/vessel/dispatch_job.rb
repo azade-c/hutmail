@@ -5,8 +5,10 @@ class Vessel::DispatchJob < ApplicationJob
     vessel.collect_all_accounts
     vessel.dispatch_now
   ensure
+    now = Time.current
+    vessel.last_dispatched_at = now
     vessel.update_columns(
-      last_dispatched_at: Time.current,
+      last_dispatched_at: now,
       next_dispatch_at: vessel.compute_next_dispatch_at
     )
   end

@@ -40,6 +40,21 @@ module Connectable
     before_validation :reset_imap_move_strategy, if: :imap_config_changed?
   end
 
+  # Password fields are rendered blank in edit forms (we never echo secrets
+  # back into the DOM). Treat a blank submission on an existing record as
+  # "leave unchanged" so saving unrelated settings does not wipe the stored
+  # credentials. New records still receive blanks so presence validations
+  # fire as expected.
+  def imap_password=(value)
+    return if value.blank? && persisted?
+    super
+  end
+
+  def smtp_password=(value)
+    return if value.blank? && persisted?
+    super
+  end
+
   def mark_as_processed(imap_uids)
     return if imap_uids.empty?
 
