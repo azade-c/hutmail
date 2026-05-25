@@ -27,7 +27,13 @@ class SettingsTest < ApplicationSystemTestCase
     assert_no_text "Prochaine dépêche prévue"
 
     select "Toutes les N heures", from: "vessel[dispatch_cadence]"
-    click_button "Enregistrer"
+
+    # Headless Chrome on Linux CI occasionally fails to dispatch a click on
+    # a submit button that lives in the bottom slice of a tall form unless
+    # we scroll it into view first.
+    submit = find_button("Enregistrer")
+    page.scroll_to(submit, align: :center)
+    submit.click
 
     assert_text "Réglages enregistrés.", wait: 5
     assert_text "Prochaine dépêche prévue"
