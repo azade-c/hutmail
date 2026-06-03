@@ -1,0 +1,147 @@
+<header class="guide-hero">
+  <h1>🦫 Comment marche Hutmail</h1>
+  <p class="guide-lead">
+    Hutmail est le <strong>facteur côté terre</strong> des marins hauturiers. Il collecte
+    vos emails, les allège au maximum, et n'envoie au bateau qu'un seul message compact —
+    dans la limite du budget radio. Le marin répond et pilote tout par email.
+  </p>
+</header>
+
+<nav class="guide-toc" aria-label="Sommaire">
+  <a href="#pieces">Les pièces</a>
+  <a href="#cycle">Le cycle</a>
+  <a href="#terre">Côté terre</a>
+  <a href="#identifiants">Identifiants</a>
+  <a href="#budget">Budget radio</a>
+  <a href="#planification">Planification</a>
+  <a href="#bateau">Côté bateau</a>
+  <a href="#demarrer">Démarrer</a>
+</nav>
+
+<h2 id="pieces">Les pièces du puzzle</h2>
+<div class="stat-grid">
+  <div class="card">
+    <div class="card__header">⛵ Bateau</div>
+    <p class="txt-small">Un équipage = un <em>bateau</em> dans Hutmail. Il regroupe ses comptes mail, son compte relais, son budget et ses réglages.</p>
+  </div>
+  <div class="card">
+    <div class="card__header">📥 Comptes mail</div>
+    <p class="txt-small">Les boîtes à surveiller (Gmail, Orange…). Chacune a une réception <strong>IMAP</strong> et un envoi <strong>SMTP</strong>, vérifiés à l'ajout, et un code 2 lettres (<code>GM</code>, <code>OR</code>).</p>
+  </div>
+  <div class="card">
+    <div class="card__header">📡 Compte relais</div>
+    <p class="txt-small">La boîte-passerelle vers SailMail. Hutmail y <strong>envoie</strong> les dépêches et y <strong>relève</strong> les réponses du bateau.</p>
+  </div>
+  <div class="card">
+    <div class="card__header">🛰️ Adresse SailMail</div>
+    <p class="txt-small">L'adresse radio du bateau (<code>INDICATIF@sailmail.com</code>) à qui les dépêches sont adressées.</p>
+  </div>
+</div>
+
+<h2 id="cycle">Le cycle en un coup d'œil</h2>
+<pre class="guide-diagram">  Monde extérieur          Hutmail 🦫              Bateau ⛵
+  ──────────────          ──────────              ──────────
+  bob@gmail.com  ──┐
+                   ├──▶  ① Collecte IMAP
+  maman@free.fr  ──┘     ② Strip (allège)
+                        ③ Dépêche (budget)  ──────▶  SailMail
+                          1 mail compact            (radio BLU)
+                                                        │
+  destinataires  ◀──  ⑤ Dispatch SMTP  ◀──  ④ Relève  ◀┘
+  (chacun le sien)        des réponses          réponses + commandes</pre>
+<p class="txt-subtle txt-small">À chaque tour de cycle, Hutmail relève les réponses du bateau, collecte les nouvelles boîtes, puis dépêche.</p>
+
+<h2 id="terre">Côté terre — ce que fait Hutmail</h2>
+
+<ol class="guide-steps">
+  <li>
+    <h3>① Collecte</h3>
+    <p>Hutmail relève chaque compte IMAP. La base de données est l'unique source de vérité : la déduplication se fait sur le <code>Message-ID</code>, jamais sur l'état lu/non-lu. Option <code>skip_already_read</code> : ignorer les messages déjà lus au wifi d'escale.</p>
+  </li>
+  <li>
+    <h3>② Strip — l'allègement</h3>
+    <p>Chaque message est réduit à l'essentiel pour économiser chaque octet :</p>
+    <ul>
+      <li>HTML → texte brut</li>
+      <li>Pièces jointes retirées (seul un repère <code>📎 facture.pdf (245 Ko)</code> reste)</li>
+      <li>Signatures supprimées (<code>--</code>, « Envoyé de mon iPhone »…)</li>
+      <li>Citations / historique de réponse retirés (<code>&gt;</code>, « Le … a écrit : »)</li>
+      <li>Bruit retiré : disclaimers, liens de désinscription, URLs orphelines</li>
+      <li>Espaces normalisés</li>
+    </ul>
+  </li>
+  <li>
+    <h3>③ Dépêche &amp; budget</h3>
+    <p>Les messages en attente sont regroupés en <strong>une seule dépêche</strong>, par boîte. Le budget restant est partagé selon le <strong>ratio de dépêche</strong> (défaut 80 %) : la majeure partie pour les messages complets, le reste pour le screener. On ajoute des messages entiers (jamais coupés en plein milieu) jusqu'à la limite.</p>
+  </li>
+  <li>
+    <h3>④ Screener</h3>
+    <p>S'il reste des messages non inclus, la dépêche se termine par un <strong>screener</strong> : la liste légère (identifiant, expéditeur, objet, taille) de ce qui attend. Le marin peut en réclamer un avec <code>GET</code>. Rien n'est perdu : le reste part automatiquement à la dépêche suivante.</p>
+  </li>
+  <li>
+    <h3>⑤ Relève &amp; dispatch des réponses</h3>
+    <p>Hutmail relève le compte relais, lit les réponses et commandes du bateau, puis envoie chaque réponse via la <strong>bonne boîte SMTP</strong> au bon destinataire. Les messages envoyés sont marqués lus dans l'IMAP d'origine, par courtoisie.</p>
+  </li>
+</ol>
+
+<h2 id="identifiants">Identifiants de messages</h2>
+<p>Chaque message reçoit un identifiant stable, lisible et court : <code>JJmon.BB.N</code>.</p>
+<table>
+  <thead><tr><th>Exemple</th><th>Signification</th></tr></thead>
+  <tbody>
+    <tr><td><code>01mar.GM.1</code></td><td>1<sup>er</sup> message du 1<sup>er</sup> mars, boîte <code>GM</code></td></tr>
+    <tr><td><code>28feb.OR.2</code></td><td>2<sup>e</sup> message du 28 février, boîte <code>OR</code></td></tr>
+    <tr><td><code>15jan26.GM.3</code></td><td>année précisée quand elle diffère de l'année en cours</td></tr>
+  </tbody>
+</table>
+<p class="txt-subtle txt-small">Le marin s'en sert dans ses commandes : <code>GET 28feb.OR.2</code>, <code>===REPLY 01mar.GM.1===</code>.</p>
+
+<h2 id="budget">Budget radio</h2>
+<p>
+  La radio BLU (SailMail) offre ~90 min toutes les 7 jours glissants, soit ~200 ko/jour
+  partagés avec la météo — environ <strong>100 ko/jour</strong> pour l'email.
+</p>
+<ul>
+  <li><strong>Budget journalier</strong> (<code>daily_budget_kb</code>, défaut 100 Ko) suivi sur <strong>7 jours glissants</strong>, calculé depuis les dépêches envoyées.</li>
+  <li><strong>Limite souple</strong> : respectée pour les dépêches automatiques, mais le marin peut la dépasser via <code>GET</code> — c'est lui qui gère son temps d'antenne.</li>
+  <li><strong>Ratio de dépêche</strong> : 90 % = plus de messages, screener plus court ; 70 % = moins de messages, screener garanti complet.</li>
+</ul>
+
+<h2 id="planification">Planification des dépêches</h2>
+<table>
+  <thead><tr><th>Cadence</th><th>Comportement</th></tr></thead>
+  <tbody>
+    <tr><td><code>manual</code></td><td>aucune dépêche automatique — déclenchée à la main depuis le bateau</td></tr>
+    <tr><td><code>every_hours</code></td><td>toutes les N heures (1 à 24) depuis la dernière dépêche</td></tr>
+    <tr><td><code>daily</code></td><td>chaque jour à une heure fixe, dans le fuseau choisi</td></tr>
+  </tbody>
+</table>
+
+<h2 id="bateau">Côté bateau — les commandes</h2>
+<p>
+  Depuis Airmail, le marin pilote tout par email : demander un message, envoyer une réponse,
+  écrire à un destinataire, suspendre l'agrégation, demander un état… Deux canaux : l'<strong>objet</strong>
+  (réponse immédiate) ou le <strong>corps</strong> entre <code>===CMD===</code> et <code>===END===</code>.
+</p>
+<div class="card guide-cta">
+  <div class="card__header">📻 Référence des commandes (page légère)</div>
+  <p class="txt-small">Conçue pour être chargée depuis le bateau en faible bande passante — sans CSS ni JS externe.</p>
+  <a href="<%= commands_path %>" class="btn">Ouvrir la référence des commandes →</a>
+</div>
+
+<h2 id="demarrer">Démarrer</h2>
+<ol class="guide-steps">
+  <li><h3>1. Créez votre bateau</h3><p>Renseignez le nom, l'adresse SailMail et le compte relais (IMAP + SMTP).</p></li>
+  <li><h3>2. Ajoutez vos comptes mail</h3><p>Pour chaque boîte à surveiller : IMAP, SMTP et un code 2 lettres. Les deux connexions sont vérifiées à l'ajout.</p></li>
+  <li><h3>3. Réglez budget &amp; cadence</h3><p>Budget journalier, ratio de dépêche, et planification (manuelle, horaire ou quotidienne).</p></li>
+  <li><h3>4. Laissez Hutmail travailler</h3><p>Collecte, allègement et dépêche tournent automatiquement. Le marin pilote par email.</p></li>
+</ol>
+
+<hr class="section-divider">
+<p>
+  <% if authenticated? %>
+    <a href="<%= vessels_path %>"><strong>Aller à mes bateaux →</strong></a>
+  <% else %>
+    <a href="<%= new_session_path %>"><strong>Se connecter →</strong></a>
+  <% end %>
+</p>
