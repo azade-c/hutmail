@@ -1,0 +1,79 @@
+<h1>🦫 Commandes Hutmail</h1>
+<p class="muted">Référence à garder à bord. Pilotez Hutmail par email, depuis Airmail.</p>
+
+<h2>Deux façons d'envoyer une commande</h2>
+<p><strong>1. Dans l'objet</strong> du mail — réponse immédiate. Une seule commande.</p>
+<pre>Objet : STATUS</pre>
+<p><strong>2. Dans le corps</strong> du mail, entre <code>===CMD===</code> et <code>===END===</code> — plusieurs commandes, traitées au prochain cycle. Les lignes commençant par <code>#</code> sont ignorées.</p>
+<pre>===CMD===
+STATUS
+GET GM
+SEND.OR famille@beavers.fr "Tout va bien"
+===END===</pre>
+<p>Les commandes sont <strong>insensibles à la casse</strong>. <code>status</code> = <code>STATUS</code>.</p>
+
+<h2>Référence d'un message : <code>JJmon.BB.N</code></h2>
+<p>Chaque message du bundle porte un identifiant stable, ex. <code>01mar.GM.1</code> :</p>
+<table>
+  <tr><td><code>01mar</code></td><td>jour + mois (3 lettres anglaises). Année ajoutée si différente : <code>15jan26</code></td></tr>
+  <tr><td><code>GM</code></td><td>code 2 lettres de la boîte mail (défini par vous)</td></tr>
+  <tr><td><code>1</code></td><td>numéro du message dans la journée pour cette boîte</td></tr>
+</table>
+
+<h2>Objet ou corps — réponse immédiate</h2>
+<table>
+  <tr><th>Commande</th><th>Effet</th></tr>
+  <tr><td><code>STATUS</code></td><td>Résumé : messages en attente, budget restant, prochaine dépêche</td></tr>
+  <tr><td><code>PING</code></td><td>Test de liaison — renvoie <code>PONG</code> + horodatage</td></tr>
+  <tr><td><code>HELP</code></td><td>Renvoie la liste des commandes</td></tr>
+  <tr><td><code>GET &lt;réf&gt;</code></td><td>Télécharger un ou plusieurs messages du screener (hors budget)</td></tr>
+  <tr><td><code>URGENT.&lt;BB&gt; &lt;email&gt; "msg"</code></td><td>Envoie un message tout de suite via la boîte <code>BB</code></td></tr>
+</table>
+
+<h2>Corps uniquement (dans <code>===CMD===</code>)</h2>
+<table>
+  <tr><th>Commande</th><th>Effet</th></tr>
+  <tr><td><code>SEND.&lt;BB&gt; &lt;email&gt; "msg"</code></td><td>Met un message en file d'envoi via la boîte <code>BB</code></td></tr>
+  <tr><td><code>PAUSE &lt;durée&gt;</code></td><td>Suspend l'agrégation (ex. escale, wifi) — <code>PAUSE 3d</code></td></tr>
+  <tr><td><code>RESUME</code></td><td>Reprend l'agrégation</td></tr>
+</table>
+
+<h2>GET — jokers implicites</h2>
+<p>Chaque segment omis élargit la sélection à tous les messages en attente correspondants :</p>
+<table>
+  <tr><td><code>GET 01mar.GM.1</code></td><td>un message précis</td></tr>
+  <tr><td><code>GET 01mar.GM</code></td><td>tous ceux de la boîte GM le 01 mars</td></tr>
+  <tr><td><code>GET 01mar</code></td><td>tous ceux du 01 mars, toutes boîtes</td></tr>
+  <tr><td><code>GET GM</code></td><td>tous ceux de la boîte GM, toutes dates</td></tr>
+  <tr><td><code>GET 1</code></td><td>tous les messages n°1, toutes boîtes et dates</td></tr>
+</table>
+
+<h2>Répondre / écrire — blocs message</h2>
+<p>Hors <code>===CMD===</code>, chaque bloc va jusqu'au prochain <code>===</code> (ou <code>===END===</code>).</p>
+<p><strong>Répondre</strong> à un message reçu dans un bundle — Hutmail route vers l'expéditeur d'origine, par la bonne boîte, avec <code>Re:</code> et le bon fil de discussion :</p>
+<pre>===REPLY 22may.GM.3===
+Bien reçu, on est aux Açores
+===END===</pre>
+<p><strong>Écrire</strong> un nouveau message — précisez la boîte d'envoi avec son code 2 lettres :</p>
+<pre>===MSG.GM bob@example.com===
+On arrive mardi à Horta
+===END===</pre>
+
+<h2>Exemple complet</h2>
+<pre>Objet : Re: === HUTMAIL 01mar 09:30 ===
+
+===CMD===
+# télécharger une newsletter laissée de côté
+GET 28feb.OR.2
+RESUME
+===END===
+
+===REPLY 01mar.GM.1===
+On confirme le rendez-vous mardi 14h !
+===END===
+
+===MSG.OR assurance@maif.fr===
+Merci, bien reçu le certificat.
+===END===</pre>
+
+<p class="muted">Hutmail 🦫 — le facteur des marins hauturiers.</p>
