@@ -214,6 +214,14 @@ remain in DB / sent folders as audit trail — leave them.
 | `CommandResponse status=error` | Parser threw or downstream send failed | Inspect `cr.response_text`; check `bin/kamal logs` for backtraces around the poll tick |
 | Loopback contamination (sailor's PING/PONG showing as bundled MessageDigest) | Relay polling did not mark UID processed before mail-account collection ran | Check `MailAccount#imap_move_strategy` and processed-UID tracking; this test confirmed no contamination on the shared-mailbox setup |
 
+## Pending scenarios
+
+Scenarios A–C and E have been run live; D is integration-test-only. The command and
+collection behaviours **not yet exercised live** (notably the `GET` + screener round-trip,
+budget overflow, `URGENT`/`SEND`, the error surface, and stripping/dedup) are catalogued with
+step-by-step instructions in
+[`e2e-live-runbook-pending-scenarios.md`](./e2e-live-runbook-pending-scenarios.md).
+
 ## Execution reports
 
 - 2026-05-25: see [`e2e-live-runbook-execution-2026-05-25.md`](./e2e-live-runbook-execution-2026-05-25.md).
