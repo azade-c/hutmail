@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   resource :home, only: :show, controller: "home"
   resource :guide, only: :show
   resource :commands, only: :show
+  resource :verification, only: :show
 
   get "up" => "rails/health#show", as: :rails_health_check
 

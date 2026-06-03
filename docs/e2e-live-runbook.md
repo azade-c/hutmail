@@ -214,6 +214,14 @@ remain in DB / sent folders as audit trail — leave them.
 | `CommandResponse status=error` | Parser threw or downstream send failed | Inspect `cr.response_text`; check `bin/kamal logs` for backtraces around the poll tick |
 | Loopback contamination (sailor's PING/PONG showing as bundled MessageDigest) | Relay polling did not mark UID processed before mail-account collection ran | Check `MailAccount#imap_move_strategy` and processed-UID tracking; this test confirmed no contamination on the shared-mailbox setup |
 
+## Pending scenarios
+
+Scenarios A–C and E ran on 2026-05-25; F–K and M–O ran on 2026-06-03 (D is integration-test-only).
+The step-by-step catalogue lives in
+[`e2e-live-runbook-pending-scenarios.md`](./e2e-live-runbook-pending-scenarios.md). The only scenario
+still not run live is **L** (multi-account grouping) — it needs a second IMAP mailbox.
+
 ## Execution reports
 
-- 2026-05-25: see [`e2e-live-runbook-execution-2026-05-25.md`](./e2e-live-runbook-execution-2026-05-25.md).
+- 2026-05-25 — A/B/C/E: [`e2e-live-runbook-execution-2026-05-25.md`](./e2e-live-runbook-execution-2026-05-25.md).
+- 2026-06-03 — F/G/H/I/J/K/M/N/O: [`e2e-live-runbook-execution-2026-06-03.md`](./e2e-live-runbook-execution-2026-06-03.md).
