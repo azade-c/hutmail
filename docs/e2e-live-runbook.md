@@ -216,12 +216,12 @@ remain in DB / sent folders as audit trail — leave them.
 
 ## Pending scenarios
 
-Scenarios A–C and E have been run live; D is integration-test-only. The command and
-collection behaviours **not yet exercised live** (notably the `GET` + screener round-trip,
-budget overflow, `URGENT`/`SEND`, the error surface, and stripping/dedup) are catalogued with
-step-by-step instructions in
-[`e2e-live-runbook-pending-scenarios.md`](./e2e-live-runbook-pending-scenarios.md).
+Scenarios A–C and E ran on 2026-05-25; F–K and M–O ran on 2026-06-03 (D is integration-test-only).
+The step-by-step catalogue lives in
+[`e2e-live-runbook-pending-scenarios.md`](./e2e-live-runbook-pending-scenarios.md). The only scenario
+still not run live is **L** (multi-account grouping) — it needs a second IMAP mailbox.
 
 ## Execution reports
 
-- 2026-05-25: see [`e2e-live-runbook-execution-2026-05-25.md`](./e2e-live-runbook-execution-2026-05-25.md).
+- 2026-05-25 — A/B/C/E: [`e2e-live-runbook-execution-2026-05-25.md`](./e2e-live-runbook-execution-2026-05-25.md).
+- 2026-06-03 — F/G/H/I/J/K/M/N/O: [`e2e-live-runbook-execution-2026-06-03.md`](./e2e-live-runbook-execution-2026-06-03.md).

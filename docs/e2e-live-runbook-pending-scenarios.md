@@ -1,9 +1,13 @@
-# Live E2E — pending scenarios (not yet exercised)
+# Live E2E — pending scenarios (catalogue)
 
 Companion to [`e2e-live-runbook.md`](./e2e-live-runbook.md). The 2026-05-25 execution
 covered scenarios **A** (scheduled bundling), **B** (subject command), **C** (deferred body
 command + new external) and **E** (outbound `===MSG===`/`===REPLY===`). **D** (mixed subject +
 body) is covered by the stubbed integration test but never run live.
+
+> **Status (2026-06-03):** scenarios **F, G, H, I, J, K, M, N, O** were executed live and
+> **passed** — see [`e2e-live-runbook-execution-2026-06-03.md`](./e2e-live-runbook-execution-2026-06-03.md).
+> Only **L** (multi-account grouping) is still pending (needs a second IMAP mailbox).
 
 This file lists the **command and collection behaviours the system implements but that no live
 run has proven yet**, with concrete instructions for the next live session. Same conventions as
