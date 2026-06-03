@@ -1,0 +1,132 @@
+<header class="guide-hero">
+  <h1>🦫 Vérification end-to-end</h1>
+  <p class="guide-lead">
+    Hutmail est testé <strong>pour de vrai</strong> : chaque fonction est rejouée contre de
+    véritables boîtes IMAP/SMTP, sur le déploiement de production, avec la radio en tête.
+    Voici l'état des preuves — ce qui est <em>démontré contre de vraies boîtes</em>, et quand.
+  </p>
+</header>
+
+<div class="stat-grid">
+  <div class="card">
+    <div class="card__header">Dernière campagne live</div>
+    <p class="txt-large"><strong>3 juin 2026</strong></p>
+    <p class="txt-small txt-subtle">Scénarios F · G · H · I · J · K · M · N · O</p>
+  </div>
+  <div class="card">
+    <div class="card__header">Résultat global</div>
+    <p class="txt-large">🟢 <strong>PASS</strong></p>
+    <p class="txt-small txt-subtle">Aucun bug produit. Aucune régression.</p>
+  </div>
+  <div class="card">
+    <div class="card__header">Fonctions prouvées</div>
+    <p class="txt-large"><strong>13 / 14</strong></p>
+    <p class="txt-small txt-subtle">Le multi-comptes attend une 2<sup>e</sup> boîte de test.</p>
+  </div>
+</div>
+
+<h2 id="couverture">Ce qui est prouvé contre de vraies boîtes</h2>
+<p class="txt-subtle txt-small">
+  Boîtes réelles utilisées : un compte mail (Mailo), un compte relais SailMail (Netcourrier) et
+  un expéditeur externe (HEY). Pipeline déclenché sur la production via la planification réelle et
+  la console.
+</p>
+
+<table>
+  <thead>
+    <tr><th>Fonction</th><th>Ce qui est vérifié</th><th>État</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>📦 Dépêche planifiée</td>
+      <td>Collecte IMAP + agrégation + envoi SMTP au bateau, sur cadence réelle</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">25 mai</span></td>
+    </tr>
+    <tr>
+      <td>💬 Commandes objet</td>
+      <td><code>PING</code>, <code>STATUS</code>, <code>HELP</code>, préfixes <code>Re:/Fwd:</code> nettoyés</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">25 mai · 3 juin</span></td>
+    </tr>
+    <tr>
+      <td>📥 Commandes corps (différées)</td>
+      <td><code>===CMD===</code> replié dans la dépêche suivante</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">25 mai · 3 juin</span></td>
+    </tr>
+    <tr>
+      <td>✉️ Réponses sortantes</td>
+      <td><code>===MSG===</code> (nouveau) et <code>===REPLY===</code> (fil conservé, In-Reply-To)</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">25 mai</span></td>
+    </tr>
+    <tr>
+      <td>📨 Récupération <code>GET</code> + screener</td>
+      <td>Identifiant exact + <strong>5 formes joker</strong> + aucune correspondance ; budget non vérifié pour <code>GET</code></td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>📊 Débordement budget + report</td>
+      <td>Screener listé, messages entiers jamais coupés, rien n'est perdu d'une dépêche à l'autre</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>🚨 <code>URGENT</code> immédiat</td>
+      <td>Envoi inline avant la prochaine dépêche</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>📤 <code>SEND</code> différé</td>
+      <td>Passe par la file (distinct d'<code>URGENT</code>)</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>⚠️ Surface d'erreur</td>
+      <td>Commande inconnue, mauvais identifiant, code boîte inconnu, <code>GET</code> sans résultat</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>🧹 Allègement (strip)</td>
+      <td>HTML→texte, signatures, citations, URLs orphelines, pièces jointes en repère (pas d'octets)</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>🔁 Dédup + <code>skip_already_read</code></td>
+      <td>Source de vérité = base ; dédup par <code>Message-ID</code> ; les lus sont ignorés</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>🗂️ Courtoisie IMAP</td>
+      <td>Sources marquées lues + archivées dans le dossier <code>Hutmail</code> après envoi</td>
+      <td><span class="badge badge--sent">prouvé</span> <span class="txt-x-small txt-subtle">3 juin</span></td>
+    </tr>
+    <tr>
+      <td>🗃️ Multi-comptes</td>
+      <td>Regroupement <code>==[ XX ]==</code> et séquence par boîte</td>
+      <td><span class="badge badge--no_longer_collectable">en attente</span> <span class="txt-x-small txt-subtle">2<sup>e</sup> boîte requise</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="gaps">Limites connues</h2>
+<p>Certaines commandes sont <strong>accusées de réception mais pas encore actives</strong> — elles
+ne sont volontairement <em>pas</em> testées en live tant que le code n'existe pas :</p>
+<ul>
+  <li><code>PAUSE</code> / <code>RESUME</code> — répondent <code>:ok</code> mais ne suspendent pas encore la collecte.</li>
+  <li><code>WHITELIST</code> / <code>BLACKLIST</code> — accusées, sans persistance ni filtrage.</li>
+  <li><code>DROP</code> — non implémentée (renvoie « commande inconnue »).</li>
+</ul>
+
+<div class="card guide-cta">
+  <div class="card__header">📋 Rapport détaillé</div>
+  <p class="txt-small">Timeline UTC, preuves serveur + boîtes, et observations — pour les opérateurs.</p>
+  <p class="txt-small txt-subtle">
+    <code>docs/e2e-live-runbook-execution-2026-06-03.md</code> dans le dépôt.
+  </p>
+</div>
+
+<hr class="section-divider">
+<p>
+  <a href="<%= guide_path %>">📖 Guide complet</a>
+  &nbsp;·&nbsp;
+  <a href="<%= commands_path %>">📻 Commandes du bateau</a>
+  &nbsp;·&nbsp;
+  <a href="<%= home_path %>"><strong>← Accueil</strong></a>
+</p>
