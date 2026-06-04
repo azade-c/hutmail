@@ -176,11 +176,20 @@ Collection-side quality, only spot-checked so far.
 1. Send one HTML newsletter-style email **with** an inline image, a `-- ` signature, a mobile
    sig (`Envoyé de mon iPhone`), and a quoted reply (`Le … a écrit :`).
 2. Send one email with a real **attachment** (e.g. a small PDF).
-3. Dispatch and inspect the bundled `MessageDigest`:
+3. Send one email whose **attachment carries a `Content-ID` header** but `Content-Disposition:
+   attachment` (common with Apple Mail / Outlook). Historically this was dropped silently — see
+   the regression fixture `06_attachment_with_content_id.eml`.
+4. Send one email with a non-image part marked `Content-Disposition: inline` (e.g. an inline
+   `.pdf`/`.ics`).
+5. Dispatch and inspect the bundled `MessageDigest`:
    - `stripped_body`: HTML→text, signature/quote/disclaimer removed, standalone URLs gone.
-   - Inline image → placeholder kept in body position; attachment → `📎 file.pdf (NNN KB)`
-     line, **not** the bytes. `attachments_metadata` JSON populated.
-   - `to_radio_text` in `bundle_text` shows the placeholder, never base64.
+   - Inline image → `[image : file.jpg (NNN KB)]` placeholder kept in body position.
+   - Inline non-image → `[fichier : file.pdf (NNN KB)]` placeholder.
+   - Real attachment (incl. the `Content-ID` one) → `📎 file.pdf (NNN KB)` footer line, **not**
+     the bytes. `attachments_metadata` JSON populated.
+   - **Nothing vanishes**: every attached part shows up as exactly one of the three forms above —
+     never both a placeholder and a footer line for the same part.
+   - `to_radio_text` in `bundle_text` shows the placeholders, never base64.
 
 ---
 

@@ -63,7 +63,13 @@
     <p>Chaque message est réduit à l'essentiel pour économiser chaque octet :</p>
     <ul>
       <li>HTML → texte brut</li>
-      <li>Pièces jointes retirées (seul un repère <code>📎 facture.pdf (245 Ko)</code> reste)</li>
+      <li>Pièces jointes retirées, mais <strong>jamais en silence</strong> — chaque fichier laisse un repère léger et chiffré :
+        <ul>
+          <li>Image insérée dans le corps → <code>[image : photo.jpg (12 Ko)]</code>, à sa place dans le texte</li>
+          <li>Autre fichier inséré dans le corps → <code>[fichier : planning.pdf (8 Ko)]</code></li>
+          <li>Vraie pièce jointe → ligne <code>📎 facture.pdf (245 Ko)</code> en pied de message</li>
+        </ul>
+      </li>
       <li>Signatures supprimées (<code>--</code>, « Envoyé de mon iPhone »…)</li>
       <li>Citations / historique de réponse retirés (<code>&gt;</code>, « Le … a écrit : »)</li>
       <li>Bruit retiré : disclaimers, liens de désinscription, URLs orphelines</li>

@@ -165,6 +165,6 @@ module MailAccount::Collecting
     end
 
     def attachment_inline?(attachment)
-      attachment.inline? || attachment.content_disposition&.include?("inline") || attachment.content_id.present?
+      attachment.inline? || attachment.content_disposition&.include?("inline")
     end
 end

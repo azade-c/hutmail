@@ -61,7 +61,7 @@ module MessageDigest::Presentable
 
     def format_attachments
       items = displayed_attachments.map do |attachment|
-        "#{attachment_name(attachment)} (#{Bundle.format_size(attachment['size'] || attachment[:size])})"
+        "#{attachment_name(attachment)} (#{Bundle.format_size(attachment_size(attachment))})"
       end
       "📎 #{items.join(', ')}"
     end
@@ -73,18 +73,20 @@ module MessageDigest::Presentable
     end
 
     def embedded_attachment?(attachment)
-      attachment_inline?(attachment) || inline_image_placeholder_present?(attachment_name(attachment))
+      inline_placeholder_present?(attachment_name(attachment), attachment_size(attachment))
     end
 
-    def attachment_inline?(attachment)
-      attachment["inline"] || attachment[:inline]
-    end
-
-    def inline_image_placeholder_present?(name)
-      stripped_body.to_s.include?("[image : #{name} (")
+    def inline_placeholder_present?(name, size)
+      formatted = Bundle.format_size(size)
+      stripped_body.to_s.include?("[image : #{name} (#{formatted})]") ||
+        stripped_body.to_s.include?("[fichier : #{name} (#{formatted})]")
     end
 
     def attachment_name(attachment)
       attachment["name"] || attachment[:name]
+    end
+
+    def attachment_size(attachment)
+      attachment["size"] || attachment[:size]
     end
 end

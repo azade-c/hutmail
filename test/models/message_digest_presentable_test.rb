@@ -51,4 +51,27 @@ class MessageDigestPresentableTest < ActiveSupport::TestCase
     assert_not_includes text, "📎 inline-photo.jpg"
     assert text.index("Signature") < text.index("📎 chart.jpg (1.0 KB)")
   end
+
+  test "to_radio_text keeps a same-named attachment that differs from the embedded one" do
+    msg = @account.message_digests.create!(
+      imap_uid: 102,
+      imap_message_id: "same-name-attachment@example.com",
+      from_address: "bob@example.com",
+      from_name: "Bob",
+      subject: "Logos",
+      date: Time.current,
+      raw_size: 5000,
+      stripped_body: "Body\n\n[image : logo.png (1.0 KB)]",
+      stripped_size: 32,
+      status: :collected,
+      collected_at: Time.current,
+      attachments_metadata: [
+        { name: "logo.png", size: 1024, content_type: "image/png", inline: true },
+        { name: "logo.png", size: 8192, content_type: "image/png", inline: false }
+      ]
+    )
+
+    text = msg.to_radio_text
+    assert_includes text, "📎 logo.png (8.0 KB)"
+  end
 end

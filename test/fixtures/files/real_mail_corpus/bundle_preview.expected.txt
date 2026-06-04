@@ -71,4 +71,14 @@ Sam Sender
 Sam Sender
 📎 chart.jpg (66.5 KB)
 
+==== %%%%%%%%%% ====
+
+[04jun.CR.1] From: Boris Cousin <boris@castors.ovh> (→ sailmailalibi) | Facture du mois | 04jun 07:15
+Bonjour,
+
+Voici la facture du mois en pièce jointe.
+
+Boris Cousin
+📎 facture.pdf (2.0 KB)
+
 === END ===
