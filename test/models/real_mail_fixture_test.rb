@@ -4,6 +4,7 @@ class RealMailFixtureTest < ActiveSupport::TestCase
   FIXTURE_DIRECTORY = Rails.root.join("test/fixtures/files/real_mail_corpus")
   REPLY_FIXTURE = "04_reply_message.eml"
   IMAGE_FIXTURE = "05_inline_image_message.eml"
+  ATTACHMENT_CID_FIXTURE = "06_attachment_with_content_id.eml"
 
   test "real reply email strips the previous French message block" do
     result = MessageDigest.strip_mail(mail_fixture(REPLY_FIXTURE))
@@ -17,6 +18,16 @@ class RealMailFixtureTest < ActiveSupport::TestCase
     assert_equal expected_fixture("inline_image_message.expected.txt"), result
   end
 
+  test "attachment carrying a Content-ID is still surfaced to the sailor" do
+    vessel = build_vessel
+    account = build_account(vessel)
+    create_message_from_fixture(account, FIXTURE_DIRECTORY.join(ATTACHMENT_CID_FIXTURE), 0)
+
+    text = account.message_digests.last.to_radio_text
+
+    assert_includes text, "📎 facture.pdf ("
+  end
+
   test "real mailbox fixtures compose the expected preview bundle" do
     preview = build_preview_bundle
     normalized_preview = normalize_preview_timestamp(preview.bundle_text)
@@ -26,6 +37,17 @@ class RealMailFixtureTest < ActiveSupport::TestCase
 
   private
     def build_preview_bundle
+      vessel = build_vessel
+      account = build_account(vessel)
+
+      mail_fixture_paths.each_with_index do |path, index|
+        create_message_from_fixture(account, path, index)
+      end
+
+      vessel.preview_dispatch
+    end
+
+    def build_vessel
       vessel = Vessel.new(name: "Crew preview", sailmail_address: "CREW@sailmail.com")
       vessel.build_relay_account(
         imap_server: "imap.example.com",
@@ -42,8 +64,11 @@ class RealMailFixtureTest < ActiveSupport::TestCase
       vessel.daily_budget_kb = 500
       vessel.bundle_ratio = 100
       vessel.save!
+      vessel
+    end
 
-      account = vessel.mail_accounts.create!(
+    def build_account(vessel)
+      vessel.mail_accounts.create!(
         name: "Crew",
         short_code: "CR",
         imap_server: "mail.example.test",
@@ -58,12 +83,6 @@ class RealMailFixtureTest < ActiveSupport::TestCase
         smtp_password: "secret",
         skip_already_read: true
       )
-
-      mail_fixture_paths.each_with_index do |path, index|
-        create_message_from_fixture(account, path, index)
-      end
-
-      vessel.preview_dispatch
     end
 
     def create_message_from_fixture(account, path, index)

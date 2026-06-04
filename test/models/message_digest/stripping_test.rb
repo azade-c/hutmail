@@ -229,4 +229,27 @@ class MessageDigest::StrippingTest < ActiveSupport::TestCase
     TEXT
     assert_not_includes result, "[image : Balises.jpg"
   end
+
+  test "adds file placeholder for an inline non-image part" do
+    raw = <<~MAIL
+      MIME-Version: 1.0
+      Content-Type: multipart/mixed; boundary="MIX"
+
+      --MIX
+      Content-Type: text/plain; charset="UTF-8"
+
+      Voici le planning ci-joint.
+      --MIX
+      Content-Type: application/pdf; name="planning.pdf"
+      Content-Disposition: inline; filename="planning.pdf"
+      Content-Transfer-Encoding: base64
+
+      #{[ "z" * 1024 ].pack("m0")}
+      --MIX--
+    MAIL
+
+    result = MessageDigest.strip_mail(Mail.new(raw))
+    assert_includes result, "[fichier : planning.pdf (1.0 KB)]"
+    assert_includes result, "Voici le planning ci-joint."
+  end
 end

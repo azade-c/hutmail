@@ -27,7 +27,7 @@ module MessageDigest::Stripping
       text = normalize_whitespace(text)
 
       text = append_placeholder(text, PLACEHOLDER_QUOTED) if had_quoted
-      text = place_inline_image_placeholders(text, mail_message)
+      text = place_attachment_placeholders(text, mail_message)
 
       text
     end
@@ -173,7 +173,12 @@ module MessageDigest::Stripping
       "#{text}\n\n#{placeholder}"
     end
 
-    def place_inline_image_placeholders(text, mail_message)
+    def place_attachment_placeholders(text, mail_message)
+      text = place_inline_images(text, mail_message)
+      place_inline_files(text, mail_message)
+    end
+
+    def place_inline_images(text, mail_message)
       images = collect_inline_images(mail_message)
       return text if images.empty?
 
@@ -181,6 +186,13 @@ module MessageDigest::Stripping
       return positioned_text if positioned_text
 
       prepend_image_placeholders(text, images)
+    end
+
+    def place_inline_files(text, mail_message)
+      files = collect_inline_files(mail_message)
+      return text if files.empty?
+
+      prepend_file_placeholders(text, files)
     end
 
     def position_image_placeholders_from_html(text, mail_message, images)
@@ -255,8 +267,17 @@ module MessageDigest::Stripping
       text.empty? ? prefix : "#{prefix}\n\n#{text}"
     end
 
+    def prepend_file_placeholders(text, files)
+      prefix = files.map { |file| file_placeholder(file) }.join("\n")
+      text.empty? ? prefix : "#{prefix}\n\n#{text}"
+    end
+
     def image_placeholder(image)
       "[image : #{image[:name]} (#{Bundle.format_size(image[:size])})]"
+    end
+
+    def file_placeholder(file)
+      "[fichier : #{file[:name]} (#{Bundle.format_size(file[:size])})]"
     end
 
     def image_placeholder?(line)
@@ -285,6 +306,19 @@ module MessageDigest::Stripping
       end.uniq
     end
 
+    def collect_inline_files(mail_message)
+      return [] unless mail_message.multipart?
+
+      Array(mail_message.all_parts).filter_map do |part|
+        next unless inline_file?(part)
+
+        name = part.filename.presence || "fichier"
+        size = part.body.decoded.bytesize rescue 0
+
+        { name:, size: }
+      end.uniq
+    end
+
     def normalize_content_id(content_id)
       content_id.to_s.delete_prefix("<").delete_suffix(">")
     end
@@ -292,6 +326,14 @@ module MessageDigest::Stripping
     def inline_image?(part)
       part.mime_type&.start_with?("image/") &&
         (part.inline? || part.content_disposition&.include?("inline") || part.content_id.present?)
+    end
+
+    def inline_file?(part)
+      return false if part.multipart?
+      return false if part.mime_type&.start_with?("image/")
+      return false if part.filename.blank?
+
+      part.inline? || part.content_disposition&.include?("inline")
     end
   end
 end
