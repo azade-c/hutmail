@@ -62,8 +62,26 @@ module Vessel::Commanding
         next
       end
 
+      if in_commands && current_block&.fetch(:kind) == :send
+        if command_line?(stripped)
+          flush_outbound_block(current_block, results)
+          current_block = nil
+        else
+          current_block[:body] << line
+          next
+        end
+      end
+
       if in_commands
-        execute_command(stripped, results, source: "body") unless stripped.start_with?("#") || stripped.blank?
+        next if stripped.start_with?("#") || stripped.blank?
+
+        if (block = open_send_block(stripped))
+          flush_outbound_block(current_block, results)
+          current_block = block
+          next
+        end
+
+        execute_command(stripped, results, source: "body")
       elsif in_messages && current_block
         current_block[:body] << line
       end
@@ -74,6 +92,25 @@ module Vessel::Commanding
   end
 
   private
+    SEND_COMMAND = /\A(SEND|URGENT)(?:\.([A-Za-z0-9]+))?\s+(\S+)\s*\z/i
+    KNOWN_COMMAND_VERBS = %w[GET SEND URGENT PAUSE RESUME STATUS PING HELP WHITELIST BLACKLIST].freeze
+
+    def open_send_block(line)
+      return unless (match = line.match(SEND_COMMAND))
+
+      {
+        kind: :send,
+        urgent: match[1].upcase == "URGENT",
+        short_code: match[2]&.upcase,
+        target: match[3].strip,
+        body: []
+      }
+    end
+
+    def command_line?(line)
+      verb = line.split(/[\s.]/, 2).first.to_s.upcase
+      KNOWN_COMMAND_VERBS.include?(verb)
+    end
     def execute_command(line, results, source: "body")
       tokens = line.split(/\s+/, 2)
       command = tokens[0].upcase
@@ -203,6 +240,7 @@ module Vessel::Commanding
         HUTMAIL commands
         Subject (answered immediately): STATUS | PING | HELP | GET <ref> | URGENT.<ACCT> <email> "msg"
         Body (in ===CMD===...===END===): all of the above + SEND.<ACCT> <email> "msg" | PAUSE | RESUME
+        SEND/URGENT also accept the message on the lines below: SEND.<ACCT> <email> then text until the next command or ===END===
         Messages: ===MSG.<ACCT> <email>=== body ===END===  or  ===REPLY <ref>=== body ===END===
       TXT
     end
@@ -263,13 +301,57 @@ module Vessel::Commanding
 
     def flush_outbound_block(block, results)
       return unless block
-      return if block[:body].blank?
-      return if block[:body].join.strip.empty?
+
+      if block[:body].join.strip.empty?
+        flush_empty_send_block(block, results) if block[:kind] == :send
+        return
+      end
 
       case block[:kind]
       when :reply then flush_outbound_reply(block[:target], block[:body], results)
       when :msg   then flush_outbound_message(block[:short_code], block[:target], block[:body], results)
+      when :send  then flush_outbound_send(block, results)
       end
+    end
+
+    def flush_empty_send_block(block, results)
+      label = block[:urgent] ? "URGENT" : "SEND"
+      report_error(results, source: "body", command: "#{label}.#{block[:short_code]} #{block[:target]}",
+        message: "Empty message. Provide text after the command line.")
+    end
+
+    def flush_outbound_send(block, results)
+      label = block[:urgent] ? "URGENT" : "SEND"
+
+      if block[:short_code].blank?
+        report_error(results, source: "body", command: label,
+          message: "Invalid format. Use: #{label}.<ACCOUNT> <email>")
+        return
+      end
+
+      account = mail_accounts.find_by(short_code: block[:short_code])
+      unless account
+        report_error(results, source: "body", command: "#{label}.#{block[:short_code]}",
+          message: "Unknown account short_code: #{block[:short_code]}")
+        return
+      end
+
+      reply = vessel_replies.create!(
+        mail_account: account,
+        message_digest: nil,
+        to_address: block[:target],
+        subject: "Hutmail message",
+        body: block[:body].join.strip,
+        status: "pending"
+      )
+
+      if block[:urgent]
+        reply.deliver_now
+      else
+        reply.deliver_later
+      end
+
+      results << { command: "#{label}.#{block[:short_code]} #{block[:target]}", status: :ok, message: "Message queued" }
     end
 
     def flush_outbound_reply(hutmail_ref, body, results)
