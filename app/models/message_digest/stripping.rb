@@ -55,6 +55,7 @@ module MessageDigest::Stripping
     end
 
     FRENCH_REPLY_HEADERS = /\A(?:De|À|A|Cc|Objet|Date|Envoyé)\s*:\s*.+\z/i
+    MIN_FRENCH_REPLY_HEADERS = 3
 
     def remove_french_reply_block(text)
       lines = text.lines
@@ -70,7 +71,7 @@ module MessageDigest::Stripping
     def find_french_reply_start(lines)
       lines.each_index do |index|
         next unless french_reply_origin?(lines[index])
-        next unless french_reply_header_count(lines, index) >= 2
+        next unless french_reply_header_count(lines, index) >= MIN_FRENCH_REPLY_HEADERS
 
         return index
       end

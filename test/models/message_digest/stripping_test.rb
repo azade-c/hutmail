@@ -84,6 +84,20 @@ class MessageDigest::StrippingTest < ActiveSupport::TestCase
     assert_equal "Plain body without content-type", result
   end
 
+  test "keeps long body when a short header-like block has fewer than three headers" do
+    intro = (1..30).map { |i| "Ligne d'intro numéro #{i} avec du contenu utile." }
+    body = (intro + [ "", "De : capitaine@alibi.fr", "Objet : ravitaillement", "" ] +
+      (1..500).map { |i| "Contenu important à transmettre, paragraphe #{i}." }).join("\n")
+
+    mail = Mail.new { body body }
+    mail.content_type = "text/plain"
+
+    result = MessageDigest.strip_mail(mail)
+    assert_includes result, "Ligne d'intro numéro 1"
+    assert_includes result, "Contenu important à transmettre, paragraphe 500"
+    assert_not_includes result, MessageDigest::Stripping::PLACEHOLDER_QUOTED
+  end
+
   test "removes French reply block De/À/Objet/Date" do
     body = <<~TEXT
       Salut les gars !
