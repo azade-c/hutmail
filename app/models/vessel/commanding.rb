@@ -82,9 +82,9 @@ module Vessel::Commanding
       base, scope = command.split(".", 2)
 
       case base
-      when "GET"       then execute_get(args, results)
-      when "SEND"      then execute_send(scope, args, results)
-      when "URGENT"    then execute_send(scope, args, results, urgent: true)
+      when "GET"       then execute_get(args, results, source: source)
+      when "SEND"      then execute_send(scope, args, results, source: source)
+      when "URGENT"    then execute_send(scope, args, results, source: source, urgent: true)
       when "PAUSE"     then execute_pause(args, results)
       when "RESUME"    then execute_resume(results)
       when "STATUS"    then execute_status(results, source: source)
@@ -93,32 +93,35 @@ module Vessel::Commanding
       when "WHITELIST" then execute_list(:whitelist, args, results)
       when "BLACKLIST" then execute_list(:blacklist, args, results)
       else
-        results << { command: command, status: :unknown, message: "Unknown command: #{command}" }
-        enqueue_response(source: source, command: command, text: "ERR: unknown command \"#{command}\"")
+        report_error(results, source: source, command: command, status: :unknown,
+          message: "Unknown command: #{command}", response: "unknown command \"#{command}\"")
       end
     end
 
-    def execute_get(args, results)
+    def execute_get(args, results, source: "body")
       messages = find_messages_by_wildcard(args)
 
       if messages.any?
         dispatch_get_response(messages)
         results << { command: "GET #{args}", status: :ok, message: "#{messages.size} messages bundled" }
       else
-        results << { command: "GET #{args}", status: :error, message: "No matching messages ready for bundling" }
+        report_error(results, source: source, command: "GET #{args}",
+          message: "No matching messages ready for bundling")
       end
     end
 
-    def execute_send(scope, args, results, urgent: false)
+    def execute_send(scope, args, results, source: "body", urgent: false)
       label = urgent ? "URGENT" : "SEND"
 
       if scope.blank?
-        results << { command: label, status: :error, message: "Invalid format. Use: #{label}.<ACCOUNT> <email> \"message\"" }
+        report_error(results, source: source, command: label,
+          message: "Invalid format. Use: #{label}.<ACCOUNT> <email> \"message\"")
         return
       end
 
       unless (match = args&.match(/\A(\S+)\s+"?(.+?)"?\z/))
-        results << { command: "#{label}.#{scope}", status: :error, message: "Invalid format. Use: #{label}.<ACCOUNT> <email> \"message\"" }
+        report_error(results, source: source, command: "#{label}.#{scope}",
+          message: "Invalid format. Use: #{label}.<ACCOUNT> <email> \"message\"")
         return
       end
 
@@ -127,7 +130,8 @@ module Vessel::Commanding
       body = match[2]
       account = mail_accounts.find_by(short_code: short_code)
       unless account
-        results << { command: "#{label}.#{short_code}", status: :error, message: "Unknown account short_code: #{short_code}" }
+        report_error(results, source: source, command: "#{label}.#{short_code}",
+          message: "Unknown account short_code: #{short_code}")
         return
       end
 
@@ -214,6 +218,11 @@ module Vessel::Commanding
       response
     end
 
+    def report_error(results, source:, command:, message:, status: :error, response: nil)
+      results << { command: command, status: status, message: message }
+      enqueue_response(source: source, command: command, text: "ERR #{command}: #{response || message}")
+    end
+
     def execute_list(type, args, results)
       results << { command: "#{type.upcase} #{args}", status: :ok, message: "#{type} updated" }
     end
@@ -267,7 +276,8 @@ module Vessel::Commanding
       original = resolve_message_by_hutmail_reference(hutmail_ref)
 
       unless original
-        results << { command: "REPLY #{hutmail_ref}", status: :error, message: "Unknown hutmail_id: #{hutmail_ref}" }
+        report_error(results, source: "body", command: "REPLY #{hutmail_ref}",
+          message: "Unknown hutmail_id: #{hutmail_ref}")
         return
       end
 
@@ -288,13 +298,15 @@ module Vessel::Commanding
       return if recipient.blank? || body.blank?
 
       if short_code.blank?
-        results << { command: "MSG #{recipient}", status: :error, message: "Invalid format. Use: ===MSG.<ACCOUNT> <email>===" }
+        report_error(results, source: "body", command: "MSG #{recipient}",
+          message: "Invalid format. Use: ===MSG.<ACCOUNT> <email>===")
         return
       end
 
       account = mail_accounts.find_by(short_code: short_code)
       unless account
-        results << { command: "MSG.#{short_code}", status: :error, message: "Unknown account short_code: #{short_code}" }
+        report_error(results, source: "body", command: "MSG.#{short_code}",
+          message: "Unknown account short_code: #{short_code}")
         return
       end
 

@@ -38,6 +38,56 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_match(/unknown command/i, cr.response_text)
   end
 
+  test "malformed SEND queues an error response for the sailor" do
+    assert_difference "@vessel.command_responses.count", 1 do
+      @results = @vessel.parse_and_execute_commands("===CMD===\nSEND.GM bob@example.com\n===END===")
+    end
+
+    assert_equal :error, @results.first[:status]
+    cr = @vessel.command_responses.last
+    assert_equal "body", cr.source
+    assert_match(/ERR/, cr.response_text)
+    assert_match(/Invalid format/i, cr.response_text)
+  end
+
+  test "SEND with an unknown account queues an error response" do
+    assert_difference "@vessel.command_responses.count", 1 do
+      @vessel.parse_and_execute_commands("===CMD===\nSEND.ZZ bob@example.com \"hi\"\n===END===")
+    end
+
+    cr = @vessel.command_responses.last
+    assert_match(/Unknown account short_code: ZZ/, cr.response_text)
+  end
+
+  test "GET with no match queues an error response" do
+    assert_difference "@vessel.command_responses.count", 1 do
+      @vessel.parse_and_execute_commands("===CMD===\nGET 99dec.ZZ.9\n===END===")
+    end
+
+    cr = @vessel.command_responses.last
+    assert_equal "body", cr.source
+    assert_match(/ERR/, cr.response_text)
+  end
+
+  test "malformed MSG block queues an error response" do
+    assert_difference "@vessel.command_responses.count", 1 do
+      @vessel.parse_and_execute_commands("===MSG bob@example.com===\nbody\n===END===")
+    end
+
+    cr = @vessel.command_responses.last
+    assert_equal "body", cr.source
+    assert_match(/Invalid format/i, cr.response_text)
+  end
+
+  test "unknown REPLY reference queues an error response" do
+    assert_difference "@vessel.command_responses.count", 1 do
+      @vessel.parse_and_execute_commands("===REPLY 99dec.ZZ.9===\nbody\n===END===")
+    end
+
+    cr = @vessel.command_responses.last
+    assert_match(/Unknown hutmail_id/, cr.response_text)
+  end
+
   test "subject accepts only the immediate-answer verbs" do
     assert_no_difference "@vessel.command_responses.count" do
       assert_empty @vessel.parse_and_execute_subject("PAUSE 2h")
