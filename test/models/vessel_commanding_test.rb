@@ -38,7 +38,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_match(/unknown command/i, cr.response_text)
   end
 
-  test "malformed SEND queues an error response for the sailor" do
+  test "SEND with no message at all queues an error response for the sailor" do
     assert_difference "@vessel.command_responses.count", 1 do
       @results = @vessel.parse_and_execute_commands("===CMD===\nSEND.GM bob@example.com\n===END===")
     end
@@ -47,7 +47,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
     cr = @vessel.command_responses.last
     assert_equal "body", cr.source
     assert_match(/ERR/, cr.response_text)
-    assert_match(/Invalid format/i, cr.response_text)
+    assert_match(/Empty message/i, cr.response_text)
   end
 
   test "SEND with an unknown account queues an error response" do
@@ -332,6 +332,56 @@ class VesselCommandingTest < ActiveSupport::TestCase
     end
     reply = @vessel.vessel_replies.order(:id).last
     assert_equal mail_accounts(:gmail), reply.mail_account
+  end
+
+  test "SEND accepts the message on the lines below the command" do
+    text = "===CMD===\nSEND.GM bob@example.com\nEssai de message\nsur plusieurs lignes\n===END==="
+    results = @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "bob@example.com", reply.to_address
+    assert_equal mail_accounts(:gmail), reply.mail_account
+    assert_equal "Essai de message\nsur plusieurs lignes", reply.body
+    assert_equal :ok, results.first[:status]
+  end
+
+  test "URGENT accepts a multiline message and delivers immediately" do
+    text = "===CMD===\nURGENT.GM bob@example.com\nEssai de message urgent 1233\n===END==="
+    assert_difference "@vessel.vessel_replies.count", 1 do
+      results = @vessel.parse_and_execute_commands(text)
+      assert_equal :ok, results.first[:status]
+    end
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "Essai de message urgent 1233", reply.body
+    assert_equal mail_accounts(:gmail), reply.mail_account
+  end
+
+  test "multiline SEND stops at the next command" do
+    text = "===CMD===\nSEND.GM bob@example.com\nFirst message body\nSTATUS\n===END==="
+    results = @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "First message body", reply.body
+    assert(results.any? { |r| r[:command] == "STATUS" })
+  end
+
+  test "inline SEND with message on the same line still works" do
+    text = "===CMD===\nSEND.GM bob@example.com \"Quick inline note\"\n===END==="
+    @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "Quick inline note", reply.body
+  end
+
+  test "multiline URGENT with an unknown account queues an error" do
+    text = "===CMD===\nURGENT.ZZ bob@example.com\nsome text\n===END==="
+    assert_no_difference "@vessel.vessel_replies.count" do
+      @vessel.parse_and_execute_commands(text)
+    end
+
+    cr = @vessel.command_responses.last
+    assert_match(/Unknown account short_code: ZZ/, cr.response_text)
   end
 
   # ------------------------------------------------------------------
