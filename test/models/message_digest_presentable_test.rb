@@ -74,4 +74,68 @@ class MessageDigestPresentableTest < ActiveSupport::TestCase
     text = msg.to_radio_text
     assert_includes text, "📎 logo.png (8.0 KB)"
   end
+
+  test "to_radio_text truncates the body and reports dropped characters when a limit is given" do
+    body = "a" * 120
+    msg = @account.message_digests.create!(
+      imap_uid: 103,
+      imap_message_id: "truncate-limit@example.com",
+      from_address: "bob@example.com",
+      from_name: "Bob",
+      subject: "Long one",
+      date: Time.current,
+      raw_size: 5000,
+      stripped_body: body,
+      stripped_size: body.length,
+      status: :collected,
+      collected_at: Time.current
+    )
+
+    text = msg.to_radio_text(char_limit: 50)
+    assert_includes text, "a" * 50
+    assert_not_includes text, "a" * 51
+    assert_includes text, "// message tronqué, restent 70 caractères //"
+  end
+
+  test "to_radio_text leaves the body intact when it fits within the limit" do
+    body = "short body"
+    msg = @account.message_digests.create!(
+      imap_uid: 104,
+      imap_message_id: "truncate-fits@example.com",
+      from_address: "bob@example.com",
+      from_name: "Bob",
+      subject: "Fits",
+      date: Time.current,
+      raw_size: 5000,
+      stripped_body: body,
+      stripped_size: body.length,
+      status: :collected,
+      collected_at: Time.current
+    )
+
+    text = msg.to_radio_text(char_limit: 50)
+    assert_includes text, body
+    assert_not_includes text, "message tronqué"
+  end
+
+  test "to_radio_text never truncates when no limit is given" do
+    body = "b" * 200
+    msg = @account.message_digests.create!(
+      imap_uid: 105,
+      imap_message_id: "truncate-none@example.com",
+      from_address: "bob@example.com",
+      from_name: "Bob",
+      subject: "No limit",
+      date: Time.current,
+      raw_size: 5000,
+      stripped_body: body,
+      stripped_size: body.length,
+      status: :collected,
+      collected_at: Time.current
+    )
+
+    text = msg.to_radio_text
+    assert_includes text, body
+    assert_not_includes text, "message tronqué"
+  end
 end

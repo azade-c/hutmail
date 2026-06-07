@@ -22,6 +22,7 @@ class Vessel < ApplicationRecord
   validates_associated :relay_account
   validates :bundle_ratio, numericality: { in: 1..100 }, allow_nil: true
   validates :daily_budget_kb, numericality: { greater_than: 0 }, allow_nil: true
+  validates :message_char_limit, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
 
   attr_accessor :captain
 

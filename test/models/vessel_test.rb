@@ -28,6 +28,15 @@ class VesselTest < ActiveSupport::TestCase
     assert @vessel.errors.of_kind?(:daily_budget_kb, :greater_than)
   end
 
+  test "message_char_limit must be a positive integer when present" do
+    @vessel.message_char_limit = 0
+    assert_not @vessel.valid?
+    assert @vessel.errors.of_kind?(:message_char_limit, :greater_than)
+
+    @vessel.message_char_limit = nil
+    assert @vessel.valid?
+  end
+
   # ------------------------------------------------------------------
   # Radio budget (7 rolling days)
   # ------------------------------------------------------------------

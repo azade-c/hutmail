@@ -35,7 +35,7 @@ module Vessel::Dispatching
       .ordered
 
     bundle = bundles.create!(status: "draft")
-    bundle.compose!(messages, remaining)
+    bundle.compose!(messages, remaining, truncate: false)
     bundle.deliver_now
     bundle
   end
