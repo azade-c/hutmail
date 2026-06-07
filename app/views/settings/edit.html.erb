@@ -49,6 +49,15 @@
         </div>
       </div>
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Plafond caractères par message</label>
+        <%= f.number_field :message_char_limit, class: "input", min: 1, placeholder: "Aucun plafond" %>
+        <div class="txt-x-small txt-subtle">
+          Tronque chaque message entrant des dépêches au-delà de cette limite. Vide = aucun plafond. La commande GET renvoie toujours le message entier.
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="card" data-controller="dispatch-schedule">

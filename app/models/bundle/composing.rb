@@ -13,15 +13,16 @@ module Bundle::Composing
     end
   end
 
-  def compose!(included_messages, remaining_messages)
-    compose_text(included_messages, remaining_messages)
+  def compose!(included_messages, remaining_messages, truncate: true)
+    compose_text(included_messages, remaining_messages, truncate: truncate)
     save!
     included_messages.each { |msg| bundle_items.create!(message_digest: msg) }
     attach_pending_command_responses
     log_step "Composition (#{included_messages.size} messages, #{self.class.format_size(total_stripped_size || 0)})"
   end
 
-  def compose_text(included_messages, remaining_messages)
+  def compose_text(included_messages, remaining_messages, truncate: true)
+    char_limit = truncate ? vessel.message_char_limit : nil
     screener_text = compose_screener(remaining_messages, vessel.screener_budget)
     pending_responses = vessel.command_responses.pending_for_bundle.to_a
 
@@ -42,7 +43,7 @@ module Bundle::Composing
       lines << "==[ #{account.short_code} — #{account.name} (#{account.imap_username}) ]=="
       lines << ""
       messages.sort_by(&:imap_uid).each_with_index do |msg, index|
-        lines << msg.to_radio_text
+        lines << msg.to_radio_text(char_limit: char_limit)
         lines << ""
         lines << "==== %%%%%%%%%% ====" unless index == messages.size - 1
         lines << "" unless index == messages.size - 1

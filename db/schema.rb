@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_23_172659) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_07_185150) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -189,6 +189,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_172659) do
     t.integer "dispatch_every_hours"
     t.string "dispatch_timezone", default: "UTC", null: false
     t.datetime "last_dispatched_at"
+    t.integer "message_char_limit"
     t.string "name", null: false
     t.datetime "next_dispatch_at"
     t.string "sailmail_address"

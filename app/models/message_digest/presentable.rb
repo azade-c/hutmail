@@ -31,9 +31,9 @@ module MessageDigest::Presentable
     header
   end
 
-  def to_radio_text
+  def to_radio_text(char_limit: nil)
     parts = [ to_radio_header ]
-    parts << stripped_body if stripped_body.present?
+    parts << truncated_body(char_limit) if stripped_body.present?
     parts << format_attachments if displayed_attachments.present?
     parts.join("\n")
   end
@@ -43,6 +43,14 @@ module MessageDigest::Presentable
   end
 
   private
+    def truncated_body(char_limit)
+      body = stripped_body
+      return body if char_limit.blank? || body.length <= char_limit
+
+      dropped = body.length - char_limit
+      "#{body[0, char_limit]}\n// message tronqué, restent #{dropped} caractères //"
+    end
+
     def format_recipients
       return nil if to_address.blank?
 
