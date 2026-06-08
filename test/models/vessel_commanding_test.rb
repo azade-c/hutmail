@@ -203,6 +203,46 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_equal :ok, results.first[:status]
   end
 
+  test "GET retrieves an already-bundled message regardless of status" do
+    create_digest(short_code: :gmail, from: "alice@example.com", subject: "Already sent",
+      date: Date.new(2026, 6, 8), seq: 1, uid: 500, status: "bundled")
+
+    refs = nil
+    @vessel.define_singleton_method(:dispatch_get_response) { |messages| refs = messages.map(&:hutmail_reference) }
+
+    results = @vessel.parse_and_execute_commands("===CMD===\nGET 08jun.GM.1\n===END===")
+
+    assert_equal [ "08jun.GM.1" ], refs
+    assert_equal :ok, results.first[:status]
+  end
+
+  test "GET retrieves a no_longer_collectable message" do
+    create_digest(short_code: :gmail, from: "bob@example.com", subject: "Stale",
+      date: Date.new(2026, 6, 8), seq: 2, uid: 501, status: "no_longer_collectable")
+
+    refs = nil
+    @vessel.define_singleton_method(:dispatch_get_response) { |messages| refs = messages.map(&:hutmail_reference) }
+
+    @vessel.parse_and_execute_commands("===CMD===\nGET 08jun.GM.2\n===END===")
+
+    assert_equal [ "08jun.GM.2" ], refs
+  end
+
+  test "GET with a broad short-code wildcard still excludes bundled messages" do
+    MessageDigest.where(mail_account: mail_accounts(:gmail)).delete_all
+    create_digest(short_code: :gmail, from: "a@example.com", subject: "Fresh",
+      date: Date.new(2026, 6, 8), seq: 1, uid: 600, status: "collected")
+    create_digest(short_code: :gmail, from: "b@example.com", subject: "Sent already",
+      date: Date.new(2026, 6, 8), seq: 2, uid: 601, status: "bundled")
+
+    refs = nil
+    @vessel.define_singleton_method(:dispatch_get_response) { |messages| refs = messages.map(&:hutmail_reference) }
+
+    @vessel.parse_and_execute_commands("===CMD===\nGET GM\n===END===")
+
+    assert_equal [ "08jun.GM.1" ], refs
+  end
+
   # ------------------------------------------------------------------
   # Outbound: REPLY / MSG / SEND / URGENT
   # ------------------------------------------------------------------
@@ -499,7 +539,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
       create_digest(short_code: :orange, from: "boss@work.com",    subject: "Invoice", date: Date.new(2026, 3, 1),  seq: 1, uid: 102)
     end
 
-    def create_digest(short_code:, from:, subject:, date:, seq:, uid:)
+    def create_digest(short_code:, from:, subject:, date:, seq:, uid:, status: "collected")
       mail_accounts(short_code).message_digests.create!(
         from_address: from,
         subject: subject,
@@ -507,7 +547,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
         imap_message_id: "#{from}-#{uid}@example.com",
         imap_uid: uid,
         raw_size: 100, stripped_body: "hi", stripped_size: 2,
-        daily_sequence: seq, status: "collected",
+        daily_sequence: seq, status: status,
         collected_at: date.beginning_of_day
       )
     end
