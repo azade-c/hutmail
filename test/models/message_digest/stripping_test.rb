@@ -112,6 +112,7 @@ class MessageDigest::StrippingTest < ActiveSupport::TestCase
 
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
+    mail.subject = "Re: Sailmail montant 1"
 
     result = MessageDigest.strip_mail(mail)
     assert_includes result, "Salut les gars"
@@ -135,6 +136,7 @@ class MessageDigest::StrippingTest < ActiveSupport::TestCase
 
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
+    mail.subject = "Re: Planning"
 
     result = MessageDigest.strip_mail(mail)
     assert_includes result, "OK merci"
@@ -161,6 +163,7 @@ class MessageDigest::StrippingTest < ActiveSupport::TestCase
 
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
+    mail.subject = "Re: Sailmail montant 1"
 
     result = MessageDigest.strip_mail(mail)
     assert_includes result, "Voici un test avec réponse"
@@ -174,10 +177,85 @@ class MessageDigest::StrippingTest < ActiveSupport::TestCase
 
     mail = Mail.new { body body }
     mail.content_type = "text/plain"
+    mail.subject = "Re: Hello"
 
     result = MessageDigest.strip_mail(mail)
     assert_includes result, "My reply"
     assert_includes result, MessageDigest::Stripping::PLACEHOLDER_QUOTED
+  end
+
+  # ------------------------------------------------------------------
+  # Reply detection: only genuine replies get their quotes trimmed
+  # ------------------------------------------------------------------
+
+  test "does not trim quoted text when the subject is not a reply" do
+    body = "My new message\n\nDe : alice@example.com\nÀ : bob@example.com\nObjet : Planning\nDate : 02/03/2026\n\nLe contenu transféré à conserver."
+
+    mail = Mail.new { body body }
+    mail.content_type = "text/plain"
+    mail.subject = "Voici une encyclique pour toi"
+
+    result = MessageDigest.strip_mail(mail)
+    assert_includes result, "My new message"
+    assert_includes result, "Le contenu transféré à conserver"
+    assert_includes result, "alice@example.com"
+    assert_not_includes result, MessageDigest::Stripping::PLACEHOLDER_QUOTED
+  end
+
+  test "does not trim forwarded messages (Fwd / Tr prefixes)" do
+    body = "Regarde ça\n\nDe : alice@example.com\nÀ : bob@example.com\nObjet : Doc\nDate : 02/03/2026\n\nMessage d'origine à transmettre."
+
+    [ "Fwd: Doc", "Tr: Doc", "Fw: Doc" ].each do |subject|
+      mail = Mail.new { body body }
+      mail.content_type = "text/plain"
+      mail.subject = subject
+
+      result = MessageDigest.strip_mail(mail)
+      assert_includes result, "Message d'origine à transmettre", "failed for subject #{subject.inspect}"
+    end
+  end
+
+  test "keeps the full body of a non-reply newsletter with underscore separators" do
+    # Regression: email_reply_parser/email_reply_trimmer treat a line of
+    # underscores as a signature/delimiter and used to drop everything below
+    # it. On a non-reply, nothing must be trimmed.
+    body = <<~TEXT
+      Table des matières
+      Chapitre 1
+      Chapitre 2
+
+      ___________________________
+
+      INTRODUCTION
+
+      Le corps complet du message qui ne doit surtout pas être coupé.
+      Il vient après la ligne de séparation en underscores.
+
+      ------------------------------------------------------------------------
+
+      Notes de bas de page à conserver aussi.
+    TEXT
+
+    mail = Mail.new { body body }
+    mail.content_type = "text/plain"
+    mail.subject = "Voici une encyclique pour toi"
+
+    result = MessageDigest.strip_mail(mail)
+    assert_includes result, "INTRODUCTION"
+    assert_includes result, "Le corps complet du message qui ne doit surtout pas être coupé"
+    assert_includes result, "Notes de bas de page à conserver aussi"
+  end
+
+  test "reply subject detection is multilingual and tolerant of casing and spacing" do
+    %w[Re: RE: Ré: AW: R: Ri:].each do |prefix|
+      assert MessageDigest.send(:reply_subject?, "#{prefix} Sujet"), "#{prefix} should be a reply"
+    end
+    assert MessageDigest.send(:reply_subject?, "RE : Sujet")
+    assert MessageDigest.send(:reply_subject?, "re:sujet")
+
+    [ "Rapport trimestriel", "Réunion demain", "Fwd: Doc", "Tr: Doc", "Bonjour" ].each do |subject|
+      assert_not MessageDigest.send(:reply_subject?, subject), "#{subject.inspect} should not be a reply"
+    end
   end
 
   test "adds image placeholder with filename and size" do
