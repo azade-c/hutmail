@@ -242,6 +242,7 @@ module Vessel::Commanding
         Body (in ===CMD===...===END===): all of the above + SEND.<ACCT> <email> "msg" | PAUSE | RESUME
         SEND/URGENT also accept the message on the lines below: SEND.<ACCT> <email> then text until the next command or ===END===
         Messages: ===MSG.<ACCT> <email>=== body ===END===  or  ===REPLY <ref>=== body ===END===
+        Custom subject (SEND/URGENT/MSG): start the body with  OBJET your subject /OBJET  then the message below
       TXT
     end
 
@@ -299,6 +300,11 @@ module Vessel::Commanding
       subject.match?(/\ARe:\s/i) ? subject : "Re: #{subject}"
     end
 
+    def extract_subject(body_lines)
+      directive_subject, remaining = Vessel::SubjectDirective.extract(body_lines.join)
+      [ directive_subject.presence || "Hutmail message", remaining.strip ]
+    end
+
     def flush_outbound_block(block, results)
       return unless block
 
@@ -336,12 +342,13 @@ module Vessel::Commanding
         return
       end
 
+      subject, body = extract_subject(block[:body])
       reply = vessel_replies.create!(
         mail_account: account,
         message_digest: nil,
         to_address: block[:target],
-        subject: "Hutmail message",
-        body: block[:body].join.strip,
+        subject: subject,
+        body: body,
         status: "pending"
       )
 
@@ -392,12 +399,13 @@ module Vessel::Commanding
         return
       end
 
+      subject, message_body = extract_subject(body)
       vessel_replies.create!(
         mail_account: account,
         message_digest: nil,
         to_address: recipient,
-        subject: "Hutmail message",
-        body: body.join.strip,
+        subject: subject,
+        body: message_body,
         status: "pending"
       ).deliver_later
 

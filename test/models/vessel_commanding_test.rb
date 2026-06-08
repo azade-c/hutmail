@@ -385,6 +385,67 @@ class VesselCommandingTest < ActiveSupport::TestCase
   end
 
   # ------------------------------------------------------------------
+  # Custom subject via OBJET directive (SEND / URGENT / MSG)
+  # ------------------------------------------------------------------
+
+  test "multiline SEND uses the OBJET directive as subject" do
+    text = "===CMD===\nSEND.GM bob@example.com\nOBJET Arrivée mardi /OBJET\nOn arrive à Horta.\n===END==="
+    @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "Arrivée mardi", reply.subject
+    assert_equal "On arrive à Horta.", reply.body
+  end
+
+  test "multiline URGENT uses the OBJET directive as subject" do
+    text = "===CMD===\nURGENT.GM bob@example.com\nOBJET Alerte météo /OBJET\nGros grain en approche\n===END==="
+    @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "Alerte météo", reply.subject
+    assert_equal "Gros grain en approche", reply.body
+  end
+
+  test "MSG uses the OBJET directive as subject" do
+    text = "===MSG.GM bob@example.com===\nOBJET Coucou /OBJET\nDes nouvelles du large\n===END==="
+    @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "Coucou", reply.subject
+    assert_equal "Des nouvelles du large", reply.body
+  end
+
+  test "OBJET directive is case insensitive" do
+    text = "===MSG.GM bob@example.com===\nobjet Tout va bien /objet\nLe corps\n===END==="
+    @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "Tout va bien", reply.subject
+  end
+
+  test "no OBJET directive keeps the default subject" do
+    text = "===CMD===\nSEND.GM bob@example.com\nMessage sans objet\n===END==="
+    @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal "Hutmail message", reply.subject
+    assert_equal "Message sans objet", reply.body
+  end
+
+  test "OBJET directive does not apply to REPLY" do
+    original = create_digest(short_code: :gmail, from: "alice@example.com",
+      subject: "Topic A", date: Date.new(2026, 5, 22), seq: 1, uid: 300)
+
+    text = "===REPLY 22may.GM.1===\nOBJET ignored here /OBJET\nThe reply body\n===END==="
+    @vessel.parse_and_execute_commands(text)
+
+    reply = @vessel.vessel_replies.order(:id).last
+    assert_equal original, reply.message_digest
+    assert_equal "Re: Topic A", reply.subject
+    assert_equal "OBJET ignored here /OBJET\nThe reply body", reply.body
+  end
+
+  # ------------------------------------------------------------------
   # Aggregation control: PAUSE / RESUME
   # ------------------------------------------------------------------
 
