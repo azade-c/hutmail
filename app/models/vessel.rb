@@ -29,7 +29,16 @@ class Vessel < ApplicationRecord
   after_create { crews.create!(user: captain, role: "captain") if captain }
 
   def budget_consumed_7d
-    bundles.where(status: "sent", sent_at: 7.days.ago..).sum(:dispatch_size)
+    bundles
+      .where(status: "sent", sent_at: budget_window_start..)
+      .sum(:dispatch_size)
+  end
+
+  # Manual override to unstick a vessel whose rolling credit was exhausted
+  # (e.g. a heavy GET). Dispatches sent before the reset point are no longer
+  # counted against the budget; history is preserved.
+  def reset_budget!
+    update!(budget_reset_at: Time.current)
   end
 
   def budget_remaining
@@ -43,4 +52,12 @@ class Vessel < ApplicationRecord
   def screener_budget
     budget_remaining - message_budget
   end
+
+  private
+    def budget_window_start
+      window = 7.days.ago
+      return window if budget_reset_at.blank?
+
+      [ window, budget_reset_at ].max
+    end
 end

@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     resources :bundles, only: :index, module: :vessels
     resource :dispatch_preview, only: :show
     resource :dispatch, only: :create, module: :vessels
+    resource :budget_reset, only: :create, module: :vessels
     resource :settings, only: %i[edit update]
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_071848) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_09_072534) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -182,6 +182,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_071848) do
   end
 
   create_table "vessels", force: :cascade do |t|
+    t.datetime "budget_reset_at"
     t.integer "bundle_ratio", default: 80
     t.datetime "created_at", null: false
     t.integer "daily_budget_kb", default: 100
