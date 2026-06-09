@@ -93,6 +93,34 @@ class VesselTest < ActiveSupport::TestCase
     assert_equal 12_000, @vessel.budget_consumed_7d
   end
 
+  test "top_up_budget! adds one-shot credit to the total without touching the allowance" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+    allowance = 100 * 7 * 1024
+
+    @vessel.top_up_budget!(300 * 1024)
+
+    assert_equal allowance + (300 * 1024), @vessel.budget_total
+    assert_equal allowance + (300 * 1024), @vessel.budget_remaining
+    assert_equal 100, @vessel.daily_budget_kb, "the configured allowance must stay untouched"
+  end
+
+  test "top_up_budget! is cumulative" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+
+    @vessel.top_up_budget!(100 * 1024)
+    @vessel.top_up_budget!(200 * 1024)
+
+    assert_equal 300 * 1024, @vessel.budget_topup_bytes
+  end
+
+  test "reset_budget! preserves top-up credit" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 500 * 1024)
+
+    @vessel.reset_budget!
+
+    assert_equal 500 * 1024, @vessel.reload.budget_topup_bytes
+  end
+
   private
     def sent_bundle(dispatch_size:, sent_at:)
       @vessel.bundles.create!(status: "sent", dispatch_size:, sent_at:)

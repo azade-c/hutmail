@@ -51,14 +51,12 @@ module Bundle::Composing
     end
 
     lines << screener_text if screener_text.present?
+
+    self.dispatch_size = dispatch_size_with_budget_footer(lines)
+    lines << budget_footer(dispatch_size)
     lines << "=== END ==="
 
     self.bundle_text = lines.join("\n")
-    # dispatch_size is the real weight transmitted over the radio link: the
-    # composed bundle text itself. This is what the rolling budget must charge,
-    # not the sum of stripped bodies (which ignores truncation and would be
-    # double-counted on a GET re-send of an already-dispatched message).
-    self.dispatch_size = bundle_text.bytesize
     self.total_raw_size = included_messages.sum(&:raw_size)
     self.total_stripped_size = included_messages.sum(&:stripped_size)
     self.messages_count = included_messages.size
@@ -68,6 +66,23 @@ module Bundle::Composing
   end
 
   private
+    def dispatch_size_with_budget_footer(lines)
+      previous_size = nil
+      current_size = 0
+
+      until current_size == previous_size
+        previous_size = current_size
+        current_size = (lines.join("\n") + "\n#{budget_footer(previous_size)}\n=== END ===").bytesize
+      end
+
+      current_size
+    end
+
+    def budget_footer(this_dispatch_size)
+      remaining_after = [ vessel.budget_remaining - this_dispatch_size, 0 ].max
+      "Restent #{self.class.format_size(remaining_after)} / #{self.class.format_size(vessel.budget_total)} (7j glissants)"
+    end
+
     def attach_pending_command_responses
       Array(@pending_command_responses).each do |cr|
         cr.update!(bundle: self, status: "included")

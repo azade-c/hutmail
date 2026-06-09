@@ -23,6 +23,7 @@ class Vessel < ApplicationRecord
   validates :bundle_ratio, numericality: { in: 1..100 }, allow_nil: true
   validates :daily_budget_kb, numericality: { greater_than: 0 }, allow_nil: true
   validates :message_char_limit, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validates :budget_topup_bytes, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   attr_accessor :captain
 
@@ -34,15 +35,20 @@ class Vessel < ApplicationRecord
       .sum(:dispatch_size)
   end
 
-  # Manual override to unstick a vessel whose rolling credit was exhausted
-  # (e.g. a heavy GET). Dispatches sent before the reset point are no longer
-  # counted against the budget; history is preserved.
   def reset_budget!
     update!(budget_reset_at: Time.current)
   end
 
+  def top_up_budget!(bytes)
+    increment!(:budget_topup_bytes, bytes)
+  end
+
+  def budget_total
+    (daily_budget_kb * 7 * 1024) + budget_topup_bytes
+  end
+
   def budget_remaining
-    [ (daily_budget_kb * 7 * 1024) - budget_consumed_7d, 0 ].max
+    [ budget_total - budget_consumed_7d, 0 ].max
   end
 
   def message_budget

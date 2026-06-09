@@ -26,6 +26,51 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_equal 2, results.size
   end
 
+  # ------------------------------------------------------------------
+  # TOPUP — one-shot extra credit
+  # ------------------------------------------------------------------
+
+  test "TOPUP adds the requested amount to the current balance in KB by default" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+    before = @vessel.budget_total
+
+    results = @vessel.parse_and_execute_commands("===CMD===\nTOPUP 300 KB\n===END===")
+
+    assert_equal :ok, results.first[:status]
+    assert_equal 300 * 1024, @vessel.reload.budget_total - before
+  end
+
+  test "TOPUP accepts MB and defaults bare amounts to KB" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+
+    @vessel.parse_and_execute_commands("===CMD===\nTOPUP 1 MB\n===END===")
+    @vessel.parse_and_execute_commands("===CMD===\nTOPUP 500\n===END===")
+
+    assert_equal (1024 * 1024) + (500 * 1024), @vessel.reload.budget_topup_bytes
+  end
+
+  test "TOPUP enqueues a confirmation response with the new balance" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+
+    assert_difference -> { @vessel.command_responses.count }, 1 do
+      @vessel.parse_and_execute_commands("===CMD===\nTOPUP 300 KB\n===END===")
+    end
+
+    response = @vessel.command_responses.order(:created_at).last
+    assert_equal "TOPUP", response.command
+    assert_match(/TOPUP \+300\.0 KB/, response.response_text)
+    assert_match(/7j/, response.response_text)
+  end
+
+  test "TOPUP with an invalid amount is rejected and changes nothing" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+
+    results = @vessel.parse_and_execute_commands("===CMD===\nTOPUP plenty\n===END===")
+
+    assert_equal :error, results.first[:status]
+    assert_equal 0, @vessel.reload.budget_topup_bytes
+  end
+
   test "unknown body command is reported and queues an error response" do
     text = "===CMD===\nDROP 01mar.GM.1\n===END==="
     assert_difference "@vessel.command_responses.count", 1 do

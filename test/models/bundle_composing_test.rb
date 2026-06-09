@@ -14,6 +14,31 @@ class BundleComposingTest < ActiveSupport::TestCase
     assert_equal "1.0 MB", Bundle.format_size(1024 * 1024)
   end
 
+  test "compose! closes every dispatch with the remaining 7-day credit" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+    message = long_body_message
+
+    bundle = @vessel.bundles.create!(status: "draft")
+    bundle.compose!([ message ], [])
+
+    footer = bundle.bundle_text.lines.map(&:chomp).reject(&:blank?)[-2]
+    assert_match(/\ARestent .+ \/ .+ \(7j glissants\)\z/, footer)
+    # The footer reflects the balance net of this dispatch's own weight.
+    expected_remaining = [ @vessel.budget_remaining - bundle.dispatch_size, 0 ].max
+    assert_includes bundle.bundle_text, Bundle.format_size(expected_remaining)
+    assert_includes bundle.bundle_text, Bundle.format_size(@vessel.budget_total)
+  end
+
+  test "dispatch_size accounts for the budget footer itself" do
+    @vessel.update!(daily_budget_kb: 100)
+    message = long_body_message
+
+    bundle = @vessel.bundles.create!(status: "draft")
+    bundle.compose!([ message ], [])
+
+    assert_equal bundle.bundle_text.bytesize, bundle.dispatch_size
+  end
+
   test "compose! truncates message bodies to the vessel char limit" do
     @vessel.update!(message_char_limit: 30)
     message = long_body_message
