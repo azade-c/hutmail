@@ -42,17 +42,17 @@ class VesselTest < ActiveSupport::TestCase
   # ------------------------------------------------------------------
 
   test "budget_consumed_7d sums only sent bundles within the rolling window" do
-    sent_bundle(total_stripped_size: 30_000, sent_at: 2.days.ago)
-    sent_bundle(total_stripped_size: 10_000, sent_at: 1.day.ago)
-    sent_bundle(total_stripped_size: 99_000, sent_at: 8.days.ago)
-    @vessel.bundles.create!(status: "draft", total_stripped_size: 50_000)
+    sent_bundle(dispatch_size: 30_000, sent_at: 2.days.ago)
+    sent_bundle(dispatch_size: 10_000, sent_at: 1.day.ago)
+    sent_bundle(dispatch_size: 99_000, sent_at: 8.days.ago)
+    @vessel.bundles.create!(status: "draft", dispatch_size: 50_000)
 
     assert_equal 40_000, @vessel.budget_consumed_7d
   end
 
   test "budget_remaining subtracts consumption from the weekly allowance" do
     @vessel.update!(daily_budget_kb: 100)
-    sent_bundle(total_stripped_size: 40_000, sent_at: 1.day.ago)
+    sent_bundle(dispatch_size: 40_000, sent_at: 1.day.ago)
 
     weekly_allowance = 100 * 7 * 1024
     assert_equal weekly_allowance - 40_000, @vessel.budget_remaining
@@ -60,7 +60,7 @@ class VesselTest < ActiveSupport::TestCase
 
   test "budget_remaining never goes negative" do
     @vessel.update!(daily_budget_kb: 1)
-    sent_bundle(total_stripped_size: 10_000_000, sent_at: 1.hour.ago)
+    sent_bundle(dispatch_size: 10_000_000, sent_at: 1.hour.ago)
 
     assert_equal 0, @vessel.budget_remaining
   end
@@ -75,7 +75,7 @@ class VesselTest < ActiveSupport::TestCase
   end
 
   private
-    def sent_bundle(total_stripped_size:, sent_at:)
-      @vessel.bundles.create!(status: "sent", total_stripped_size:, sent_at:)
+    def sent_bundle(dispatch_size:, sent_at:)
+      @vessel.bundles.create!(status: "sent", dispatch_size:, sent_at:)
     end
 end

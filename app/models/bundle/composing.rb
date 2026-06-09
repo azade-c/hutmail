@@ -18,7 +18,7 @@ module Bundle::Composing
     save!
     included_messages.each { |msg| bundle_items.create!(message_digest: msg) }
     attach_pending_command_responses
-    log_step "Composition (#{included_messages.size} messages, #{self.class.format_size(total_stripped_size || 0)})"
+    log_step "Composition (#{included_messages.size} messages, #{self.class.format_size(dispatch_size || 0)} transmis)"
   end
 
   def compose_text(included_messages, remaining_messages, truncate: true)
@@ -54,6 +54,11 @@ module Bundle::Composing
     lines << "=== END ==="
 
     self.bundle_text = lines.join("\n")
+    # dispatch_size is the real weight transmitted over the radio link: the
+    # composed bundle text itself. This is what the rolling budget must charge,
+    # not the sum of stripped bodies (which ignores truncation and would be
+    # double-counted on a GET re-send of an already-dispatched message).
+    self.dispatch_size = bundle_text.bytesize
     self.total_raw_size = included_messages.sum(&:raw_size)
     self.total_stripped_size = included_messages.sum(&:stripped_size)
     self.messages_count = included_messages.size

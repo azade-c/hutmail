@@ -152,4 +152,111 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     ).count
     assert_equal bundleable_before, bundleable_after
   end
+
+  # The rolling budget must be charged the real transmitted weight of the
+  # bundle (its text), not the sum of stripped bodies. A truncated dispatch
+  # must cost only what actually went over the radio, and a later GET of the
+  # full message must not double-charge the original body.
+  test "dispatch_size reflects the truncated bundle text, not the full stripped body" do
+    @account.message_digests.delete_all
+    @vessel.update!(message_char_limit: 200, daily_budget_kb: 100)
+
+    long_body = "Encyclique " * 2000 # ~22 KB stripped body
+    assert_operator long_body.bytesize, :>, 20_000
+
+    digest = @account.message_digests.create!(
+      imap_uid: 7001,
+      imap_message_id: "encyclique@example.test",
+      from_address: "pape@example.test",
+      from_name: "Le Pape",
+      to_address: "crew@example.test",
+      subject: "Encyclique",
+      date: Time.current,
+      raw_size: 30_000,
+      stripped_body: long_body,
+      stripped_size: long_body.bytesize,
+      status: :collected,
+      collected_at: Time.current
+    )
+
+    bundle = @vessel.bundles.create!(status: "draft")
+    bundle.compose!([ digest ], [])
+
+    # The transmitted weight is bounded by the char limit, far below the body.
+    assert_includes bundle.bundle_text, "message tronqu\u00e9"
+    assert_equal bundle.bundle_text.bytesize, bundle.dispatch_size
+    assert_operator bundle.dispatch_size, :<, 2_000,
+      "a truncated dispatch must not be charged the full stripped body"
+    assert_operator bundle.dispatch_size, :<, digest.stripped_size,
+      "transmitted weight must be smaller than the untruncated body"
+  end
+
+  test "a GET re-send is charged only its own transmitted weight, not the original body again" do
+    @account.message_digests.delete_all
+    @vessel.update!(message_char_limit: 200, daily_budget_kb: 100)
+
+    long_body = "Encyclique " * 2000
+    digest = @account.message_digests.create!(
+      imap_uid: 7002,
+      imap_message_id: "get-encyclique@example.test",
+      from_address: "pape@example.test",
+      from_name: "Le Pape",
+      to_address: "crew@example.test",
+      subject: "Encyclique",
+      date: Time.current,
+      raw_size: 30_000,
+      stripped_body: long_body,
+      stripped_size: long_body.bytesize,
+      status: :collected,
+      collected_at: Time.current
+    )
+
+    stub_relay_delivery
+
+    # 1) Normal (truncated) dispatch.
+    truncated = @vessel.bundles.create!(status: "draft")
+    truncated.compose!([ digest ], [])
+    truncated.deliver_now
+
+    # 2) Full GET re-send (truncate: false).
+    full = @vessel.dispatch_get_response([ digest.reload ])
+
+    # The GET carries the full body, so it costs more than the truncated one…
+    assert_operator full.dispatch_size, :>, truncated.dispatch_size
+    # …but each bundle is charged only its own transmitted text, never the
+    # abstract stripped_size, and never the body twice.
+    assert_equal full.bundle_text.bytesize, full.dispatch_size
+    assert_equal truncated.bundle_text.bytesize, truncated.dispatch_size
+
+    consumed = @vessel.budget_consumed_7d
+    combined_text = truncated.dispatch_size + full.dispatch_size
+    assert_equal combined_text, consumed,
+      "budget must sum the real transmitted weights of sent bundles"
+    assert_operator consumed, :<, 2 * digest.stripped_size,
+      "the body must not be double-charged across the truncated + GET pair"
+  end
+
+  private
+    def stub_relay_delivery
+      @original_send_bundle = RelayMailer.method(:send_bundle)
+      RelayMailer.define_singleton_method(:send_bundle) do |_bundle, **_opts|
+        relay = Object.new
+        relay.define_singleton_method(:deliver_now) { true }
+        relay.define_singleton_method(:message_id) { nil }
+        relay.define_singleton_method(:message) { Mail.new("Subject: t\n\nx") }
+        relay
+      end
+
+      @original_append_to_sent = RelayAccount.instance_method(:append_to_sent)
+      RelayAccount.define_method(:append_to_sent) { |_raw| "Sent" }
+
+      @original_mark_as_processed = MailAccount.instance_method(:mark_as_processed)
+      MailAccount.define_method(:mark_as_processed) { |_uids| true }
+    end
+
+    def teardown
+      RelayMailer.define_singleton_method(:send_bundle, @original_send_bundle) if @original_send_bundle
+      RelayAccount.define_method(:append_to_sent, @original_append_to_sent) if @original_append_to_sent
+      MailAccount.define_method(:mark_as_processed, @original_mark_as_processed) if @original_mark_as_processed
+    end
 end

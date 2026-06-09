@@ -5,7 +5,7 @@
     <div class="card margin-block-start">
       <div class="card__header">
         Simulation de la prochaine dépêche
-        <span class="badge"><%= @preview.messages_count %> messages · <%= Bundle.format_size(@preview.total_stripped_size || 0) %></span>
+        <span class="badge"><%= @preview.messages_count %> messages · <%= Bundle.format_size(@preview.dispatch_size || 0) %></span>
       </div>
       <% if @preview.remaining_count&.positive? %>
         <p class="txt-small txt-subtle">

@@ -29,7 +29,7 @@ class Vessel < ApplicationRecord
   after_create { crews.create!(user: captain, role: "captain") if captain }
 
   def budget_consumed_7d
-    bundles.where(status: "sent", sent_at: 7.days.ago..).sum(:total_stripped_size)
+    bundles.where(status: "sent", sent_at: 7.days.ago..).sum(:dispatch_size)
   end
 
   def budget_remaining
