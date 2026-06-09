@@ -18,7 +18,7 @@ module Bundle::Composing
     save!
     included_messages.each { |msg| bundle_items.create!(message_digest: msg) }
     attach_pending_command_responses
-    log_step "Composition (#{included_messages.size} messages, #{self.class.format_size(total_stripped_size || 0)})"
+    log_step "Composition (#{included_messages.size} messages, #{self.class.format_size(dispatch_size || 0)} transmis)"
   end
 
   def compose_text(included_messages, remaining_messages, truncate: true)
@@ -51,6 +51,9 @@ module Bundle::Composing
     end
 
     lines << screener_text if screener_text.present?
+
+    self.dispatch_size = dispatch_size_with_budget_footer(lines)
+    lines << budget_footer(dispatch_size)
     lines << "=== END ==="
 
     self.bundle_text = lines.join("\n")
@@ -63,6 +66,23 @@ module Bundle::Composing
   end
 
   private
+    def dispatch_size_with_budget_footer(lines)
+      previous_size = nil
+      current_size = 0
+
+      until current_size == previous_size
+        previous_size = current_size
+        current_size = (lines.join("\n") + "\n#{budget_footer(previous_size)}\n=== END ===").bytesize
+      end
+
+      current_size
+    end
+
+    def budget_footer(this_dispatch_size)
+      remaining_after = [ vessel.budget_remaining - this_dispatch_size, 0 ].max
+      "Restent #{self.class.format_size(remaining_after)} / #{self.class.format_size(vessel.budget_total)} (7j glissants)"
+    end
+
     def attach_pending_command_responses
       Array(@pending_command_responses).each do |cr|
         cr.update!(bundle: self, status: "included")

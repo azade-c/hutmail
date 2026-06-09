@@ -23,17 +23,32 @@ class Vessel < ApplicationRecord
   validates :bundle_ratio, numericality: { in: 1..100 }, allow_nil: true
   validates :daily_budget_kb, numericality: { greater_than: 0 }, allow_nil: true
   validates :message_char_limit, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validates :budget_topup_bytes, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   attr_accessor :captain
 
   after_create { crews.create!(user: captain, role: "captain") if captain }
 
   def budget_consumed_7d
-    bundles.where(status: "sent", sent_at: 7.days.ago..).sum(:total_stripped_size)
+    bundles
+      .where(status: "sent", sent_at: budget_window_start..)
+      .sum(:dispatch_size)
+  end
+
+  def reset_budget!
+    update!(budget_reset_at: Time.current)
+  end
+
+  def top_up_budget!(bytes)
+    increment!(:budget_topup_bytes, bytes)
+  end
+
+  def budget_total
+    (daily_budget_kb * 7 * 1024) + budget_topup_bytes
   end
 
   def budget_remaining
-    [ (daily_budget_kb * 7 * 1024) - budget_consumed_7d, 0 ].max
+    [ budget_total - budget_consumed_7d, 0 ].max
   end
 
   def message_budget
@@ -43,4 +58,12 @@ class Vessel < ApplicationRecord
   def screener_budget
     budget_remaining - message_budget
   end
+
+  private
+    def budget_window_start
+      window = 7.days.ago
+      return window if budget_reset_at.blank?
+
+      [ window, budget_reset_at ].max
+    end
 end

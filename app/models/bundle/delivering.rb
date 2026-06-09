@@ -50,7 +50,7 @@ module Bundle::Delivering
     def record_as_sent!
       update!(status: "sent", sent_at: Time.current)
       message_digests.update_all(status: MessageDigest.statuses.fetch("bundled"))
-      log_step "Statut → sent (#{messages_count} messages, #{Bundle.format_size(total_stripped_size || 0)})"
+      log_step "Statut → sent (#{messages_count} messages, #{Bundle.format_size(dispatch_size || 0)} transmis)"
     end
 
     def mark_sources_processed

@@ -35,6 +35,11 @@
     <div class="budget-bar">
       <div class="<%= class_names("budget-bar__fill", "budget-bar__fill--#{pct > 90 ? "danger" : "ok"}") %>" data-width="<%= pct %>%"></div>
     </div>
+    <div class="margin-block-start-half">
+      <%= button_to "Remettre le budget à z\u00e9ro", vessel_budget_reset_path(@vessel),
+          class: "btn btn--link",
+          data: { turbo_confirm: "Remettre le budget radio \u00e0 z\u00e9ro ? Les d\u00e9p\u00eaches d\u00e9j\u00e0 envoy\u00e9es ne seront plus d\u00e9compt\u00e9es du cr\u00e9dit 7j." } %>
+    </div>
   </div>
 <% end %>
 
@@ -120,7 +125,7 @@
           <a href="<%= bundle_path(bundle) %>">
             <span class="<%= class_names("badge", "badge--#{bundle.status}") %>"><%= bundle.status %></span>
             <%= bundle.messages_count %> messages
-            · <%= Bundle.format_size(bundle.total_stripped_size || 0) %>
+            · <%= Bundle.format_size(bundle.dispatch_size || 0) %>
             <% if bundle.sent_at %>
               · envoyé le <%= bundle.sent_at.strftime("%d %b %H:%M") %>
             <% end %>

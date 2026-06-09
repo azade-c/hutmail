@@ -93,7 +93,7 @@ module Vessel::Commanding
 
   private
     SEND_COMMAND = /\A(SEND|URGENT)(?:\.([A-Za-z0-9]+))?\s+(\S+)\s*\z/i
-    KNOWN_COMMAND_VERBS = %w[GET SEND URGENT PAUSE RESUME STATUS PING HELP WHITELIST BLACKLIST].freeze
+    KNOWN_COMMAND_VERBS = %w[GET SEND URGENT PAUSE RESUME STATUS PING HELP WHITELIST BLACKLIST TOPUP].freeze
 
     def open_send_block(line)
       return unless (match = line.match(SEND_COMMAND))
@@ -129,6 +129,7 @@ module Vessel::Commanding
       when "HELP"      then execute_help(results, source: source)
       when "WHITELIST" then execute_list(:whitelist, args, results)
       when "BLACKLIST" then execute_list(:blacklist, args, results)
+      when "TOPUP"     then execute_topup(args, results, source: source)
       else
         report_error(results, source: source, command: command, status: :unknown,
           message: "Unknown command: #{command}", response: "unknown command \"#{command}\"")
@@ -188,6 +189,41 @@ module Vessel::Commanding
       end
 
       results << { command: "#{label}.#{short_code} #{recipient}", status: :ok, message: "Message queued" }
+    end
+
+    def execute_topup(args, results, source: "body")
+      bytes = parse_topup_bytes(args)
+
+      if bytes.nil?
+        report_error(results, source: source, command: "TOPUP #{args}",
+          message: "Invalid format. Use: TOPUP <amount> [KB|MB]")
+        return
+      end
+
+      top_up_budget!(bytes)
+
+      text = "TOPUP +#{Bundle.format_size(bytes)} — #{Bundle.format_size(budget_remaining)} / #{Bundle.format_size(budget_total)} restants (7j)"
+      results << { command: "TOPUP #{args}", status: :ok, message: text }
+      enqueue_response(source: source, command: "TOPUP", text: text)
+    end
+
+    def parse_topup_bytes(args)
+      return nil if args.blank?
+
+      match = args.strip.match(/\A(\d+(?:\.\d+)?)\s*(KB|MB|B)?\z/i)
+      return nil unless match
+
+      amount = match[1].to_f
+      return nil unless amount.positive?
+
+      multiplier =
+        case match[2]&.upcase
+        when "MB" then 1024 * 1024
+        when "B"  then 1
+        else 1024 # KB is the default unit
+        end
+
+      (amount * multiplier).round
     end
 
     def execute_pause(args, results)

@@ -42,17 +42,17 @@ class VesselTest < ActiveSupport::TestCase
   # ------------------------------------------------------------------
 
   test "budget_consumed_7d sums only sent bundles within the rolling window" do
-    sent_bundle(total_stripped_size: 30_000, sent_at: 2.days.ago)
-    sent_bundle(total_stripped_size: 10_000, sent_at: 1.day.ago)
-    sent_bundle(total_stripped_size: 99_000, sent_at: 8.days.ago)
-    @vessel.bundles.create!(status: "draft", total_stripped_size: 50_000)
+    sent_bundle(dispatch_size: 30_000, sent_at: 2.days.ago)
+    sent_bundle(dispatch_size: 10_000, sent_at: 1.day.ago)
+    sent_bundle(dispatch_size: 99_000, sent_at: 8.days.ago)
+    @vessel.bundles.create!(status: "draft", dispatch_size: 50_000)
 
     assert_equal 40_000, @vessel.budget_consumed_7d
   end
 
   test "budget_remaining subtracts consumption from the weekly allowance" do
     @vessel.update!(daily_budget_kb: 100)
-    sent_bundle(total_stripped_size: 40_000, sent_at: 1.day.ago)
+    sent_bundle(dispatch_size: 40_000, sent_at: 1.day.ago)
 
     weekly_allowance = 100 * 7 * 1024
     assert_equal weekly_allowance - 40_000, @vessel.budget_remaining
@@ -60,7 +60,7 @@ class VesselTest < ActiveSupport::TestCase
 
   test "budget_remaining never goes negative" do
     @vessel.update!(daily_budget_kb: 1)
-    sent_bundle(total_stripped_size: 10_000_000, sent_at: 1.hour.ago)
+    sent_bundle(dispatch_size: 10_000_000, sent_at: 1.hour.ago)
 
     assert_equal 0, @vessel.budget_remaining
   end
@@ -74,8 +74,55 @@ class VesselTest < ActiveSupport::TestCase
     assert_in_delta remaining, @vessel.message_budget + @vessel.screener_budget, 0.001
   end
 
+  test "reset_budget! ignores dispatches sent before the reset point" do
+    @vessel.update!(daily_budget_kb: 100)
+    sent_bundle(dispatch_size: 40_000, sent_at: 2.days.ago)
+    assert_equal 40_000, @vessel.budget_consumed_7d
+
+    @vessel.reset_budget!
+
+    assert_equal 0, @vessel.budget_consumed_7d,
+      "dispatches sent before the reset must no longer count"
+  end
+
+  test "reset_budget! still counts dispatches sent after the reset" do
+    @vessel.update!(daily_budget_kb: 100)
+    @vessel.reset_budget!
+    sent_bundle(dispatch_size: 12_000, sent_at: 1.minute.from_now)
+
+    assert_equal 12_000, @vessel.budget_consumed_7d
+  end
+
+  test "top_up_budget! adds one-shot credit to the total without touching the allowance" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+    allowance = 100 * 7 * 1024
+
+    @vessel.top_up_budget!(300 * 1024)
+
+    assert_equal allowance + (300 * 1024), @vessel.budget_total
+    assert_equal allowance + (300 * 1024), @vessel.budget_remaining
+    assert_equal 100, @vessel.daily_budget_kb, "the configured allowance must stay untouched"
+  end
+
+  test "top_up_budget! is cumulative" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 0)
+
+    @vessel.top_up_budget!(100 * 1024)
+    @vessel.top_up_budget!(200 * 1024)
+
+    assert_equal 300 * 1024, @vessel.budget_topup_bytes
+  end
+
+  test "reset_budget! preserves top-up credit" do
+    @vessel.update!(daily_budget_kb: 100, budget_topup_bytes: 500 * 1024)
+
+    @vessel.reset_budget!
+
+    assert_equal 500 * 1024, @vessel.reload.budget_topup_bytes
+  end
+
   private
-    def sent_bundle(total_stripped_size:, sent_at:)
-      @vessel.bundles.create!(status: "sent", total_stripped_size:, sent_at:)
+    def sent_bundle(dispatch_size:, sent_at:)
+      @vessel.bundles.create!(status: "sent", dispatch_size:, sent_at:)
     end
 end
