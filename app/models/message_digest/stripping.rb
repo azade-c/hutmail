@@ -10,10 +10,41 @@ module MessageDigest::Stripping
       /^\s*Le .+ a écrit\s*:\s*$/i
     ].freeze
 
+    # Reply-subject prefixes, multilingual (inspired by Thunderbird's
+    # mailnews.localizedRe and Roundcube): Re/Ré (fr/en), RE (es), AW (de),
+    # R/Ri (it). Case-insensitive, tolerant of a space before the colon.
+    # The mandatory colon avoids false positives like "Rapport" or "Réunion".
+    # Forward prefixes (Fwd:, Tr:, ...) are deliberately excluded so forwarded
+    # messages keep their quoted body intact.
+    REPLY_SUBJECT = /\A\s*(?:re|ré|aw|ri|r)\s*:/i
+
     def strip_mail(mail_message)
       text = extract_text(mail_message)
       return "" if text.blank?
 
+      if reply_subject?(mail_message.subject)
+        text = strip_reply_quotes(text)
+      end
+
+      text = remove_signatures(text)
+      text = remove_noise(text)
+      text = normalize_whitespace(text)
+
+      text = place_attachment_placeholders(text, mail_message)
+
+      text
+    end
+
+    private
+
+    def reply_subject?(subject)
+      subject.to_s.match?(REPLY_SUBJECT)
+    end
+
+    # Removes the quoted previous message from a reply, leaving only the new
+    # text written by the author, and appends a placeholder to signal that a
+    # previous message was stripped. Only called for genuine replies.
+    def strip_reply_quotes(text)
       had_quoted = false
 
       text, removed = remove_french_reply_block(text)
@@ -22,17 +53,8 @@ module MessageDigest::Stripping
       had_quoted ||= text.lines.any? { |l| QUOTED_REPLY_MARKERS.any? { |p| l.match?(p) } }
       text = remove_quoted_replies(text)
 
-      text = remove_signatures(text)
-      text = remove_noise(text)
-      text = normalize_whitespace(text)
-
-      text = append_placeholder(text, PLACEHOLDER_QUOTED) if had_quoted
-      text = place_attachment_placeholders(text, mail_message)
-
-      text
+      had_quoted ? append_placeholder(text, PLACEHOLDER_QUOTED) : text
     end
-
-    private
 
     def extract_text(mail_message)
       if mail_message.text_part
@@ -106,7 +128,7 @@ module MessageDigest::Stripping
     end
 
     def remove_quoted_replies(text)
-      text = EmailReplyParser.parse_reply(text)
+      text = EmailReplyTrimmer.trim(text).to_s
       text = text.sub(/^\s*Le .+? a écrit\s*:\s*\z/m, "")
       text = text.sub(/^\s*-{2,}\s*Message transféré\s*-{2,}.*\z/m, "")
       text = text.sub(/^\s*-{2,}\s*Forwarded message\s*-{2,}.*\z/m, "")
