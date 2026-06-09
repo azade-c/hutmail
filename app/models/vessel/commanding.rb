@@ -144,7 +144,7 @@ module Vessel::Commanding
         results << { command: "GET #{args}", status: :ok, message: "#{messages.size} messages bundled" }
       else
         report_error(results, source: source, command: "GET #{args}",
-          message: "No matching messages ready for bundling")
+          message: "No matching messages found")
       end
     end
 
@@ -278,6 +278,7 @@ module Vessel::Commanding
         Body (in ===CMD===...===END===): all of the above + SEND.<ACCT> <email> "msg" | PAUSE | RESUME
         SEND/URGENT also accept the message on the lines below: SEND.<ACCT> <email> then text until the next command or ===END===
         Messages: ===MSG.<ACCT> <email>=== body ===END===  or  ===REPLY <ref>=== body ===END===
+        Custom subject (SEND/URGENT/MSG): start the body with  OBJET your subject /OBJET  then the message below
       TXT
     end
 
@@ -308,20 +309,26 @@ module Vessel::Commanding
       all_messages = MessageDigest.none
 
       ids.each do |id_str|
-        messages = MessageDigest.bundleable
+        scope = MessageDigest
           .joins(:mail_account)
           .where(mail_accounts: { vessel_id: id })
 
         messages = if id_str.match?(/\A\d+\z/)
-          messages.where("message_digests.daily_sequence = ?", id_str.to_i)
+          scope.bundleable.where("message_digests.daily_sequence = ?", id_str.to_i)
         elsif id_str.match?(/\A[A-Z]{2}\z/)
-          messages.where(mail_accounts: { short_code: id_str })
+          scope.bundleable.where(mail_accounts: { short_code: id_str })
         else
+          # A precise reference (date.code.seq) can retrieve a message whatever
+          # its status, so a sailor can re-request a message already bundled
+          # (e.g. lost or corrupted on reception over the radio link). Broad
+          # wildcards stay limited to bundleable messages to avoid pulling the
+          # whole history by accident over a scarce radio link.
           parsed = MessageDigest.decompose_hutmail_reference(id_str)
-          messages = messages.where("DATE(message_digests.date) = ?", parsed[:date]) if parsed[:date]
-          messages = messages.where(mail_accounts: { short_code: parsed[:short_code] }) if parsed[:short_code]
-          messages = messages.where("message_digests.daily_sequence = ?", parsed[:sequence]) if parsed[:sequence]
-          messages
+          scope = scope.bundleable unless precise_reference?(parsed)
+          scope = scope.where("DATE(message_digests.date) = ?", parsed[:date]) if parsed[:date]
+          scope = scope.where(mail_accounts: { short_code: parsed[:short_code] }) if parsed[:short_code]
+          scope = scope.where("message_digests.daily_sequence = ?", parsed[:sequence]) if parsed[:sequence]
+          scope
         end
 
         all_messages = all_messages.or(messages)
@@ -330,9 +337,18 @@ module Vessel::Commanding
       all_messages
     end
 
+    def precise_reference?(parsed)
+      parsed[:date].present? && parsed[:short_code].present? && parsed[:sequence].present?
+    end
+
     def subject_for_reply(original)
       subject = original.subject.to_s
       subject.match?(/\ARe:\s/i) ? subject : "Re: #{subject}"
+    end
+
+    def extract_subject(body_lines)
+      directive_subject, remaining = Vessel::SubjectDirective.extract(body_lines.join)
+      [ directive_subject.presence || "Hutmail message", remaining.strip ]
     end
 
     def flush_outbound_block(block, results)
@@ -372,12 +388,13 @@ module Vessel::Commanding
         return
       end
 
+      subject, body = extract_subject(block[:body])
       reply = vessel_replies.create!(
         mail_account: account,
         message_digest: nil,
         to_address: block[:target],
-        subject: "Hutmail message",
-        body: block[:body].join.strip,
+        subject: subject,
+        body: body,
         status: "pending"
       )
 
@@ -428,12 +445,13 @@ module Vessel::Commanding
         return
       end
 
+      subject, message_body = extract_subject(body)
       vessel_replies.create!(
         mail_account: account,
         message_digest: nil,
         to_address: recipient,
-        subject: "Hutmail message",
-        body: body.join.strip,
+        subject: subject,
+        body: message_body,
         status: "pending"
       ).deliver_later
 
