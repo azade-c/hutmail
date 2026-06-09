@@ -152,4 +152,75 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     ).count
     assert_equal bundleable_before, bundleable_after
   end
+
+  # GET must transmit the full stripped text of a message but never the raw
+  # bytes of attachments or inline HTML images. Attachments and inline images
+  # are represented by lightweight placeholders only; the actual binary is
+  # never relayed over the radio link.
+  test "dispatch_get_response transmits text only, never attachment or image bytes" do
+    mail = Mail.read(file_fixture("real_mail_corpus/05_inline_image_message.eml"))
+    raw_size = mail.to_s.bytesize
+    stripped = MessageDigest.strip_mail(mail)
+
+    @account.message_digests.delete_all
+    digest = @account.message_digests.create!(
+      imap_uid: 4242,
+      imap_message_id: "get-image@example.test",
+      from_address: "sender@example.test",
+      from_name: "Sam Sender",
+      to_address: "crew@example.test",
+      subject: "Message avec une image en PJ et en corps de texte",
+      date: Time.current,
+      raw_size: raw_size,
+      stripped_body: stripped,
+      stripped_size: stripped.bytesize,
+      status: :collected,
+      collected_at: Time.current,
+      attachments_metadata: [
+        { name: "photo.jpg", size: 150_800, content_type: "image/jpeg", inline: false }
+      ]
+    )
+
+    sent_messages = []
+    original_send_bundle = RelayMailer.method(:send_bundle)
+    RelayMailer.define_singleton_method(:send_bundle) do |bundle, **_opts|
+      sent_messages << bundle.bundle_text
+      relay = Object.new
+      relay.define_singleton_method(:deliver_now) { true }
+      relay.define_singleton_method(:message_id) { nil }
+      relay.define_singleton_method(:message) { Mail.new("Subject: test\n\nhi") }
+      relay
+    end
+
+    original_append_to_sent = RelayAccount.instance_method(:append_to_sent)
+    RelayAccount.define_method(:append_to_sent) { |_raw| "Sent" }
+
+    original_mark_as_processed = MailAccount.instance_method(:mark_as_processed)
+    MailAccount.define_method(:mark_as_processed) { |_uids| true }
+
+    bundle = @vessel.dispatch_get_response([ digest ])
+
+    radio_text = sent_messages.first
+    assert_not_nil radio_text, "GET must produce an outbound bundle text"
+
+    # The full stripped body is present (text is transmitted in its entirety).
+    assert_includes radio_text, stripped
+
+    # The inline image is referenced by a placeholder, not its bytes.
+    assert_match(/\[image : /, radio_text)
+
+    # The transmitted bundle is tiny: nowhere near the raw mail size.
+    assert_operator bundle.bundle_text.bytesize, :<, 10_000,
+      "GET payload must stay small; attachment/image bytes must not leak in"
+    assert_operator bundle.bundle_text.bytesize, :<, raw_size / 10,
+      "GET payload must be far smaller than the raw mail (no binary leak)"
+
+    # No base64 attachment block and no MIME boundary should appear in the text.
+    refute_match(/Content-Transfer-Encoding:\s*base64/i, radio_text)
+    refute_match(/^------=_NextPart/, radio_text)
+  ensure
+    RelayMailer.define_singleton_method(:send_bundle, original_send_bundle) if original_send_bundle
+    RelayAccount.define_method(:append_to_sent, original_append_to_sent) if original_append_to_sent
+    MailAccount.define_method(:mark_as_processed, original_mark_as_processed) if original_mark_as_processed
+  end
 end
