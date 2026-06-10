@@ -30,6 +30,41 @@ class MessageDigest::StrippingTest < ActiveSupport::TestCase
     assert_equal "Plain text version", result
   end
 
+  test "handles binary-encoded body without charset" do
+    raw = <<~MAIL
+      From: someone@example.com
+      To: boris@example.com
+      Subject: Test
+      Content-Type: text/plain
+      Content-Transfer-Encoding: 8bit
+
+      Bonjour, voici des caract\xC3\xA8res accentu\xC3\xA9s.
+    MAIL
+    mail = Mail.new(raw.b)
+
+    result = MessageDigest.strip_mail(mail)
+    assert_equal Encoding::UTF_8, result.encoding
+    assert_includes result, "caractères accentués"
+  end
+
+  test "handles invalid utf-8 bytes in body" do
+    raw = "From: someone@example.com\r\nSubject: Test\r\n\r\nHello \xE9 world".b
+    mail = Mail.new(raw)
+
+    result = MessageDigest.strip_mail(mail)
+    assert result.valid_encoding?
+    assert_includes result, "Hello"
+  end
+
+  test "handles unconvertible charset like UTF-7 without raising" do
+    raw = "From: someone@example.com\r\nSubject: Test\r\nContent-Type: text/plain; charset=UTF-7\r\n\r\nHello world".b
+    mail = Mail.new(raw)
+
+    result = MessageDigest.strip_mail(mail)
+    assert result.valid_encoding?
+    assert_includes result, "Hello world"
+  end
+
   test "removes mobile signatures" do
     mail = Mail.new do
       body "Real content\n\nSent from my iPhone"
