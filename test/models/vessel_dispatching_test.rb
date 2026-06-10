@@ -307,7 +307,79 @@ class VesselDispatchingTest < ActiveSupport::TestCase
     MailAccount.define_method(:mark_as_processed, original_mark_as_processed) if original_mark_as_processed
   end
 
+  test "dispatchable_messages? reflects presence of bundleable messages" do
+    assert @vessel.dispatchable_messages?
+
+    MessageDigest.where(
+      mail_account_id: @vessel.mail_accounts.select(:id)
+    ).update_all(status: MessageDigest.statuses.fetch("bundled"))
+
+    assert_not @vessel.dispatchable_messages?
+  end
+
+  test "dispatch_now bundles messages from all mail accounts of the vessel" do
+    stub_relay_delivery
+    MessageDigest.where(mail_account_id: @vessel.mail_accounts.select(:id)).delete_all
+
+    gmail_digest = create_collected_digest(mail_accounts(:gmail), uid: 9001, message_id: "multi-gm@example.test")
+    orange_digest = create_collected_digest(mail_accounts(:orange), uid: 9002, message_id: "multi-or@example.test")
+
+    bundle = @vessel.dispatch_now
+
+    assert_equal "sent", bundle.status
+    assert_equal 2, bundle.messages_count
+
+    bundled_account_ids = bundle.message_digests.pluck(:mail_account_id)
+    assert_includes bundled_account_ids, mail_accounts(:gmail).id
+    assert_includes bundled_account_ids, mail_accounts(:orange).id
+    assert gmail_digest.reload.bundled?
+    assert orange_digest.reload.bundled?
+  end
+
+  test "dispatch_now ignores messages from other vessels' accounts" do
+    stub_relay_delivery
+    MessageDigest.where(mail_account_id: @vessel.mail_accounts.select(:id)).delete_all
+
+    other_vessel = Vessel.create!(
+      name: "Autre",
+      sailmail_address: "OTH999@sailmail.com",
+      relay_account_attributes: relay_accounts(:one).attributes.except("id", "vessel_id", "created_at", "updated_at")
+    )
+    other_account = other_vessel.mail_accounts.create!(
+      mail_accounts(:gmail).attributes.slice(
+        "name", "imap_server", "imap_port", "imap_encryption",
+        "smtp_server", "smtp_port", "smtp_encryption", "skip_already_read"
+      ).merge(short_code: "OT")
+    )
+
+    create_collected_digest(mail_accounts(:gmail), uid: 9101, message_id: "mine@example.test")
+    foreign_digest = create_collected_digest(other_account, uid: 9102, message_id: "foreign@example.test")
+
+    bundle = @vessel.dispatch_now
+
+    assert_equal 1, bundle.messages_count
+    assert_not_includes bundle.message_digests.pluck(:id), foreign_digest.id
+    assert foreign_digest.reload.collected?
+  end
+
   private
+    def create_collected_digest(account, uid:, message_id:)
+      account.message_digests.create!(
+        imap_uid: uid,
+        imap_message_id: message_id,
+        from_address: "sender@example.test",
+        from_name: "Sender",
+        to_address: "crew@example.test",
+        subject: "Subject #{uid}",
+        date: Time.current,
+        raw_size: 1000,
+        stripped_body: "Body #{uid}",
+        stripped_size: 500,
+        status: :collected,
+        collected_at: Time.current
+      )
+    end
+
     def stub_relay_delivery
       @original_send_bundle = RelayMailer.method(:send_bundle)
       RelayMailer.define_singleton_method(:send_bundle) do |_bundle, **_opts|

@@ -11,6 +11,8 @@ module Vessel::Dispatching
     end
   end
 
+  def dispatchable_messages? = messages_to_bundle.exists?
+
   def dispatch_now
     bundle = compose_next_bundle
     bundle&.deliver_now

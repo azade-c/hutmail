@@ -2,6 +2,9 @@
 
 <div class="page-header">
   <h1>Dépêches</h1>
+  <%= button_to "Envoyer maintenant", vessel_dispatch_path(@vessel), class: "btn",
+      disabled: !@vessel.dispatchable_messages?,
+      data: { turbo_confirm: "Collecter et envoyer la dépêche maintenant ?" } %>
 </div>
 
 <% if @bundles.any? %>
