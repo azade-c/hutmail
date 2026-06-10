@@ -58,17 +58,30 @@ module MessageDigest::Stripping
 
     def extract_text(mail_message)
       if mail_message.text_part
-        mail_message.text_part.decoded.to_s
+        decode_to_utf8(mail_message.text_part)
       elsif mail_message.html_part
-        html_to_text(mail_message.html_part.decoded.to_s)
+        html_to_text(decode_to_utf8(mail_message.html_part))
       elsif mail_message.content_type&.include?("text/html")
-        html_to_text(mail_message.body.decoded.to_s)
+        html_to_text(decode_to_utf8(mail_message))
       else
-        mail_message.body.decoded.to_s
+        decode_to_utf8(mail_message)
       end
     rescue => e
       Rails.logger.warn "MessageDigest::Stripping: failed to extract text: #{e.message}"
       ""
+    end
+
+    def decode_to_utf8(part)
+      to_utf8(part.decoded.to_s, part.charset)
+    end
+
+    def to_utf8(text, charset)
+      text = text.to_s.dup
+      source = Encoding.find(charset.to_s) rescue Encoding::UTF_8
+      text.force_encoding(source) if text.encoding == Encoding::BINARY
+      text.encode(Encoding::UTF_8, invalid: :replace, undef: :replace).scrub
+    rescue EncodingError
+      text.force_encoding(Encoding::UTF_8).scrub
     end
 
     def html_to_text(html)
@@ -309,9 +322,9 @@ module MessageDigest::Stripping
 
     def extract_html(mail_message)
       if mail_message.html_part
-        mail_message.html_part.decoded.to_s
+        decode_to_utf8(mail_message.html_part)
       elsif mail_message.content_type&.include?("text/html")
-        mail_message.body.decoded.to_s
+        decode_to_utf8(mail_message)
       end
     end
 
