@@ -108,9 +108,7 @@
 <% end %>
 
 <%= turbo_frame_tag "dispatch-preview" do %>
-  <% if @bundleable_messages.any? %>
-    <%= render "dispatch_actions", vessel: @vessel, show_send: true %>
-  <% end %>
+  <%= render "dispatch_actions", vessel: @vessel, send_enabled: @bundleable_messages.any? %>
 <% end %>
 
 <% if @recent_bundles.any? %>

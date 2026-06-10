@@ -7,6 +7,24 @@ class Vessels::DispatchesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @user
   end
 
+  test "create collects from all accounts before dispatching" do
+    execution_order = []
+
+    original_collect = Vessel.instance_method(:collect_all_accounts)
+    original_dispatch = Vessel.instance_method(:dispatch_now)
+    Vessel.define_method(:collect_all_accounts) { execution_order << :collect }
+    Vessel.define_method(:dispatch_now) { execution_order << :dispatch; nil }
+
+    post vessel_dispatch_path(@vessel)
+
+    assert_equal %i[collect dispatch], execution_order
+    assert_redirected_to vessel_path(@vessel)
+    assert_equal "Aucun message à dépêcher", flash[:notice]
+  ensure
+    Vessel.define_method(:collect_all_accounts, original_collect)
+    Vessel.define_method(:dispatch_now, original_dispatch)
+  end
+
   test "create dispatches bundle and redirects to bundle page" do
     fake_bundle = Bundle.create!(
       vessel: @vessel,

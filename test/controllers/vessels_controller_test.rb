@@ -27,7 +27,26 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "turbo-frame#dispatch-preview .btn__group"
     assert_select "turbo-frame#dispatch-preview form[action='#{vessel_dispatch_preview_path(@vessel)}'][data-turbo-frame='dispatch-preview']"
-    assert_select "turbo-frame#dispatch-preview form[action='#{vessel_dispatch_path(@vessel)}'][data-turbo-frame='_top']"
+    assert_select "turbo-frame#dispatch-preview form[action='#{vessel_dispatch_path(@vessel)}'][data-turbo-frame='_top']" do
+      assert_select "button:not([disabled])", text: "Envoyer maintenant"
+    end
+  end
+
+  test "show keeps collect button visible and disables send when no messages are bundleable" do
+    MessageDigest.where(
+      mail_account_id: @vessel.mail_accounts.select(:id)
+    ).update_all(status: MessageDigest.statuses.fetch("bundled"))
+
+    sign_in_as @user_with_vessel
+    get vessel_path(@vessel)
+
+    assert_response :success
+    assert_select "turbo-frame#dispatch-preview form[action='#{vessel_dispatch_preview_path(@vessel)}']" do
+      assert_select "button", text: "Collecter & simuler"
+    end
+    assert_select "turbo-frame#dispatch-preview form[action='#{vessel_dispatch_path(@vessel)}']" do
+      assert_select "button[disabled]", text: "Envoyer maintenant"
+    end
   end
 
   test "show rejects access to unrelated vessel" do

@@ -14,7 +14,9 @@ class DispatchPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#dispatch-preview"
     assert_select ".btn__group"
     assert_select "form[action='#{vessel_dispatch_preview_path(@vessel)}'][data-turbo-frame='dispatch-preview']"
-    assert_select "form[action='#{vessel_dispatch_path(@vessel)}'][data-turbo-frame='_top']"
+    assert_select "form[action='#{vessel_dispatch_path(@vessel)}'][data-turbo-frame='_top']" do
+      assert_select "button:not([disabled])", text: "Envoyer maintenant"
+    end
     assert_select ".bundle-preview"
   end
 
@@ -27,6 +29,12 @@ class DispatchPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".empty-state"
+    assert_select "form[action='#{vessel_dispatch_preview_path(@vessel)}']" do
+      assert_select "button", text: "Collecter & simuler"
+    end
+    assert_select "form[action='#{vessel_dispatch_path(@vessel)}']" do
+      assert_select "button[disabled]", text: "Envoyer maintenant"
+    end
   end
 
   test "show does not create any bundle record" do

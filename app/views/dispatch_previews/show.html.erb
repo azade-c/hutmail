@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "dispatch-preview" do %>
-  <%= render "vessels/dispatch_actions", vessel: @vessel, show_send: @preview.present? %>
+  <%= render "vessels/dispatch_actions", vessel: @vessel, send_enabled: @preview.present? %>
 
   <% if @preview %>
     <div class="card margin-block-start">

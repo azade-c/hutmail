@@ -24,6 +24,25 @@ class CollectionsControllerTest < ActionDispatch::IntegrationTest
     MailAccount.define_method(:collect_now, original)
   end
 
+  test "create only collects: no bundle is created and nothing is dispatched" do
+    original = MailAccount.instance_method(:collect_now)
+    MailAccount.define_method(:collect_now) { 2 }
+
+    original_dispatch = Vessel.instance_method(:dispatch_now)
+    dispatch_called = false
+    Vessel.define_method(:dispatch_now) { dispatch_called = true }
+
+    assert_no_difference "Bundle.count" do
+      post mail_account_collection_path(@account)
+    end
+
+    assert_redirected_to mail_account_path(@account)
+    assert_not dispatch_called, "collection must never trigger a dispatch"
+  ensure
+    MailAccount.define_method(:collect_now, original)
+    Vessel.define_method(:dispatch_now, original_dispatch)
+  end
+
   test "create rejects access from unrelated user" do
     sign_in_as users(:no_vessel)
     post mail_account_collection_path(@account)
