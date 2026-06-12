@@ -33,7 +33,7 @@
       <%= Bundle.format_size(@budget_consumed) %> utilisés sur <%= Bundle.format_size(total) %>
     </div>
     <div class="budget-bar">
-      <div class="<%= class_names("budget-bar__fill", "budget-bar__fill--#{pct > 90 ? "danger" : "ok"}") %>" data-width="<%= pct %>%"></div>
+      <div class="<%= class_names("budget-bar__fill", "budget-bar__fill--#{pct > 90 ? "danger" : "ok"}") %>" style="--budget-fill: <%= pct %>%"></div>
     </div>
     <div class="margin-block-start-half">
       <%= button_to "Remettre le budget à z\u00e9ro", vessel_budget_reset_path(@vessel),
