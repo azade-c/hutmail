@@ -49,6 +49,18 @@ class VesselsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "show budget bar fill width reflects consumed percentage" do
+    # daily_budget_kb 100 => total 100 * 7 * 1024 = 716_800 bytes.
+    # A sent bundle of 358_400 bytes consumes exactly 50%.
+    @vessel.bundles.create!(status: "sent", sent_at: Time.current, dispatch_size: 358_400)
+
+    sign_in_as @user_with_vessel
+    get vessel_path(@vessel)
+
+    assert_response :success
+    assert_select ".budget-bar__fill[style*='--budget-fill: 50.0%']"
+  end
+
   test "show rejects access to unrelated vessel" do
     sign_in_as @user_without_vessel
     get vessel_path(@vessel)

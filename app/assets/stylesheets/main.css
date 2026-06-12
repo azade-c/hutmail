@@ -240,8 +240,13 @@
   .budget-bar__fill {
     background: var(--color-river);
     block-size: 100%;
+    inline-size: var(--budget-fill, 0%);
     border-radius: 0.5em;
     transition: inline-size 300ms var(--ease-out-expo);
+  }
+
+  .budget-bar__fill--danger {
+    background: var(--color-negative);
   }
 
   .bundle-preview {
