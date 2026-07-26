@@ -67,5 +67,5 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "html2text", "~> 0.4.0"
+gem "html2text", "~> 0.5.0"
 gem "email_reply_trimmer", "~> 0.1"
