@@ -68,4 +68,4 @@ group :test do
 end
 
 gem "html2text", "~> 0.5.0"
-gem "email_reply_trimmer", "~> 0.1"
+gem "email_reply_trimmer", "~> 0.3"
