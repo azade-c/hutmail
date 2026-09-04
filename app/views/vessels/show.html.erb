@@ -32,6 +32,7 @@
   <div class="card__header">Carte de suivi</div>
   <div class="txt-small txt-subtle">
     Lien à partager avec la famille à terre. Il donne la position du bateau : ne le publiez pas.
+    Vous pouvez le changer dans les <a href="<%= edit_vessel_settings_path(@vessel) %>">réglages</a>.
   </div>
   <div class="margin-block-start-half">
     <a href="<%= track_path(@vessel.track_token) %>" class="btn btn--link">

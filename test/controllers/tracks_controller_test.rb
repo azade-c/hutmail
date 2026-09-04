@@ -30,6 +30,19 @@ class TracksControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # The route constraint and Vessel::Tracking::TOKEN_FORMAT are written out in
+  # two files that cannot see each other. Should they ever drift, a token the
+  # skipper was allowed to save would 404 for the family ashore.
+  test "the route accepts exactly the tokens the model allows" do
+    %W[
+      #{"a" * 16} #{"a" * 24} #{"a" * 64} Alib1EnRouteVersLeSud
+      #{"a" * 15} #{"a" * 65} nope avec-un-tiret-1234
+    ].each do |candidate|
+      assert_equal model_accepts?(candidate), route_matches?(candidate),
+        "#{candidate.inspect}: model and route disagree"
+    end
+  end
+
   test "the trace is kept out of search indexes" do
     get track_path(@vessel.track_token)
 
@@ -129,4 +142,18 @@ class TracksControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", track_path(@vessel.track_token)
   end
 
+  private
+    def model_accepts?(token)
+      vessel = Vessel.new(track_token: token)
+      vessel.valid?
+
+      !vessel.errors.include?(:track_token)
+    end
+
+    def route_matches?(token)
+      Rails.application.routes.recognize_path("/suivi/#{token}")
+      true
+    rescue ActionController::RoutingError
+      false
+    end
 end

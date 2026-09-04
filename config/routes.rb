@@ -20,8 +20,9 @@ Rails.application.routes.draw do
   # Public trace of a vessel, guarded by an unguessable token rather than a
   # login: it is meant to be shared with family ashore, not indexed. The path is
   # French because this is the only URL anyone outside the crew ever sees.
+  # The constraint mirrors Vessel::Tracking::TOKEN_FORMAT.
   resources :tracks, only: :show, path: "suivi", param: :token,
-    constraints: { token: /[A-Za-z0-9]{16,}/ }
+    constraints: { token: /[A-Za-z0-9]{16,64}/ }
 
   resource :home, only: :show, controller: "home"
   resource :guide, only: :show

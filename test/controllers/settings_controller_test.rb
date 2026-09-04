@@ -39,4 +39,71 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     }
     assert_response :unprocessable_entity
   end
+
+  # ------------------------------------------------------------------
+  # The tracking link
+  # ------------------------------------------------------------------
+
+  test "edit offers the tracking link for editing" do
+    get edit_vessel_settings_path(@vessel)
+
+    assert_response :success
+    assert_select "input[name='vessel[track_token]'][value=?]", @vessel.track_token
+  end
+
+  test "the skipper can choose a readable tracking link" do
+    patch vessel_settings_path(@vessel), params: {
+      vessel: { track_token: "AlibiEnRouteVersLeSud" }
+    }
+
+    assert_redirected_to edit_vessel_settings_path(@vessel)
+    assert_equal "AlibiEnRouteVersLeSud", @vessel.reload.track_token
+
+    get track_path("AlibiEnRouteVersLeSud")
+    assert_response :success
+  end
+
+  test "changing the link retires the old one on the spot" do
+    was = @vessel.track_token
+
+    patch vessel_settings_path(@vessel), params: {
+      vessel: { track_token: "AlibiEnRouteVersLeSud" }
+    }
+
+    get "/suivi/#{was}"
+    assert_response :not_found
+  end
+
+  test "clearing the link is how a leaked URL gets revoked" do
+    was = @vessel.track_token
+
+    patch vessel_settings_path(@vessel), params: { vessel: { track_token: "" } }
+
+    assert_redirected_to edit_vessel_settings_path(@vessel)
+    assert_not_equal was, @vessel.reload.track_token
+
+    get "/suivi/#{was}"
+    assert_response :not_found
+  end
+
+  # A link that fails the route constraint would 404 for the family, so it has
+  # to be refused at the form rather than saved and quietly broken.
+  test "a guessable link is refused in French and nothing is saved" do
+    was = @vessel.track_token
+
+    patch vessel_settings_path(@vessel), params: { vessel: { track_token: "trop-court" } }
+
+    assert_response :unprocessable_entity
+    assert_equal was, @vessel.reload.track_token
+    assert_match "Lien de suivi doit faire de 16 à 64 lettres ou chiffres", response.body
+  end
+
+  # The form prints the live URL, and url_for enforces the route constraint. If
+  # it ever read the token being typed instead of the saved one, this 500s.
+  test "the form still renders when the submitted link is invalid" do
+    patch vessel_settings_path(@vessel), params: { vessel: { track_token: "nope" } }
+
+    assert_response :unprocessable_entity
+    assert_match track_url(@vessel.track_token), response.body
+  end
 end
