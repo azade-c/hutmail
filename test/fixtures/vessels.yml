@@ -3,4 +3,4 @@ one:
   sailmail_address: ALB1234@sailmail.com
   bundle_ratio: 80
   daily_budget_kb: 100
-  track_token: fixturetracktoken000one
+  track_slug: fixturetrackslugone123

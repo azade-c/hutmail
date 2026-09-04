@@ -35,7 +35,7 @@
       <% end %>
     </dl>
 
-    <%= link_to "Google Earth", track_path(@vessel.track_token, format: :kml),
+    <%= link_to "Google Earth", track_path(@vessel.track_slug, format: :kml),
           class: "track-header__export", download: "#{@vessel.name.parameterize}.kml" %>
   <% end %>
 </header>

@@ -34,10 +34,10 @@
     <h2 class="card__header">Carte de suivi</h2>
     <div class="form-group">
       <label>Lien de suivi</label>
-      <%# The persisted token, never the one being typed: an invalid one would
+      <%# The persisted slug, never the one being typed: an invalid one would
           fail the route constraint and blow up URL generation. %>
-      <div class="txt-x-small txt-subtle"><%= track_url(@vessel.track_token_in_database) %></div>
-      <%= f.text_field :track_token, class: "input" %>
+      <div class="txt-x-small txt-subtle"><%= track_url(@vessel.track_slug_in_database) %></div>
+      <%= f.text_field :track_slug, class: "input" %>
       <div class="txt-x-small txt-subtle">
         De 16 à 64 lettres ou chiffres, sans espace ni accent — ce lien doit rester impossible à deviner.
         Videz le champ et enregistrez pour en tirer un nouveau : l'ancien cesse aussitôt de répondre.

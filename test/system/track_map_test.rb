@@ -11,14 +11,14 @@ class TrackMapTest < ApplicationSystemTestCase
   # with a DOM node to look for. That suits us: it is the one that was asked
   # for by name.
   test "the boat sits on the last known fix" do
-    visit track_path(@vessel.track_token)
+    visit track_path(@vessel.track_slug)
 
     assert_selector ".leaflet-container"
     assert_selector ".track-boat svg", count: 1, visible: :all
   end
 
   test "hovering the boat shows the date of the fix" do
-    visit track_path(@vessel.track_token)
+    visit track_path(@vessel.track_slug)
 
     assert_selector ".track-boat"
     assert_no_selector ".leaflet-tooltip"

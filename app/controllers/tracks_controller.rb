@@ -4,7 +4,7 @@ class TracksController < ApplicationController
   layout "track"
 
   def show
-    @vessel = Vessel.find_by!(track_token: params[:token])
+    @vessel = Vessel.find_by!(track_slug: params[:slug])
     @reports = @vessel.position_reports.chronological.to_a
     @distance_nm = PositionReport.total_distance_nm(@reports)
 

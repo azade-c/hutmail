@@ -207,10 +207,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_112000) do
     t.string "name", null: false
     t.datetime "next_dispatch_at"
     t.string "sailmail_address"
-    t.string "track_token", null: false
+    t.string "track_slug", null: false
     t.datetime "updated_at", null: false
     t.index ["next_dispatch_at"], name: "index_vessels_on_next_dispatch_at"
-    t.index ["track_token"], name: "index_vessels_on_track_token", unique: true
+    t.index ["track_slug"], name: "index_vessels_on_track_slug", unique: true
   end
 
   add_foreign_key "bundle_items", "bundles"

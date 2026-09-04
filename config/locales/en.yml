@@ -35,11 +35,11 @@ en:
   activerecord:
     attributes:
       vessel:
-        track_token: "Lien de suivi"
+        track_slug: "Lien de suivi"
     errors:
       models:
         vessel:
           attributes:
-            track_token:
+            track_slug:
               invalid: "doit faire de 16 à 64 lettres ou chiffres, sans espace ni accent"
               taken: "est déjà utilisé par un autre bateau"
