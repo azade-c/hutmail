@@ -12,7 +12,10 @@ class Vessel < ApplicationRecord
   has_many :vessel_replies, dependent: :destroy
   has_many :command_responses, dependent: :destroy
   has_many :processed_relay_messages, dependent: :delete_all
+  has_many :position_reports, dependent: :destroy
   has_one :relay_account, dependent: :destroy
+
+  has_secure_token :track_token, length: 24
 
   accepts_nested_attributes_for :relay_account, update_only: true
 

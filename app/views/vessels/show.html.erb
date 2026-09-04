@@ -22,6 +22,22 @@
     <div class="stat__value"><%= @vessel.bundle_ratio %>%</div>
     <div class="stat__label">Ratio dépêche</div>
   </div>
+  <div class="stat">
+    <div class="stat__value"><%= @position_reports_count %></div>
+    <div class="stat__label">Points de trace</div>
+  </div>
+</div>
+
+<div class="card margin-block-end">
+  <div class="card__header">Carte de suivi</div>
+  <div class="txt-small txt-subtle">
+    Lien à partager avec la famille à terre. Il donne la position du bateau : ne le publiez pas.
+  </div>
+  <div class="margin-block-start-half">
+    <a href="<%= track_path(@vessel.track_token) %>" class="btn btn--link">
+      <%= track_url(@vessel.track_token) %>
+    </a>
+  </div>
 </div>
 
 <% if @budget_remaining > 0 || @budget_consumed > 0 %>

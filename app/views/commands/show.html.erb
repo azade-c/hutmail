@@ -30,6 +30,17 @@ SEND.OR famille@beavers.fr "Tout va bien"
   <tr><td><code>URGENT.&lt;BB&gt; &lt;email&gt; "msg"</code></td><td>Envoie un message tout de suite via la boîte <code>BB</code></td></tr>
 </table>
 
+<h2>POSREPORT — rapport de position</h2>
+<p>À envoyer <strong>dans l'objet</strong>, sans corps : c'est le mail le plus léger que le bord puisse émettre. Hutmail répond en silence — l'accusé de réception voyage dans la prochaine dépêche, jamais dans un mail dédié.</p>
+<pre>Objet : POSREPORT 2026-11-05 1430 12.5S 38.5W</pre>
+<table>
+  <tr><td><code>2026-11-05</code></td><td>date UTC, format <code>AAAA-MM-JJ</code></td></tr>
+  <tr><td><code>1430</code></td><td>heure UTC, format <code>HHMM</code> (ou <code>14:30</code>)</td></tr>
+  <tr><td><code>12.5S</code></td><td>latitude en degrés décimaux — <code>12.5S</code> ou <code>-12.5</code></td></tr>
+  <tr><td><code>38.5W</code></td><td>longitude en degrés décimaux — <code>38.5W</code> ou <code>-38.5</code></td></tr>
+</table>
+<p>Chaque rapport ajoute un point à la trace du bateau sur la carte de suivi. Renvoyer le même horodatage <strong>corrige</strong> le point au lieu de le dupliquer — utile quand la liaison radio bafouille. Le lien de la carte à partager se trouve sur la page du bateau dans Hutmail.</p>
+
 <h2>Corps uniquement (dans <code>===CMD===</code>)</h2>
 <table>
   <tr><th>Commande</th><th>Effet</th></tr>

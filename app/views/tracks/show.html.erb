@@ -1,0 +1,60 @@
+<% last = @reports.last %>
+<% previous = @reports[-2] %>
+<% last_leg_hours = last && previous ? (last.reported_at - previous.reported_at) / 3600.0 : nil %>
+<% last_leg_knots = last_leg_hours&.positive? ? previous.distance_nm_to(last) / last_leg_hours : nil %>
+
+<header class="track-header">
+  <div class="track-header__title">
+    <span class="track-header__logo">🦫</span>
+    <h1><%= @vessel.name %></h1>
+  </div>
+
+  <% if last %>
+    <dl class="track-header__stats">
+      <div>
+        <dt>Dernière position</dt>
+        <dd><%= last.reported_on_utc %></dd>
+      </div>
+      <div>
+        <dt>Coordonnées</dt>
+        <dd><%= last.coordinates_label %></dd>
+      </div>
+      <div>
+        <dt>Distance parcourue</dt>
+        <dd><%= number_with_delimiter(@distance_nm.round) %> nm</dd>
+      </div>
+      <div>
+        <dt>Points</dt>
+        <dd><%= @reports.size %></dd>
+      </div>
+      <% if last_leg_knots %>
+        <div>
+          <dt>Dernière étape</dt>
+          <dd><%= last_leg_knots.round(1) %> nd</dd>
+        </div>
+      <% end %>
+    </dl>
+  <% end %>
+</header>
+
+<% if @reports.any? %>
+  <%
+    points = @reports.map do |report|
+      {
+        lat: report.latitude.to_f,
+        lon: report.longitude.to_f,
+        label: "#{report.reported_on_utc}<br>#{report.coordinates_label}"
+      }
+    end
+  %>
+  <div class="track-map"
+       data-controller="track-map"
+       data-track-map-points-value="<%= points.to_json %>"></div>
+<% else %>
+  <div class="track-empty">
+    <p>Aucun rapport de position pour le moment.</p>
+    <p class="txt-small txt-subtle">
+      La trace apparaîtra dès le premier <code>POSREPORT</code> reçu du bord.
+    </p>
+  </div>
+<% end %>

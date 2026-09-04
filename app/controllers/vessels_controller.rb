@@ -32,6 +32,7 @@ class VesselsController < ApplicationController
     @recent_bundles = @vessel.bundles.recent.limit(5)
     @budget_consumed = @vessel.budget_consumed_7d
     @budget_remaining = @vessel.budget_remaining
+    @position_reports_count = @vessel.position_reports.count
   end
 
   private

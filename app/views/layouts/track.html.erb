@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= @vessel.name %> — trace 🦫</title>
+  <meta name="robots" content="noindex, nofollow">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "leaflet", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <%# Leaflet is a UMD bundle: it has to run before the Stimulus modules that use it. %>
+  <%= javascript_include_tag "leaflet", "data-turbo-track": "reload", nonce: true %>
+  <%= javascript_importmap_tags %>
+</head>
+<body class="track-page">
+  <%= yield %>
+</body>
+</html>
