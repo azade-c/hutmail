@@ -19,7 +19,8 @@ Rails.application.routes.draw do
 
   # Public trace of a vessel, guarded by an unguessable token rather than a
   # login: it is meant to be shared with family ashore, not indexed.
-  get "track/:token", to: "tracks#show", as: :track, constraints: { token: /[A-Za-z0-9]{16,}/ }
+  resources :tracks, only: :show, path: "track", param: :token,
+    constraints: { token: /[A-Za-z0-9]{16,}/ }
 
   resource :home, only: :show, controller: "home"
   resource :guide, only: :show
