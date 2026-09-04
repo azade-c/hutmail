@@ -19,7 +19,13 @@ class TracksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a token too short to be one does not even match the route" do
-    get "/track/nope"
+    get "/suivi/nope"
+
+    assert_response :not_found
+  end
+
+  test "the English path the route used to answer on is gone" do
+    get "/track/#{@vessel.track_token}"
 
     assert_response :not_found
   end
@@ -122,4 +128,5 @@ class TracksControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "a[href=?]", track_path(@vessel.track_token)
   end
+
 end
