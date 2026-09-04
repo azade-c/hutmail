@@ -54,6 +54,12 @@
     white-space: nowrap;
   }
 
+  .track-header__export {
+    margin-inline-start: auto;
+    font-size: var(--text-x-small);
+    white-space: nowrap;
+  }
+
   .track-map {
     --track-trace-color: oklch(59% 0.19 38);
     --track-last-fix-color: oklch(46% 0.1 230);
@@ -74,13 +80,23 @@
     text-align: center;
   }
 
-  /* Leaflet popups are injected outside the app's markup, so they need the
-     app's type explicitly. */
+  /* The boat marker on the last known fix. A white outline keeps the hull
+     readable over both the chart and the satellite mosaic. */
+  .track-boat svg {
+    inline-size: 100%;
+    block-size: 100%;
+    fill: var(--track-last-fix-color);
+    filter: drop-shadow(0 0 1px oklch(100% 0 0)) drop-shadow(0 1px 2px oklch(0% 0 0 / 0.4));
+  }
+
+  /* Leaflet popups and tooltips are injected outside the app's markup, so they
+     need the app's type explicitly. */
   .leaflet-container {
     font-family: var(--font-sans);
   }
 
-  .leaflet-popup-content {
+  .leaflet-popup-content,
+  .leaflet-tooltip {
     font-family: var(--font-mono);
     font-size: var(--text-x-small);
   }

@@ -58,35 +58,63 @@ export default class extends Controller {
   }
 
   // The palette lives in track.css; reading it back keeps one source of truth.
+  // The boat is an ordinary DOM node, so it is styled there directly.
   readColors() {
-    const styles = getComputedStyle(this.element)
-
-    this.traceColor = styles.getPropertyValue("--track-trace-color").trim() || "#e5484d"
-    this.lastFixColor = styles.getPropertyValue("--track-last-fix-color").trim() || "#0b7285"
+    this.traceColor =
+      getComputedStyle(this.element).getPropertyValue("--track-trace-color").trim() || "#e5484d"
   }
 
   drawTrace(latlngs, points) {
     L.polyline(latlngs, { color: this.traceColor, weight: 2 }).addTo(this.map)
 
-    latlngs.forEach((latlng, index) => {
-      const isLast = index === latlngs.length - 1
+    const lastIndex = latlngs.length - 1
 
-      L.circleMarker(latlng, {
-        radius: isLast ? 7 : 4,
-        color: isLast ? this.lastFixColor : this.traceColor,
-        fillColor: isLast ? this.lastFixColor : this.traceColor,
-        fillOpacity: isLast ? 1 : 0.6,
+    latlngs.forEach((latlng, index) => {
+      if (index === lastIndex) return
+
+      this.describe(L.circleMarker(latlng, {
+        radius: 4,
+        color: this.traceColor,
+        fillColor: this.traceColor,
+        fillOpacity: 0.6,
         weight: 2
-      })
-        .bindPopup(points[index].label)
-        .addTo(this.map)
+      }), points[index].label)
     })
+
+    // The boat rides the last known fix. That is the one thing family ashore
+    // opens this page for, so it gets a hull instead of another dot.
+    this.describe(L.marker(latlngs[lastIndex], {
+      icon: this.boatIcon(),
+      zIndexOffset: 1000,
+      keyboard: false
+    }), points[lastIndex].label)
 
     if (latlngs.length === 1) {
       this.map.setView(latlngs[0], 8)
     } else {
       this.map.fitBounds(L.latLngBounds(latlngs), { padding: [ 32, 32 ] })
     }
+  }
+
+  // Hover shows the date on a desktop; the popup covers the tap on a phone,
+  // where there is no hover to speak of.
+  describe(marker, label) {
+    marker
+      .bindTooltip(label, { direction: "top", offset: [ 0, -8 ] })
+      .bindPopup(label)
+      .addTo(this.map)
+  }
+
+  boatIcon() {
+    return L.divIcon({
+      className: "track-boat",
+      iconSize: [ 26, 26 ],
+      iconAnchor: [ 13, 20 ],
+      tooltipAnchor: [ 0, -10 ],
+      html: '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path d="M11 1.5 3.6 12.2H11zM13 5.4V12.2h5.8zM1.8 14.2h20.4l-3.3 6.3H5.1z"/>' +
+        "</svg>"
+    })
   }
 
   // A Pacific crossing hands us longitudes that jump from +179 to -179.
