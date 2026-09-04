@@ -29,3 +29,17 @@
 
 en:
   hello: "Hello world"
+
+  # The interface is written in French. Only the messages a skipper can actually
+  # trigger by hand live here; the rest are hardcoded in the views.
+  activerecord:
+    attributes:
+      vessel:
+        track_slug: "Lien de suivi"
+    errors:
+      models:
+        vessel:
+          attributes:
+            track_slug:
+              invalid: "doit faire de 16 à 64 lettres ou chiffres, sans espace ni accent"
+              taken: "est déjà utilisé par un autre bateau"

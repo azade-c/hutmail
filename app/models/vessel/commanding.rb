@@ -2,7 +2,7 @@ module Vessel::Commanding
   extend ActiveSupport::Concern
 
   SUBJECT_REPLY_PREFIX = /\A(?:re|fw|fwd|tr)\s*:\s*/i
-  SUBJECT_ALLOWED_COMMANDS = %w[STATUS PING HELP GET URGENT].freeze
+  SUBJECT_ALLOWED_COMMANDS = %w[STATUS PING HELP GET URGENT POSREPORT].freeze
   RESPONDING_COMMANDS = %w[STATUS PING HELP].freeze
 
   def parse_and_execute_subject(subject)
@@ -93,7 +93,7 @@ module Vessel::Commanding
 
   private
     SEND_COMMAND = /\A(SEND|URGENT)(?:\.([A-Za-z0-9]+))?\s+(\S+)\s*\z/i
-    KNOWN_COMMAND_VERBS = %w[GET SEND URGENT PAUSE RESUME STATUS PING HELP WHITELIST BLACKLIST TOPUP].freeze
+    KNOWN_COMMAND_VERBS = %w[GET SEND URGENT PAUSE RESUME STATUS PING HELP WHITELIST BLACKLIST TOPUP POSREPORT].freeze
 
     def open_send_block(line)
       return unless (match = line.match(SEND_COMMAND))
@@ -130,6 +130,7 @@ module Vessel::Commanding
       when "WHITELIST" then execute_list(:whitelist, args, results)
       when "BLACKLIST" then execute_list(:blacklist, args, results)
       when "TOPUP"     then execute_topup(args, results, source: source)
+      when "POSREPORT" then execute_posreport(args, results, source: source)
       else
         report_error(results, source: source, command: command, status: :unknown,
           message: "Unknown command: #{command}", response: "unknown command \"#{command}\"")
@@ -226,6 +227,32 @@ module Vessel::Commanding
       (amount * multiplier).round
     end
 
+    # A position report is the cheapest thing a boat can send: a bare subject
+    # line, no body at all. So it is answered silently — the acknowledgement
+    # rides the next dispatch instead of burning a radio mail of its own.
+    def execute_posreport(args, results, source: "body")
+      attributes = PositionReport.parse_command(args)
+
+      unless attributes
+        report_error(results, source: source, command: "POSREPORT",
+          message: "Invalid format. Use: POSREPORT <YYYY-MM-DD> <HHMM> <lat> <lon>")
+        return
+      end
+
+      report = position_reports.find_or_initialize_by(reported_at: attributes[:reported_at])
+      report.assign_attributes(attributes)
+
+      unless report.save
+        report_error(results, source: source, command: "POSREPORT",
+          message: "Position out of range: #{args}")
+        return
+      end
+
+      text = "POSREPORT ok #{report.reported_at.utc.strftime('%d%b %H:%MZ').downcase} #{report.coordinates_label}"
+      results << { command: "POSREPORT", status: :ok, message: text }
+      enqueue_response(source: "body", command: "POSREPORT", text: text)
+    end
+
     def execute_pause(args, results)
       results << { command: "PAUSE #{args}", status: :ok, message: "Aggregation paused" }
     end
@@ -276,6 +303,7 @@ module Vessel::Commanding
         HUTMAIL commands
         Subject (answered immediately): STATUS | PING | HELP | GET <ref> | URGENT.<ACCT> <email> "msg"
         Body (in ===CMD===...===END===): all of the above + SEND.<ACCT> <email> "msg" | PAUSE | RESUME
+        Position (silent, ack in the next dispatch): POSREPORT <YYYY-MM-DD> <HHMM> <lat> <lon> - e.g. POSREPORT 2026-11-05 1430 12.5S 38.5W
         SEND/URGENT also accept the message on the lines below: SEND.<ACCT> <email> then text until the next command or ===END===
         Messages: ===MSG.<ACCT> <email>=== body ===END===  or  ===REPLY <ref>=== body ===END===
         Custom subject (SEND/URGENT/MSG): start the body with  OBJET your subject /OBJET  then the message below

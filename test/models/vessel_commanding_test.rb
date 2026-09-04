@@ -566,6 +566,84 @@ class VesselCommandingTest < ActiveSupport::TestCase
     assert_match(/blacklist updated/i, results.first[:message])
   end
 
+  # ------------------------------------------------------------------
+  # POSREPORT — position reports
+  # ------------------------------------------------------------------
+
+  test "POSREPORT from the subject records a fix" do
+    assert_difference "@vessel.position_reports.count", 1 do
+      results = @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 12.5S 38.5W")
+
+      assert_equal "POSREPORT", results.first[:command]
+      assert_equal :ok, results.first[:status]
+      assert_match(/POSREPORT ok 05nov 14:30z 12.5S 38.5W/, results.first[:message])
+    end
+
+    report = @vessel.position_reports.last
+    assert_equal Time.utc(2026, 11, 5, 14, 30), report.reported_at
+    assert_in_delta(-12.5, report.latitude, 1e-6)
+    assert_in_delta(-38.5, report.longitude, 1e-6)
+  end
+
+  test "POSREPORT from the subject burns no radio mail of its own" do
+    assert_no_enqueued_jobs only: CommandResponse::DeliverJob do
+      assert_difference "@vessel.command_responses.count", 1 do
+        @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 45.2563 2.2570")
+      end
+    end
+
+    response = @vessel.command_responses.last
+    assert_equal "POSREPORT", response.command
+    assert_equal "pending", response.status
+    # source "body" is what makes the acknowledgement ride the next dispatch.
+    assert_equal "body", response.source
+    assert_includes CommandResponse.pending_for_bundle, response
+  end
+
+  test "POSREPORT works from the command body too" do
+    assert_difference "@vessel.position_reports.count", 1 do
+      @vessel.parse_and_execute_commands("===CMD===\nPOSREPORT 2026-11-05 1430 45.2563 2.2570\n===END===")
+    end
+  end
+
+  test "POSREPORT does not swallow the command that follows it in a body" do
+    results = @vessel.parse_and_execute_commands(
+      "===CMD===\nPOSREPORT 2026-11-05 1430 45.2563 2.2570\nSTATUS\n===END==="
+    )
+
+    assert_equal %w[POSREPORT STATUS], results.map { |r| r[:command] }
+  end
+
+  test "repeating a POSREPORT corrects the fix instead of duplicating it" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 45.2563 2.2570")
+
+    assert_no_difference "@vessel.position_reports.count" do
+      @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 46.0 3.0")
+    end
+
+    assert_in_delta 46.0, @vessel.position_reports.last.latitude, 1e-6
+  end
+
+  test "a malformed POSREPORT is reported and records nothing" do
+    assert_no_difference "@vessel.position_reports.count" do
+      results = @vessel.parse_and_execute_commands("===CMD===\nPOSREPORT somewhere nice\n===END===")
+
+      assert_equal :error, results.first[:status]
+      assert_match(/Invalid format/, results.first[:message])
+    end
+
+    assert_match(/ERR POSREPORT/, @vessel.command_responses.last.response_text)
+  end
+
+  test "a POSREPORT off the planet is reported and records nothing" do
+    assert_no_difference "@vessel.position_reports.count" do
+      results = @vessel.parse_and_execute_commands("===CMD===\nPOSREPORT 2026-11-05 1430 91.0 2.2570\n===END===")
+
+      assert_equal :error, results.first[:status]
+      assert_match(/out of range/i, results.first[:message])
+    end
+  end
+
   private
     def get_references(args)
       refs = nil

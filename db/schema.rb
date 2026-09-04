@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_073401) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_112000) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -116,6 +116,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_073401) do
     t.index ["status"], name: "index_message_digests_on_status"
   end
 
+  create_table "position_reports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.decimal "latitude", precision: 9, scale: 6, null: false
+    t.decimal "longitude", precision: 9, scale: 6, null: false
+    t.datetime "reported_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "vessel_id", null: false
+    t.index ["vessel_id", "reported_at"], name: "index_position_reports_on_vessel_id_and_reported_at", unique: true
+    t.index ["vessel_id"], name: "index_position_reports_on_vessel_id"
+  end
+
   create_table "processed_relay_messages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "imap_message_id", null: false
@@ -196,8 +207,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_073401) do
     t.string "name", null: false
     t.datetime "next_dispatch_at"
     t.string "sailmail_address"
+    t.string "track_slug", null: false
     t.datetime "updated_at", null: false
     t.index ["next_dispatch_at"], name: "index_vessels_on_next_dispatch_at"
+    t.index ["track_slug"], name: "index_vessels_on_track_slug", unique: true
   end
 
   add_foreign_key "bundle_items", "bundles"
@@ -209,6 +222,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_073401) do
   add_foreign_key "crews", "vessels"
   add_foreign_key "mail_accounts", "vessels"
   add_foreign_key "message_digests", "mail_accounts"
+  add_foreign_key "position_reports", "vessels"
   add_foreign_key "processed_relay_messages", "vessels"
   add_foreign_key "relay_accounts", "vessels"
   add_foreign_key "sessions", "users"

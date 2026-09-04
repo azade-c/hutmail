@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document>
+    <name><%= @vessel.name %></name>
+    <description><%= @reports.size %> positions, <%= @distance_nm.round %> nm</description>
+
+    <Style id="trace">
+      <LineStyle>
+        <color>ff2a48e5</color>
+        <width>3</width>
+      </LineStyle>
+    </Style>
+    <Style id="fix">
+      <IconStyle>
+        <scale>0.6</scale>
+        <color>ff2a48e5</color>
+        <Icon><href>https://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon>
+      </IconStyle>
+    </Style>
+    <Style id="boat">
+      <IconStyle>
+        <scale>1.2</scale>
+        <Icon><href>https://maps.google.com/mapfiles/kml/shapes/sailing.png</href></Icon>
+      </IconStyle>
+    </Style>
+
+    <% if @reports.any? %>
+      <Placemark>
+        <name>Trace</name>
+        <styleUrl>#trace</styleUrl>
+        <LineString>
+          <tessellate>1</tessellate>
+          <coordinates><%= @reports.map(&:kml_coordinates).join(" ") %></coordinates>
+        </LineString>
+      </Placemark>
+
+      <Placemark>
+        <name><%= @vessel.name %></name>
+        <description><%= @reports.last.reported_on_utc %></description>
+        <styleUrl>#boat</styleUrl>
+        <Point><coordinates><%= @reports.last.kml_coordinates %></coordinates></Point>
+      </Placemark>
+
+      <Folder>
+        <name>Positions</name>
+        <% @reports.each do |report| %>
+          <Placemark>
+            <name><%= report.reported_on_utc %></name>
+            <description><%= report.coordinates_label %></description>
+            <styleUrl>#fix</styleUrl>
+            <TimeStamp><when><%= report.reported_at_iso8601 %></when></TimeStamp>
+            <Point><coordinates><%= report.kml_coordinates %></coordinates></Point>
+          </Placemark>
+        <% end %>
+      </Folder>
+
+      <%# gx:Track drives Google Earth's time slider: it replays the crossing. %>
+      <Placemark>
+        <name>Replay</name>
+        <styleUrl>#trace</styleUrl>
+        <gx:Track>
+          <% @reports.each do |report| %>
+            <when><%= report.reported_at_iso8601 %></when>
+          <% end %>
+          <% @reports.each do |report| %>
+            <gx:coord><%= report.kml_track_coordinates %></gx:coord>
+          <% end %>
+        </gx:Track>
+      </Placemark>
+    <% end %>
+  </Document>
+</kml>

@@ -1,0 +1,103 @@
+@layer modules {
+  /* The trace page has no nav and no main wrapper: the map takes the screen. */
+  .track-page {
+    display: flex;
+    flex-direction: column;
+    block-size: 100dvh;
+    margin: 0;
+  }
+
+  .track-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--inline-space) var(--inline-space-double);
+    padding: var(--block-space-half) var(--main-padding);
+    border-block-end: var(--border);
+    background: var(--color-canvas);
+  }
+
+  .track-header__title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--inline-space-half);
+  }
+
+  .track-header__title h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-large);
+    margin: 0;
+  }
+
+  .track-header__logo {
+    font-size: var(--text-medium);
+  }
+
+  .track-header__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--inline-space) var(--inline-space-double);
+    margin: 0;
+  }
+
+  .track-header__stats dt {
+    font-size: var(--text-xx-small);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-dark);
+  }
+
+  .track-header__stats dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-small);
+    white-space: nowrap;
+  }
+
+  .track-header__export {
+    margin-inline-start: auto;
+    font-size: var(--text-x-small);
+    white-space: nowrap;
+  }
+
+  .track-map {
+    --track-trace-color: oklch(59% 0.19 38);
+    --track-last-fix-color: oklch(46% 0.1 230);
+
+    flex: 1;
+    min-block-size: 0;
+    background: var(--color-river-lightest);
+  }
+
+  .track-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--block-space-half);
+    padding: var(--main-padding);
+    text-align: center;
+  }
+
+  /* The boat marker on the last known fix. A white outline keeps the hull
+     readable over both the chart and the satellite mosaic. */
+  .track-boat svg {
+    inline-size: 100%;
+    block-size: 100%;
+    fill: var(--track-last-fix-color);
+    filter: drop-shadow(0 0 1px oklch(100% 0 0)) drop-shadow(0 1px 2px oklch(0% 0 0 / 0.4));
+  }
+
+  /* Leaflet popups and tooltips are injected outside the app's markup, so they
+     need the app's type explicitly. */
+  .leaflet-container {
+    font-family: var(--font-sans);
+  }
+
+  .leaflet-popup-content,
+  .leaflet-tooltip {
+    font-family: var(--font-mono);
+    font-size: var(--text-x-small);
+  }
+}
