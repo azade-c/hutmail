@@ -67,6 +67,20 @@ class PositionReport < ApplicationRecord
     reported_at.utc.strftime("%Y-%m-%d %H:%MZ")
   end
 
+  def reported_at_iso8601
+    reported_at.utc.iso8601
+  end
+
+  # KML reads longitude first, then latitude, then altitude.
+  def kml_coordinates
+    "#{longitude.to_f},#{latitude.to_f},0"
+  end
+
+  # gx:Track separates its coordinates with spaces where KML uses commas.
+  def kml_track_coordinates
+    kml_coordinates.tr(",", " ")
+  end
+
   def coordinates_label
     "#{format_degrees(latitude, 'N', 'S')} #{format_degrees(longitude, 'E', 'W')}"
   end

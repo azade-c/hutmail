@@ -143,4 +143,29 @@ class PositionReportTest < ActiveSupport::TestCase
     assert_equal "12.5S 38.5W", report.coordinates_label
     assert_equal "2026-11-05 14:30Z", report.reported_on_utc
   end
+
+  # ------------------------------------------------------------------
+  # KML
+  # ------------------------------------------------------------------
+
+  test "KML puts longitude before latitude" do
+    report = @vessel.position_reports.build(
+      reported_at: Time.utc(2026, 11, 5, 14, 30), latitude: -12.5, longitude: -38.5
+    )
+
+    assert_equal "-38.5,-12.5,0", report.kml_coordinates
+    assert_equal "-38.5 -12.5 0", report.kml_track_coordinates
+    assert_equal "2026-11-05T14:30:00Z", report.reported_at_iso8601
+  end
+
+  test "KML timestamps stay UTC whatever the app zone is" do
+    report = @vessel.position_reports.create!(
+      reported_at: Time.utc(2026, 11, 5, 14, 30), latitude: 1, longitude: 1
+    )
+
+    Time.use_zone("Europe/Paris") do
+      assert_equal "2026-11-05T14:30:00Z", report.reload.reported_at_iso8601
+      assert_equal "2026-11-05 14:30Z", report.reported_on_utc
+    end
+  end
 end

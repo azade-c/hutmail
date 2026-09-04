@@ -60,6 +60,60 @@ class TracksControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller='track-map']", false
   end
 
+  test "the trace is downloadable as KML for Google Earth" do
+    @vessel.position_reports.create!(reported_at: Time.utc(2026, 11, 5, 14, 30), latitude: 1.5, longitude: -2.5)
+    @vessel.position_reports.create!(reported_at: Time.utc(2026, 11, 6, 6, 0), latitude: 2.5, longitude: -3.5)
+
+    get track_path(@vessel.track_token, format: :kml)
+
+    assert_response :success
+    assert_equal "application/vnd.google-earth.kml+xml", response.media_type
+    assert_match "<coordinates>-2.5,1.5,0 -3.5,2.5,0</coordinates>", response.body
+  end
+
+  test "the KML carries the timestamps Google Earth replays a crossing with" do
+    @vessel.position_reports.create!(reported_at: Time.utc(2026, 11, 5, 14, 30), latitude: 1, longitude: 1)
+
+    get track_path(@vessel.track_token, format: :kml)
+
+    assert_match "<when>2026-11-05T14:30:00Z</when>", response.body
+    assert_match "<gx:coord>1.0 1.0 0</gx:coord>", response.body
+  end
+
+  test "the KML is well-formed XML Google Earth will accept" do
+    @vessel.update!(name: "Alibi & <Cie>")
+    @vessel.position_reports.create!(reported_at: Time.utc(2026, 11, 5), latitude: 1, longitude: 1)
+
+    get track_path(@vessel.track_token, format: :kml)
+
+    document = Nokogiri::XML(response.body, &:strict)
+    assert_equal "kml", document.root.name
+    assert_equal "Alibi & <Cie>", document.at_xpath("//xmlns:Document/xmlns:name").text
+    assert_equal 1, document.xpath("//gx:Track", "gx" => "http://www.google.com/kml/ext/2.2").size
+  end
+
+  test "an unknown token is a 404 for the KML too" do
+    get track_path("notatrackingtokenatall", format: :kml)
+
+    assert_response :not_found
+  end
+
+  test "a vessel without a single fix still renders valid KML" do
+    get track_path(@vessel.track_token, format: :kml)
+
+    assert_response :success
+    assert_match "</kml>", response.body
+    assert_no_match(/<coordinates>/, response.body)
+  end
+
+  test "the trace page offers the KML download" do
+    @vessel.position_reports.create!(reported_at: Time.utc(2026, 11, 5), latitude: 1, longitude: 1)
+
+    get track_path(@vessel.track_token)
+
+    assert_select "a[href=?]", track_path(@vessel.track_token, format: :kml)
+  end
+
   test "the vessel page links to the shareable trace" do
     sign_in_as users(:one)
 

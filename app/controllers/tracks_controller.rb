@@ -10,5 +10,10 @@ class TracksController < ApplicationController
 
     # A live boat position is not something to leave in a search index.
     response.set_header("X-Robots-Tag", "noindex, nofollow")
+
+    respond_to do |format|
+      format.html
+      format.kml { render layout: false, content_type: Mime[:kml].to_s }
+    end
   end
 end
