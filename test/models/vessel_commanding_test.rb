@@ -576,7 +576,7 @@ class VesselCommandingTest < ActiveSupport::TestCase
 
       assert_equal "POSREPORT", results.first[:command]
       assert_equal :ok, results.first[:status]
-      assert_match(/POSREPORT ok 05nov 14:30z 12.5S 38.5W/, results.first[:message])
+      assert_match(/POSREPORT ok n° 1 05nov 14:30z 12.5S 38.5W/, results.first[:message])
     end
 
     report = @vessel.position_reports.last
@@ -642,6 +642,99 @@ class VesselCommandingTest < ActiveSupport::TestCase
       assert_equal :error, results.first[:status]
       assert_match(/out of range/i, results.first[:message])
     end
+  end
+
+  # ------------------------------------------------------------------
+  # POSREPORTDEL — deleting a wrong fix
+  # ------------------------------------------------------------------
+
+  test "POSREPORTDEL from the subject removes the numbered fix" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 12.5S 38.5W")
+
+    assert_difference "@vessel.position_reports.count", -1 do
+      results = @vessel.parse_and_execute_subject("POSREPORTDEL 1")
+
+      assert_equal "POSREPORTDEL", results.first[:command]
+      assert_equal :ok, results.first[:status]
+    end
+  end
+
+  # The acknowledgement is the only copy left of what was thrown away, so it has
+  # to carry enough for the skipper to send the point back if the number was wrong.
+  test "POSREPORTDEL names the point it deleted" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 12.5S 38.5W")
+
+    results = @vessel.parse_and_execute_subject("POSREPORTDEL 1")
+
+    assert_match(/POSREPORTDEL ok n° 1 05nov 14:30z 12.5S 38.5W/, results.first[:message])
+  end
+
+  test "POSREPORTDEL from the subject burns no radio mail of its own" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 45.2563 2.2570")
+
+    assert_no_enqueued_jobs only: CommandResponse::DeliverJob do
+      @vessel.parse_and_execute_subject("POSREPORTDEL 1")
+    end
+
+    response = @vessel.command_responses.last
+    assert_equal "POSREPORTDEL", response.command
+    assert_equal "pending", response.status
+    assert_equal "body", response.source
+  end
+
+  test "POSREPORTDEL works from the command body too" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 45.2563 2.2570")
+
+    assert_difference "@vessel.position_reports.count", -1 do
+      @vessel.parse_and_execute_commands("===CMD===\nPOSREPORTDEL 1\n===END===")
+    end
+  end
+
+  test "POSREPORTDEL leaves the numbers of the surviving points alone" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 45.0 2.0")
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-06 1430 46.0 3.0")
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-07 1430 47.0 4.0")
+
+    @vessel.parse_and_execute_subject("POSREPORTDEL 2")
+
+    assert_equal [ 1, 3 ], @vessel.position_reports.chronological.map(&:sequence)
+  end
+
+  test "POSREPORTDEL on an unknown number is reported and deletes nothing" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 45.2563 2.2570")
+
+    assert_no_difference "@vessel.position_reports.count" do
+      results = @vessel.parse_and_execute_subject("POSREPORTDEL 47")
+
+      assert_equal :error, results.first[:status]
+      assert_match(/Unknown position: 47/, results.first[:message])
+    end
+  end
+
+  # A vessel can only delete its own points: the number is scoped to the track.
+  test "POSREPORTDEL cannot reach another vessel's fix" do
+    other = Vessel.create!(name: "Bilbo", sailmail_address: "BLB1@sailmail.com",
+      relay_account: RelayAccount.new(relay_accounts(:one).attributes.except("id", "vessel_id")))
+    other.position_reports.create!(reported_at: Time.utc(2026, 11, 5), latitude: 45.0, longitude: 2.0)
+
+    assert_no_difference "PositionReport.count" do
+      results = @vessel.parse_and_execute_subject("POSREPORTDEL 1")
+
+      assert_equal :error, results.first[:status]
+    end
+  end
+
+  test "a malformed POSREPORTDEL is reported and deletes nothing" do
+    @vessel.parse_and_execute_subject("POSREPORT 2026-11-05 1430 45.2563 2.2570")
+
+    assert_no_difference "@vessel.position_reports.count" do
+      results = @vessel.parse_and_execute_commands("===CMD===\nPOSREPORTDEL the last one\n===END===")
+
+      assert_equal :error, results.first[:status]
+      assert_match(/Invalid format/, results.first[:message])
+    end
+
+    assert_match(/ERR POSREPORTDEL/, @vessel.command_responses.last.response_text)
   end
 
   private
