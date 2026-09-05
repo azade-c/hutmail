@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_112000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_05_094424) do
   create_table "bundle_items", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
@@ -121,9 +121,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_112000) do
     t.decimal "latitude", precision: 9, scale: 6, null: false
     t.decimal "longitude", precision: 9, scale: 6, null: false
     t.datetime "reported_at", null: false
+    t.integer "sequence", null: false
     t.datetime "updated_at", null: false
     t.integer "vessel_id", null: false
     t.index ["vessel_id", "reported_at"], name: "index_position_reports_on_vessel_id_and_reported_at", unique: true
+    t.index ["vessel_id", "sequence"], name: "index_position_reports_on_vessel_id_and_sequence", unique: true
     t.index ["vessel_id"], name: "index_position_reports_on_vessel_id"
   end
 
@@ -203,6 +205,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_112000) do
     t.integer "dispatch_every_hours"
     t.string "dispatch_timezone", default: "UTC", null: false
     t.datetime "last_dispatched_at"
+    t.integer "last_position_sequence", default: 0, null: false
     t.integer "message_char_limit"
     t.string "name", null: false
     t.datetime "next_dispatch_at"

@@ -1,4 +1,6 @@
 class PositionReport < ApplicationRecord
+  include Numbering
+
   EARTH_RADIUS_NM = 3440.065
 
   # POSREPORT 2026-11-05 1430 45.2563 2.2570

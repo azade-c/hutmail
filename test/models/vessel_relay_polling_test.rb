@@ -53,10 +53,90 @@ class VesselRelayPollingTest < ActiveSupport::TestCase
     assert @vessel.processed_relay_messages.exists?(imap_message_id: "cmd-xyz@sailmail.com")
   end
 
+  # ------------------------------------------------------------------
+  # Sender check — the From: has to be the vessel's own address
+  # ------------------------------------------------------------------
+
+  # IMAP SEARCH FROM matches substrings, so this message comes back from the
+  # server even though it is not from the boat.
+  test "poll_relay_now refuses a From: that merely contains the sailmail address" do
+    lookalike = mail_with_body("POSREPORT 2026-11-05 1430 12.5S 38.5W", "",
+      from: "#{@vessel.sailmail_address}.attacker.tld")
+
+    fake_imap = build_relay_fake_imap(
+      uid_search: [ 31 ],
+      uid_fetch: { 31 => fake_fetch("forged@attacker.tld", lookalike) }
+    )
+
+    archived_uids = nil
+
+    assert_no_difference [ "@vessel.position_reports.count", "@vessel.command_responses.count" ] do
+      archived_uids = capture_archive_calls do
+        with_fake_imap(fake_imap) { @vessel.poll_relay_now }
+      end
+    end
+
+    assert_empty archived_uids
+    assert_not @vessel.processed_relay_messages.exists?(imap_message_id: "forged@attacker.tld")
+  end
+
+  # One forged co-author would otherwise be enough to get a command executed.
+  test "poll_relay_now refuses a From: carrying a second address alongside the vessel" do
+    co_signed = mail_with_body("POSREPORT 2026-11-05 1430 12.5S 38.5W", "",
+      from: "#{@vessel.sailmail_address}, evil@attacker.tld")
+
+    fake_imap = build_relay_fake_imap(
+      uid_search: [ 32 ],
+      uid_fetch: { 32 => fake_fetch("co-signed@attacker.tld", co_signed) }
+    )
+
+    assert_no_difference "@vessel.position_reports.count" do
+      with_fake_imap(fake_imap) { @vessel.poll_relay_now }
+    end
+  end
+
+  # A display name and shouty capitals are how real mail clients write it.
+  test "poll_relay_now accepts the vessel address behind a display name and in any case" do
+    dressed_up = mail_with_body("POSREPORT 2026-11-05 1430 12.5S 38.5W", "",
+      from: "Alibi <#{@vessel.sailmail_address.upcase}>")
+
+    fake_imap = build_relay_fake_imap(
+      uid_search: [ 33 ],
+      uid_fetch: { 33 => fake_fetch("real@sailmail.com", dressed_up) }
+    )
+
+    assert_difference "@vessel.position_reports.count", 1 do
+      with_fake_imap(fake_imap) { @vessel.poll_relay_now }
+    end
+  end
+
+  # A refused message stays in the INBOX rather than being filed with the boat's
+  # own mail, so that whoever looks at the mailbox can still see what arrived.
+  test "poll_relay_now still archives the genuine messages of a mixed batch" do
+    genuine = mail_with_body("Commands", "===CMD===\nSTATUS\n===END===\n")
+    forged = mail_with_body("Commands", "===CMD===\nSTATUS\n===END===\n",
+      from: "#{@vessel.sailmail_address}.attacker.tld")
+
+    fake_imap = build_relay_fake_imap(
+      uid_search: [ 41, 42 ],
+      uid_fetch: {
+        41 => fake_fetch("forged-mixed@attacker.tld", forged),
+        42 => fake_fetch("genuine-mixed@sailmail.com", genuine)
+      }
+    )
+
+    archived_uids = capture_archive_calls do
+      with_fake_imap(fake_imap) { @vessel.poll_relay_now }
+    end
+
+    assert_equal [ 42 ], archived_uids
+    assert_equal [ "genuine-mixed@sailmail.com" ], @vessel.processed_relay_messages.pluck(:imap_message_id)
+  end
+
   private
-    def mail_with_body(subject, body)
+    def mail_with_body(subject, body, from: @vessel.sailmail_address)
       <<~MAIL
-        From: #{@vessel.sailmail_address}
+        From: #{from}
         To: relay@example.com
         Subject: #{subject}
         Date: Mon, 08 Mar 2026 10:00:00 +0000

@@ -46,7 +46,8 @@
       {
         lat: report.latitude.to_f,
         lon: report.longitude.to_f,
-        label: "#{report.reported_on_utc}<br>#{report.coordinates_label}"
+        label: "#{report.reported_on_utc}<br>#{report.coordinates_label}" \
+               "<br><span class=\"track-point__number\">#{report.number_label}</span>"
       }
     end
   %>

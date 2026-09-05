@@ -30,6 +30,12 @@ module Vessel::RelayPolling
 
         raw = data.attr["BODY[]"]
         mail = Mail.new(raw)
+
+        unless from_vessel?(mail)
+          Rails.logger.warn "Vessel##{id} relay poll: refused #{message_id}, From: #{mail.from.inspect} is not the vessel's address"
+          next
+        end
+
         body = mail.text_part&.decoded || mail.body.decoded.to_s
         subject = mail.subject.to_s
 
@@ -50,4 +56,17 @@ module Vessel::RelayPolling
       Rails.logger.warn "Vessel##{id} failed to archive relay messages: #{e.class}: #{e.message}"
     end
   end
+
+  private
+    # IMAP SEARCH FROM is a substring match (RFC 3501), so the search alone also
+    # hands us mail from ALB1234@sailmail.com.somewhere-else.tld. Commands can
+    # delete a position report, so the From: has to *be* the vessel's address and
+    # carry nothing alongside it — one forged co-author would otherwise be enough.
+    #
+    # This closes the gap between "contains" and "is". It is not authentication:
+    # a From: header is unsigned, and anyone who knows both the relay mailbox and
+    # the callsign can still write one. Checking DKIM/SPF is the next step up.
+    def from_vessel?(mail)
+      Array(mail.from).map { |address| address.to_s.strip.downcase } == [ sailmail_address.to_s.strip.downcase ]
+    end
 end

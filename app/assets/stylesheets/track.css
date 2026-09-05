@@ -100,4 +100,11 @@
     font-family: var(--font-mono);
     font-size: var(--text-x-small);
   }
+
+  /* The number is what a POSREPORTDEL quotes, so it belongs in the tooltip —
+     but it is bookkeeping, not position, and reads smaller than the fix. */
+  .track-point__number {
+    font-size: var(--text-xx-small);
+    opacity: 0.7;
+  }
 }

@@ -2,7 +2,7 @@ module Vessel::Commanding
   extend ActiveSupport::Concern
 
   SUBJECT_REPLY_PREFIX = /\A(?:re|fw|fwd|tr)\s*:\s*/i
-  SUBJECT_ALLOWED_COMMANDS = %w[STATUS PING HELP GET URGENT POSREPORT].freeze
+  SUBJECT_ALLOWED_COMMANDS = %w[STATUS PING HELP GET URGENT POSREPORT POSREPORTDEL].freeze
   RESPONDING_COMMANDS = %w[STATUS PING HELP].freeze
 
   def parse_and_execute_subject(subject)
@@ -93,7 +93,7 @@ module Vessel::Commanding
 
   private
     SEND_COMMAND = /\A(SEND|URGENT)(?:\.([A-Za-z0-9]+))?\s+(\S+)\s*\z/i
-    KNOWN_COMMAND_VERBS = %w[GET SEND URGENT PAUSE RESUME STATUS PING HELP WHITELIST BLACKLIST TOPUP POSREPORT].freeze
+    KNOWN_COMMAND_VERBS = %w[GET SEND URGENT PAUSE RESUME STATUS PING HELP WHITELIST BLACKLIST TOPUP POSREPORT POSREPORTDEL].freeze
 
     def open_send_block(line)
       return unless (match = line.match(SEND_COMMAND))
@@ -131,6 +131,7 @@ module Vessel::Commanding
       when "BLACKLIST" then execute_list(:blacklist, args, results)
       when "TOPUP"     then execute_topup(args, results, source: source)
       when "POSREPORT" then execute_posreport(args, results, source: source)
+      when "POSREPORTDEL" then execute_posreportdel(args, results, source: source)
       else
         report_error(results, source: source, command: command, status: :unknown,
           message: "Unknown command: #{command}", response: "unknown command \"#{command}\"")
@@ -248,9 +249,38 @@ module Vessel::Commanding
         return
       end
 
-      text = "POSREPORT ok #{report.reported_at.utc.strftime('%d%b %H:%MZ').downcase} #{report.coordinates_label}"
+      text = "POSREPORT ok #{report.number_label} #{report.reported_at.utc.strftime('%d%b %H:%MZ').downcase} #{report.coordinates_label}"
       results << { command: "POSREPORT", status: :ok, message: text }
       enqueue_response(source: "body", command: "POSREPORT", text: text)
+    end
+
+    POSREPORT_NUMBER = /\A\d{1,9}\z/
+
+    # Deleting is silent like reporting, but the acknowledgement spells out the
+    # point that went: a wrong number over the radio is only recoverable if the
+    # skipper can read back what was thrown away and send it again.
+    def execute_posreportdel(args, results, source: "body")
+      number = args.to_s.strip
+
+      unless number.match?(POSREPORT_NUMBER)
+        report_error(results, source: source, command: "POSREPORTDEL",
+          message: "Invalid format. Use: POSREPORTDEL <number>")
+        return
+      end
+
+      report = position_reports.find_by(sequence: number)
+
+      unless report
+        report_error(results, source: source, command: "POSREPORTDEL",
+          message: "Unknown position: #{number}")
+        return
+      end
+
+      text = "POSREPORTDEL ok #{report.number_label} #{report.reported_at.utc.strftime('%d%b %H:%MZ').downcase} #{report.coordinates_label}"
+      report.destroy!
+
+      results << { command: "POSREPORTDEL", status: :ok, message: text }
+      enqueue_response(source: "body", command: "POSREPORTDEL", text: text)
     end
 
     def execute_pause(args, results)
@@ -304,6 +334,7 @@ module Vessel::Commanding
         Subject (answered immediately): STATUS | PING | HELP | GET <ref> | URGENT.<ACCT> <email> "msg"
         Body (in ===CMD===...===END===): all of the above + SEND.<ACCT> <email> "msg" | PAUSE | RESUME
         Position (silent, ack in the next dispatch): POSREPORT <YYYY-MM-DD> <HHMM> <lat> <lon> - e.g. POSREPORT 2026-11-05 1430 12.5S 38.5W
+        Delete a wrong position: POSREPORTDEL <number> - the number shown on the map, e.g. POSREPORTDEL 12
         SEND/URGENT also accept the message on the lines below: SEND.<ACCT> <email> then text until the next command or ===END===
         Messages: ===MSG.<ACCT> <email>=== body ===END===  or  ===REPLY <ref>=== body ===END===
         Custom subject (SEND/URGENT/MSG): start the body with  OBJET your subject /OBJET  then the message below
